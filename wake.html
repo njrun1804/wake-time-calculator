@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wake Time Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root {
         color-scheme: light;
@@ -76,39 +77,7 @@
         flex-wrap: wrap;
         gap: 0.6rem;
       }
-      button {
-        font: inherit;
-        font-weight: 600;
-        padding: 0.55rem 1rem;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition:
-          transform 120ms ease,
-          box-shadow 120ms ease;
-        font-size: 0.9rem;
-      }
-      button.primary {
-        background: #2563eb;
-        color: #fff;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
-      }
-      button.secondary {
-        background: #e5edff;
-        color: #1f3b82;
-      }
-      button.ghost {
-        background: #eef1f6;
-        color: #1f2933;
-      }
-      button:focus-visible {
-        outline: 3px solid rgba(37, 99, 235, 0.5);
-        outline-offset: 2px;
-      }
-      button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
-      }
+      /* Button styles are handled by DaisyUI .btn classes now */
       .status {
         min-height: 1.25rem;
         font-size: 0.95rem;
@@ -196,24 +165,7 @@
         background: #fdfdff;
         font-size: 0.85rem;
       }
-      button.tiny {
-        font: inherit;
-        font-weight: 600;
-        padding: 0.4rem 0.7rem;
-        border: none;
-        border-radius: 8px;
-        background: #eef1f6;
-        color: #1f2933;
-        cursor: pointer;
-        transition:
-          transform 120ms ease,
-          box-shadow 120ms ease;
-        font-size: 0.85rem;
-      }
-      button.tiny:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
-      }
+      /* Legacy tiny button no longer needed; kept for safety */
       .aw-grid {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -255,7 +207,7 @@
         font-weight: 500;
       }
       .aw-credits {
-        margin: 0;
+        margin: 0.25rem 0 0;
         font-size: 0.75rem;
         color: #7d8ca2;
       }
@@ -307,16 +259,17 @@
         }
       }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
   </head>
   <body>
-    <main>
-      <section class="awareness" id="awareness" aria-live="polite">
+    <main class="max-w-3xl w-full">
+      <section class="awareness bg-base-200 rounded-2xl shadow-md" id="awareness" aria-live="polite">
         <div class="aw-top">
           <div class="aw-where">
-            <span id="awCity">your location</span>
+            <span id="awCity">Verify location</span>
           </div>
             <div class="aw-actions">
-            <button type="button" id="useMyLocation" class="tiny">
+            <button type="button" id="useMyLocation" class="btn btn-sm">
               Use my location
             </button>
             <input
@@ -324,29 +277,30 @@
               type="text"
               placeholder="City or ZIP"
               aria-label="City or ZIP"
+              class="input input-bordered input-sm w-40"
             >
-            <button type="button" id="setPlace" class="tiny">Set</button>
+            <button type="button" id="setPlace" class="btn btn-sm btn-primary">Set</button>
           </div>
         </div>
 
-        <div class="aw-grid">
-          <div class="aw-item">
+        <div class="aw-grid grid grid-cols-5 gap-2">
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Dawn</div>
             <time class="value" id="awDawn" datetime="">—</time>
           </div>
-          <div class="aw-item">
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Wind chill</div>
             <div class="value" id="awWindChill">—</div>
           </div>
-          <div class="aw-item">
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Precip %</div>
             <div class="value" id="awPoP">—</div>
           </div>
-          <div class="aw-item">
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Wet bulb</div>
             <div class="value" id="awWetBulb">—</div>
           </div>
-          <div class="aw-item">
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Trail Wetness</div>
             <div class="value" id="awWetness">—</div>
           </div>
@@ -366,15 +320,16 @@
           >
         </p>
       </section>
-      <h1>
-        Wake time<br>
-        <span style="font-size: 0.7em; font-weight: 500; color: #52606d;">
-          Latest wake: <span id="latestWake">--:--</span> •
-          Chosen wake: <span id="chosenWake">--:--</span>
-        </span>
-        <br>
-        <span class="inline-subtle">Clothes at dawn: <span id="clothesInline">—</span></span>
+      <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-base-content">
+        Wake time
       </h1>
+      <div class="mt-1 text-sm md:text-base text-base-content/70 font-medium">
+        Latest wake: <span id="latestWake">--:--</span> •
+        Chosen wake: <span id="chosenWake">--:--</span>
+      </div>
+      <div class="mt-1 text-base md:text-lg text-base-content/80 font-semibold">
+        Clothes at dawn: <span id="clothesInline">—</span>
+      </div>
       <form id="wakeForm" aria-describedby="status">
         <div class="form-row">
           <div class="field-group">
@@ -384,6 +339,7 @@
               name="firstMeeting"
               required
               aria-required="true"
+              class="select select-bordered w-full"
             >
               <option value="06:00">6:00 AM</option>
               <option value="06:15">6:15 AM</option>
@@ -413,6 +369,7 @@
               inputmode="numeric"
               min="0"
               placeholder="0"
+              class="input input-bordered w-full"
             >
           </div>
         </div>
@@ -420,7 +377,7 @@
         <div class="form-row">
           <div class="field-group">
             <label for="breakfastMinutes">Breakfast</label>
-            <select id="breakfastMinutes" name="breakfastMinutes">
+            <select id="breakfastMinutes" name="breakfastMinutes" class="select select-bordered w-full">
               <option value="0" selected>None (0 min)</option>
               <option value="10">Quick (10 min)</option>
               <option value="20">Standard (20 min)</option>
@@ -429,7 +386,7 @@
           </div>
           <div class="field-group">
             <label for="runLocation">Run location</label>
-            <select id="runLocation" name="runLocation">
+            <select id="runLocation" name="runLocation" class="select select-bordered w-full">
               <optgroup label="Dirt by distance">
                 <option value="figure8" data-travel="14">Figure 8</option>
                 <option value="huber" data-travel="20">Huber</option>
@@ -463,7 +420,7 @@
         <div class="field-group" id="travelGroup" style="display: none;">
           <label for="travelMinutes">
             Travel override (minutes)
-            <button type="button" id="clearTravel" class="tiny" style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; font-size: 0.75rem;">Clear</button>
+            <button type="button" id="clearTravel" class="btn btn-xs btn-ghost" style="margin-left: 0.5rem;">Clear</button>
           </label>
           <input
             id="travelMinutes"
@@ -472,14 +429,15 @@
             inputmode="numeric"
             min="0"
             value="0"
+            class="input input-bordered w-full"
           >
         </div>
         <div style="margin-top: -0.5rem;">
-          <button type="button" id="showTravel" class="ghost" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">Override travel time</button>
+          <button type="button" id="showTravel" class="btn btn-sm btn-ghost">Override travel time</button>
         </div>
       </form>
       <div class="status" id="status" role="status" aria-live="polite"></div>
-      <section class="output" aria-live="polite">
+      <section class="output bg-base-200 rounded-2xl" aria-live="polite">
         <div class="breakdown" id="breakdown">
           0 (run) + 45 (prep) + 0 (travel) + 0 (breakfast)
         </div>
@@ -1021,7 +979,7 @@
           isSnow,
         }) => {
           if (!wels.awCity) return;
-          wels.awCity.textContent = city || "Loading location...";
+          wels.awCity.textContent = city || "Verify location";
           wels.awCity.title = city || ""; // Add tooltip for full name
           if (dawn) {
             wels.awDawn.textContent = fmtTime12InZone(dawn, tz || defaultTz);
