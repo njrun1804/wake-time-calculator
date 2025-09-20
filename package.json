@@ -12,9 +12,12 @@
     "format": "npx prettier --write wake.html",
     "validate": "npx html-validate wake.html",
     "minify": "npx html-minifier-terser wake.html -o wake.min.html --collapse-whitespace --remove-comments --minify-css --minify-js",
-    "smoke": "(python3 -m http.server 8001 & PID=$!; success=0; for attempt in $(seq 1 10); do if curl -sS -I http://localhost:8001/wake.html; then success=1; break; fi; sleep 0.5; done; kill $PID; test $success -eq 1)"
+    "smoke": "(python3 -m http.server 8001 & PID=$!; success=0; for attempt in $(seq 1 10); do if curl -sS -I http://localhost:8001/wake.html; then success=1; break; fi; sleep 0.5; done; kill $PID; test $success -eq 1)",
+    "test:visual": "node test-visual.js"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "playwright": "^1.41.0"
+  },
   "keywords": ["wake-time", "calculator", "weather", "running"],
   "author": "",
   "license": "MIT"

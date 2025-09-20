@@ -538,7 +538,7 @@
             </select>
           </div>
         </div>
-        <!-- Travel time auto-synced with location -->
+        <!-- Travel time auto-synced with location (hidden, derived from data-travel attribute) -->
         <input
           id="travelMinutes"
           name="travelMinutes"
@@ -712,7 +712,7 @@
     <script>
       (() => {
         // Constants
-        const PREP_MINUTES = 45;
+        const PREP_MINUTES = 45; // Fixed prep time - not user-configurable by design
         const MINUTES_PER_DAY = 1440;
         const MINUTES_PER_HOUR = 60;
         const MM_TO_INCHES = 25.4;
