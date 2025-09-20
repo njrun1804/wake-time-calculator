@@ -1,7 +1,7 @@
 # Wake Time Calculator - Agent Documentation
 
 ## Overview
-Single-file HTML app that calculates optimal wake time based on meeting schedule, run duration, and location-aware weather conditions.
+Single-file HTML app that calculates optimal wake time based on meeting schedule, run duration, and location-aware weather conditions. UI styling uses Tailwind + DaisyUI via CDN; there is no build step.
 
 ## Key Features
 
@@ -31,12 +31,13 @@ Single-file HTML app that calculates optimal wake time based on meeting schedule
   - `wake:lat`, `wake:lon`, `wake:city` - Location coordinates
 - **Caching**: 15-minute cache for API responses (localStorage + in-memory)
 - **Request deduplication**: Uses request ID counter to prevent stale updates
+ - **Timezone**: Forecast requests use `timezone=auto`; dawn label formats in the location’s tz
 
 ## Technical Details
 
 ### API Endpoints
 - **Dawn**: `https://api.sunrisesunset.io/json?lat={lat}&lng={lon}&date=tomorrow`
-- **Weather**: `https://api.open-meteo.com/v1/forecast` (hourly + daily data)
+- **Weather**: `https://api.open-meteo.com/v1/forecast` (hourly + daily data, `timeformat=unixtime`, `timezone=auto`)
 - **Geocoding**: `https://geocoding-api.open-meteo.com/v1/search` (forward)
 - **Reverse geocoding**: `https://geocoding-api.open-meteo.com/v1/reverse`
 
@@ -66,6 +67,9 @@ if (tempF <= 50 && windMph >= 3):
 - **Location auto-sync**: Travel time updates when location changes (if not manually set)
 - **Ellipsis truncation**: Long location names truncate with tooltip
 - **ARIA labels**: Screen reader support on key elements
+- **Headlamp badge**: Simple red badge next to “Run location” when a dirt route is selected (no date/time logic)
+- **Clothes at dawn**: Suggestion based on wind chill with optional “+ rain jacket” if PoP ≥ 60% and not snow
+- **Visuals**: Boston‑flavored hero gradient (optional image via CSS var), glass card, Tailwind/DaisyUI components
 
 ## Common Tasks
 
@@ -82,12 +86,13 @@ Modify the `categorizeWetness` function breakpoints (currently 0.05, 0.20, 0.40,
 Update `CACHE_DURATION` constant (currently 15 minutes = 900000ms)
 
 ## Recent Improvements
-- Fixed date label to use dawn's actual date (not "now + 24h")
-- Added request ID tracking to prevent stale responses
-- Implemented full localStorage caching alongside in-memory cache
-- Display numeric wetness value alongside category
-- Reverse geocoding for "Use my location" to show city name
-- Streamlined UI: removed date display, updated header format, removed footer
+- Tailwind + DaisyUI integration; glassy cards and compact controls
+- Boston‑style hero background with CSS variable opt‑in image
+- Reverse geocoding fallback (Nominatim) for better city labels
+- Request ID tracking and persistent 15‑minute cache across API calls
+- Numeric wetness surfaced with category; corrected tz formatting
+- Headlamp UX simplified to a dirt‑route badge by Run location
+- “Clothes at dawn” inline, with jacket hint when rainy (not snow)
 
 ## Testing Checklist
 - [ ] Calculator works across midnight boundary
@@ -97,3 +102,4 @@ Update `CACHE_DURATION` constant (currently 15 minutes = 900000ms)
 - [ ] Mobile layout remains functional
 - [ ] Settings persist after reload
 - [ ] Travel time syncs with location selection
+- [ ] Headlamp badge only shows for dirt routes (not “No dirt”)

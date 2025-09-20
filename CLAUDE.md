@@ -1,24 +1,27 @@
 # Claude Code Instructions
 
 ## Project Context
-This is a single-file wake time calculator app with weather awareness. The entire app is contained in `/Users/mikeedwards/dev-play/wake.html`.
+This is a single-file wake time calculator app with weather awareness. The app entry is `wake.html` at the repository root.
 
 ## Development Guidelines
 
 ### Code Style
-- **NO COMMENTS** unless explicitly requested
-- Maintain existing code patterns and conventions
-- Use existing utilities/libraries (don't add new dependencies)
-- Preserve exact indentation when editing
+- Keep edits concise and focused; avoid unrelated refactors
+- Maintain existing patterns and conventions
+- Prefer no inline comments unless clarifying tradeoffs
+- Preserve indentation and formatting
+- Allowed: Tailwind + DaisyUI via CDN (already used); avoid adding build steps
 
 ### Testing Commands
 None currently configured - app runs directly in browser.
 
 ### File Structure
 ```
-/Users/mikeedwards/dev-play/
+repo/
 ├── wake.html      # Main application (HTML + inline CSS/JS)
-├── agent.md       # Technical documentation
+├── index.html     # Redirect to wake.html (for GitHub Pages)
+├── README.md      # Project overview and usage
+├── agent.md       # Technical documentation for agents
 └── CLAUDE.md      # This file
 ```
 
@@ -26,12 +29,12 @@ None currently configured - app runs directly in browser.
 
 ### Open in browser
 ```bash
-open /Users/mikeedwards/dev-play/wake.html
+open wake.html
 ```
 
 ### View full source
 ```bash
-cat wake.html
+sed -n '1,200p' wake.html
 ```
 
 ## Common Edits
@@ -45,14 +48,13 @@ Search for `categorizeWetness` function
 ### Modify cache duration
 Search for `CACHE_DURATION` constant
 
-## API Keys
-No API keys required - all services used are free/public:
-- SunriseSunset.io
-- Open-Meteo
-- Open-Meteo Geocoding
+## APIs
+No API keys required — public services:
+- SunriseSunset.io (dawn)
+- Open‑Meteo (hourly + daily weather, geocoding, WMO weathercode)
 
 ## Notes
 - App uses localStorage for persistence
-- 15-minute cache for API responses
+- 15-minute cache for API responses (localStorage + in‑memory)
 - Responsive design with mobile breakpoints
-- No build process - edit and refresh
+- Tailwind + DaisyUI via CDN (no build process) — edit and refresh
