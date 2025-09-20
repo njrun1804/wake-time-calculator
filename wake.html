@@ -435,7 +435,7 @@
         </div>
 
         <div class="aw-note" id="awMsg">
-          Give location to load tomorrow’s dawn &amp; conditions.
+          Give location to load tomorrow's daylight &amp; conditions.
         </div>
         <p class="aw-credits">
           Powered by
@@ -510,7 +510,7 @@
               <span
                 id="locHeadlamp"
                 class="hidden ml-2 badge badge-error badge-outline text-[0.6rem] align-middle"
-                >Headlamp</span
+                >Check daylight</span
               ></label
             >
             <select id="runLocation" name="runLocation" class="select select-bordered w-full">
@@ -534,31 +534,13 @@
             </select>
           </div>
         </div>
-        <div class="field-group hidden" id="travelGroup">
-          <label for="travelMinutes"> Travel override (minutes) </label>
-          <button
-            type="button"
-            id="clearTravel"
-            class="btn btn-xs btn-ghost ml-2"
-            aria-label="Clear travel override"
-          >
-            Clear
-          </button>
-          <input
-            id="travelMinutes"
-            name="travelMinutes"
-            type="number"
-            inputmode="numeric"
-            min="0"
-            value="0"
-            class="input input-bordered w-full"
-          />
-        </div>
-        <div class="mt-neg-half">
-          <button type="button" id="showTravel" class="btn btn-sm btn-ghost">
-            Override travel time
-          </button>
-        </div>
+        <!-- Travel time auto-synced with location -->
+        <input
+          id="travelMinutes"
+          name="travelMinutes"
+          type="hidden"
+          value="0"
+        />
         <!-- Hidden submit button for HTML validation -->
         <button type="submit" class="hidden" tabindex="-1">Submit</button>
       </form>
@@ -587,7 +569,7 @@
             <h1 class="text-xl md:text-2xl font-bold text-white">Wake Time</h1>
           </div>
           <div class="wake-time-display">
-            <div class="text-5xl md:text-6xl font-black text-white mb-2" id="chosenWake">--:--</div>
+            <div class="text-3xl md:text-4xl font-black text-white mb-2" id="chosenWake">--:--</div>
             <span id="prevDayBadge" class="badge badge-warning badge-sm align-middle hidden mb-2"
               >Previous day</span
             >
@@ -792,9 +774,6 @@
           chosenWake: document.getElementById('chosenWake'),
           runStart: document.getElementById('runStart'),
           status: document.getElementById('status'),
-          travelGroup: document.getElementById('travelGroup'),
-          showTravel: document.getElementById('showTravel'),
-          clearTravel: document.getElementById('clearTravel'),
         };
 
         const toMinutes = (time) => {
@@ -849,15 +828,8 @@
           // prep fixed at PREP_MINUTES
           elements.breakfast.value = stored.breakfast ?? defaults.breakfast;
 
-          // Show travel override if user had custom value
-          if (stored.travel && stored.travel !== '0') {
-            elements.travel.value = stored.travel;
-            elements.travelGroup.classList.remove('hidden');
-            elements.showTravel.classList.add('hidden');
-          } else {
-            // If the user did not set a custom travel override, keep auto-sync
-            syncTravelWithLocation();
-          }
+          // Always sync travel with location
+          syncTravelWithLocation();
         };
 
         const saveValues = () => {
@@ -932,14 +904,53 @@
           'rez',
           'battlefield',
         ]);
-        const locationNeedsHeadlamp = () => DIRT_LOCATIONS.has(elements.location.value);
+        // Store dawn date globally for daylight check
+        let currentDawnDate = null;
 
-        // Simple run-location headlamp badge (dirt only)
+        // Check if we need daylight warning based on run start time vs dawn
         const updateLocationHeadlamp = () => {
           const badge = document.getElementById('locHeadlamp');
           if (!badge) return;
-          if (locationNeedsHeadlamp()) badge.classList.remove('hidden');
-          else badge.classList.add('hidden');
+
+          if (!currentDawnDate) {
+            badge.classList.add('hidden');
+            return;
+          }
+
+          // Calculate run start time
+          const firstValue = elements.first.value || defaults.firstMeeting;
+          const firstMinutes = toMinutes(firstValue);
+          if (firstMinutes === null) {
+            badge.classList.add('hidden');
+            return;
+          }
+
+          const run = sanitizeMinutes(elements.run.value, 0);
+          const travel = sanitizeMinutes(elements.travel.value, 0);
+          const breakfast = sanitizeMinutes(elements.breakfast.value, 0);
+
+          const total = run + PREP_MINUTES + travel + breakfast;
+          let wake = firstMinutes - total;
+          if (wake < 0) wake += MINUTES_PER_DAY;
+
+          const runStartMinutes = wake + PREP_MINUTES + travel;
+
+          // Get dawn time in minutes
+          const dawnHours = currentDawnDate.getHours();
+          const dawnMinutes = currentDawnDate.getMinutes();
+          const dawnTotalMinutes = dawnHours * 60 + dawnMinutes;
+
+          // Calculate difference (no buffer)
+          const minutesBeforeDawn = dawnTotalMinutes - (runStartMinutes % MINUTES_PER_DAY);
+
+          if (minutesBeforeDawn > 0) {
+            // Running before dawn
+            badge.classList.remove('hidden');
+            badge.textContent = `Check daylight (${minutesBeforeDawn} min before dawn)`;
+          } else {
+            // Running after dawn
+            badge.classList.add('hidden');
+          }
         };
 
         const fmtTime12InZone = (date, tz) =>
@@ -1427,7 +1438,8 @@
             wels.awWetness.classList.add('bad');
           }
 
-          // Update location headlamp badge (dirt routes)
+          // Store dawn for daylight check
+          currentDawnDate = dawn;
           updateLocationHeadlamp();
         };
 
@@ -1711,21 +1723,6 @@
           });
           elements.location.addEventListener('change', () => {
             // Always sync travel with location changes
-            syncTravelWithLocation();
-            recalculate();
-            saveValues();
-            updateLocationHeadlamp();
-          });
-
-          elements.showTravel?.addEventListener('click', () => {
-            elements.travelGroup.classList.remove('hidden');
-            elements.showTravel.classList.add('hidden');
-            elements.travel.focus();
-          });
-
-          elements.clearTravel?.addEventListener('click', () => {
-            elements.travelGroup.classList.add('hidden');
-            elements.showTravel.classList.remove('hidden');
             syncTravelWithLocation();
             recalculate();
             saveValues();
