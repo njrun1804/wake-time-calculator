@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wake Time Calculator</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f6f8;
+        color: #1f2933;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+      }
+      main {
+        width: min(100%, 720px);
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+        padding: clamp(1.25rem, 1.5vw + 0.75rem, 2rem);
+        display: grid;
+        gap: 1.25rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.5rem, 2vw + 0.75rem, 1.9rem);
+        text-align: center;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      form {
+        display: grid;
+        gap: 1rem;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+      @media (max-width: 520px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .field-group {
+        display: grid;
+        gap: 0.35rem;
+      }
+      label {
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      input[type="time"],
+      input[type="number"],
+      select {
+        width: 100%;
+        font: inherit;
+        padding: 0.5rem 0.65rem;
+        border: 1px solid #d2d8e1;
+        border-radius: 8px;
+        background: #fdfdff;
+        font-size: 0.95rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        padding: 0.55rem 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease;
+        font-size: 0.9rem;
+      }
+      button.primary {
+        background: #2563eb;
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+      }
+      button.secondary {
+        background: #e5edff;
+        color: #1f3b82;
+      }
+      button.ghost {
+        background: #eef1f6;
+        color: #1f2933;
+      }
+      button:focus-visible {
+        outline: 3px solid rgba(37, 99, 235, 0.5);
+        outline-offset: 2px;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+      }
+      .status {
+        min-height: 1.25rem;
+        font-size: 0.95rem;
+        color: #2563eb;
+        font-weight: 600;
+      }
+      .output {
+        border-radius: 12px;
+        background: linear-gradient(145deg, #f8fbff, #eef2f8);
+        padding: 0.75rem 1rem;
+        margin-top: -0.5rem;
+      }
+      .wake-display {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .primary-time {
+        font-size: clamp(2.2rem, 3vw + 0.75rem, 2.8rem);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+      }
+      .badge {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #1f3b82;
+        background: #dbe4ff;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+      }
+      .secondary-time {
+        font-size: 1rem;
+        color: #52606d;
+        font-weight: 600;
+      }
+      .totals,
+      .breakdown {
+        color: #61748f;
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+      .note {
+        margin: 0.35rem 0 0;
+        font-size: 0.85rem;
+        color: #7d8ca2;
+      }
+      /* Awareness bar */
+      .awareness {
+        border-radius: 12px;
+        background: linear-gradient(145deg, #f8fbff, #eef2f8);
+        padding: 0.85rem 1rem;
+        display: grid;
+        gap: 0.6rem;
+        margin-bottom: 0;
+      }
+      .aw-top {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .aw-where {
+        font-size: 0.9rem;
+        color: #1f3158;
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 300px;
+      }
+      .aw-actions {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+      }
+      .aw-actions input {
+        width: 10rem;
+        font: inherit;
+        padding: 0.4rem 0.55rem;
+        border: 1px solid #d2d8e1;
+        border-radius: 8px;
+        background: #fdfdff;
+        font-size: 0.85rem;
+      }
+      button.tiny {
+        font: inherit;
+        font-weight: 600;
+        padding: 0.4rem 0.7rem;
+        border: none;
+        border-radius: 8px;
+        background: #eef1f6;
+        color: #1f2933;
+        cursor: pointer;
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease;
+        font-size: 0.85rem;
+      }
+      button.tiny:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1);
+      }
+      .aw-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+      .aw-item {
+        background: #ffffff;
+        border: 1px solid #e5e9f2;
+        border-radius: 10px;
+        padding: 0.5rem 0.35rem;
+        text-align: center;
+      }
+      .aw-item .label {
+        font-size: 0.65rem;
+        color: #61748f;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        line-height: 1.1;
+      }
+      .aw-item .value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-top: 0.15rem;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+      .aw-note {
+        font-size: 0.85rem;
+        color: #7d8ca2;
+        margin: 0;
+      }
+      .aw-credits {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #7d8ca2;
+      }
+      .aw-credits a {
+        color: #1f3b82;
+        text-decoration: underline;
+      }
+      @media (max-width: 640px) {
+        .aw-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0.4rem;
+        }
+        .aw-item {
+          padding: 0.45rem 0.25rem;
+        }
+        .aw-item .label {
+          font-size: 0.6rem;
+        }
+        .aw-item .value {
+          font-size: 0.95rem;
+        }
+        .aw-actions {
+          width: 100%;
+        }
+        .aw-actions input {
+          flex: 1 1 auto;
+          width: auto;
+        }
+        body {
+          padding: 1rem;
+        }
+        main {
+          padding: 1rem;
+          gap: 1rem;
+        }
+        h1 {
+          font-size: 1.4rem;
+        }
+        .actions {
+          flex-direction: column;
+        }
+        button {
+          width: 100%;
+        }
+      }
+      @media (max-width: 480px) {
+        .aw-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="awareness" id="awareness" aria-live="polite">
+        <div class="aw-top">
+          <div class="aw-where">
+            <span id="awCity">your location</span>
+          </div>
+            <div class="aw-actions">
+            <button type="button" id="useMyLocation" class="tiny">
+              Use my location
+            </button>
+            <input
+              id="placeQuery"
+              type="text"
+              placeholder="City or ZIP"
+              aria-label="City or ZIP"
+            >
+            <button type="button" id="setPlace" class="tiny">Set</button>
+          </div>
+        </div>
+
+        <div class="aw-grid">
+          <div class="aw-item">
+            <div class="label">Dawn</div>
+            <time class="value" id="awDawn" datetime="">—</time>
+          </div>
+          <div class="aw-item">
+            <div class="label">Wind chill</div>
+            <div class="value" id="awWindChill">—</div>
+          </div>
+          <div class="aw-item">
+            <div class="label">Precip %</div>
+            <div class="value" id="awPoP">—</div>
+          </div>
+          <div class="aw-item">
+            <div class="label">Wet bulb</div>
+            <div class="value" id="awWetBulb">—</div>
+          </div>
+          <div class="aw-item">
+            <div class="label">Trail Wetness</div>
+            <div class="value" id="awWetness">—</div>
+          </div>
+        </div>
+
+          <div class="aw-note" id="awMsg">
+            Give location to load tomorrow’s dawn &amp; conditions.
+          </div>
+        <p class="aw-credits">
+          Powered by
+          <a href="https://sunrisesunset.io" target="_blank" rel="noopener"
+            >SunriseSunset.io</a
+          >
+          &amp;
+          <a href="https://open-meteo.com" target="_blank" rel="noopener"
+            >Open‑Meteo</a
+          >
+        </p>
+      </section>
+      <h1>
+        Wake time<br>
+        <span style="font-size: 0.7em; font-weight: 500; color: #52606d;">
+          Latest wake: <span id="latestWake">--:--</span> •
+          Chosen wake: <span id="chosenWake">--:--</span>
+        </span>
+      </h1>
+      <form id="wakeForm" aria-describedby="status">
+        <div class="form-row">
+          <div class="field-group">
+            <label for="firstMeeting">First meeting</label>
+            <select
+              id="firstMeeting"
+              name="firstMeeting"
+              required
+              aria-required="true"
+            >
+              <option value="06:00">6:00 AM</option>
+              <option value="06:15">6:15 AM</option>
+              <option value="06:30">6:30 AM</option>
+              <option value="06:45">6:45 AM</option>
+              <option value="07:00">7:00 AM</option>
+              <option value="07:15">7:15 AM</option>
+              <option value="07:30">7:30 AM</option>
+              <option value="07:45">7:45 AM</option>
+              <option value="08:00">8:00 AM</option>
+              <option value="08:15">8:15 AM</option>
+              <option value="08:30" selected>8:30 AM</option>
+              <option value="08:45">8:45 AM</option>
+              <option value="09:00">9:00 AM</option>
+              <option value="09:15">9:15 AM</option>
+              <option value="09:30">9:30 AM</option>
+              <option value="09:45">9:45 AM</option>
+              <option value="10:00">10:00 AM</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="runMinutes">Run (minutes)</label>
+            <input
+              id="runMinutes"
+              name="runMinutes"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              placeholder="0"
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label for="breakfastMinutes">Breakfast</label>
+            <select id="breakfastMinutes" name="breakfastMinutes">
+              <option value="0" selected>None (0 min)</option>
+              <option value="10">Quick (10 min)</option>
+              <option value="20">Standard (20 min)</option>
+              <option value="45">Leisure w/ coffee (45 min)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="runLocation">Run location</label>
+            <select id="runLocation" name="runLocation">
+              <optgroup label="Dirt by distance">
+                <option value="figure8" data-travel="14">Figure 8</option>
+                <option value="huber" data-travel="20">Huber</option>
+                <option value="tatum" data-travel="36">Tatum</option>
+                <option value="holmdel" data-travel="50">Holmdel</option>
+                <option value="shark-river" data-travel="52">
+                  Shark river
+                </option>
+                <option value="allaire" data-travel="64">Allaire</option>
+                <option value="rez" data-travel="70">Rez</option>
+                <option value="battlefield" data-travel="60">
+                  Battlefield
+                </option>
+              </optgroup>
+              <optgroup label="No dirt">
+                <option value="round-town" data-travel="0">Round town</option>
+                <option value="sandy-hook" data-travel="32">Sandy hook</option>
+                <option value="henry-hudson" data-travel="32">
+                  Henry Hudson
+                </option>
+                <option value="lb-boardwalk" data-travel="38">
+                  LB Boardwalk
+                </option>
+                <option value="asbury-boardwalk" data-travel="50">
+                  Asbury boardwalk
+                </option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <div class="field-group" id="travelGroup" style="display: none;">
+          <label for="travelMinutes">
+            Travel override (minutes)
+            <button type="button" id="clearTravel" class="tiny" style="margin-left: 0.5rem; padding: 0.2rem 0.5rem; font-size: 0.75rem;">Clear</button>
+          </label>
+          <input
+            id="travelMinutes"
+            name="travelMinutes"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            value="0"
+          >
+        </div>
+        <div style="margin-top: -0.5rem;">
+          <button type="button" id="showTravel" class="ghost" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">Override travel time</button>
+        </div>
+      </form>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <section class="output" aria-live="polite">
+        <div class="breakdown" id="breakdown">
+          0 (run) + 45 (prep) + 0 (travel) + 0 (breakfast)
+        </div>
+      </section>
+    </main>
+    <script>
+      (() => {
+        // Constants
+        const PREP_MINUTES = 45;
+        const MINUTES_PER_DAY = 1440;
+        const MINUTES_PER_HOUR = 60;
+        const MM_TO_INCHES = 25.4;
+
+        const defaults = {
+          firstMeeting: "08:30",
+          run: "",
+          prep: String(PREP_MINUTES),
+          travel: "0",
+          breakfast: "0",
+          location: "round-town",
+        };
+
+        const storageKeys = {
+          firstMeeting: "wake:first",
+          run: "wake:run",
+          travel: "wake:travel",
+          breakfast: "wake:breakfast",
+          location: "wake:location",
+        };
+
+        const elements = {
+          form: document.getElementById("wakeForm"),
+          first: document.getElementById("firstMeeting"),
+          run: document.getElementById("runMinutes"),
+          travel: document.getElementById("travelMinutes"),
+          breakfast: document.getElementById("breakfastMinutes"),
+          location: document.getElementById("runLocation"),
+          latestWake: document.getElementById("latestWake"),
+          chosenWake: document.getElementById("chosenWake"),
+          breakdown: document.getElementById("breakdown"),
+          status: document.getElementById("status"),
+          travelGroup: document.getElementById("travelGroup"),
+          showTravel: document.getElementById("showTravel"),
+          clearTravel: document.getElementById("clearTravel"),
+        };
+
+        const toMinutes = (time) => {
+          if (typeof time !== "string" || !time.includes(":")) return null;
+          const [h, m] = time.split(":").map(Number);
+          if (Number.isNaN(h) || Number.isNaN(m)) return null;
+          return h * MINUTES_PER_HOUR + m;
+        };
+
+        const fromMinutes = (total) => {
+          const minutes =
+            ((total % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+          const h = Math.floor(minutes / MINUTES_PER_HOUR);
+          const m = minutes % MINUTES_PER_HOUR;
+          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        };
+
+        const format12 = (time24) => {
+          const [h, m] = time24.split(":").map(Number);
+          const period = h >= 12 ? "PM" : "AM";
+          const hour = h % 12 === 0 ? 12 : h % 12;
+          return `${hour}:${String(m).padStart(2, "0")} ${period}`;
+        };
+
+        const sanitizeMinutes = (value, fallback) => {
+          if (value === "" || value === null || value === undefined)
+            return fallback;
+          const number = Number.parseInt(value, 10);
+          return Number.isNaN(number) ? fallback : Math.max(0, number);
+        };
+
+        // (removed unused helpers minutesLabel, setStatus)
+
+        const setFirstMeeting = (value) => {
+          const option = elements.first.querySelector(
+            `option[value="${value}"]`,
+          );
+          elements.first.value = option ? value : defaults.firstMeeting;
+        };
+
+        const loadValues = () => {
+          const stored = Object.fromEntries(
+            Object.entries(storageKeys).map(([key, storageKey]) => {
+              try {
+                return [key, localStorage.getItem(storageKey)];
+              } catch (error) {
+                return [key, null];
+              }
+            }),
+          );
+
+          setFirstMeeting(stored.firstMeeting ?? defaults.firstMeeting);
+          setRunLocation(stored.location ?? defaults.location);
+          elements.run.value = stored.run ?? defaults.run;
+          // prep fixed at PREP_MINUTES
+          elements.breakfast.value = stored.breakfast ?? defaults.breakfast;
+
+          // Show travel override if user had custom value
+          if (stored.travel && stored.travel !== "0") {
+            elements.travel.value = stored.travel;
+            elements.travelGroup.style.display = "block";
+            elements.showTravel.style.display = "none";
+          } else {
+            syncTravelWithLocation();
+          }
+        };
+
+        const saveValues = () => {
+          try {
+            localStorage.setItem(
+              storageKeys.firstMeeting,
+              elements.first.value || defaults.firstMeeting,
+            );
+            localStorage.setItem(storageKeys.run, elements.run.value);
+            localStorage.setItem(
+              storageKeys.travel,
+              elements.travel.value || defaults.travel,
+            );
+            localStorage.setItem(
+              storageKeys.breakfast,
+              elements.breakfast.value || defaults.breakfast,
+            );
+            localStorage.setItem(
+              storageKeys.location,
+              elements.location.value || defaults.location,
+            );
+          } catch (error) {
+            console.error("Local storage unavailable", error);
+          }
+        };
+
+
+        const setRunLocation = (value) => {
+          const option = elements.location.querySelector(
+            `option[value="${value}"]`,
+          );
+          elements.location.value = option ? value : defaults.location;
+        };
+
+        const syncTravelWithLocation = () => {
+          const option =
+            elements.location.options[elements.location.selectedIndex];
+          const auto = option ? Number(option.dataset.travel) : NaN;
+          if (Number.isFinite(auto)) {
+            elements.travel.value = String(auto);
+          }
+        };
+
+        const weatherStorage = {
+          lat: "wake:lat",
+          lon: "wake:lon",
+          city: "wake:city",
+          tz: "wake:tz",
+        };
+
+        // Simple cache (15 min)
+        const CACHE_DURATION = 15 * 60 * 1000;
+        const weatherCache = {};
+
+        const wels = {
+          awCity: document.getElementById("awCity"),
+          awDawn: document.getElementById("awDawn"),
+          awWindChill: document.getElementById("awWindChill"),
+          awPoP: document.getElementById("awPoP"),
+          awWetBulb: document.getElementById("awWetBulb"),
+          awWetness: document.getElementById("awWetness"),
+          awMsg: document.getElementById("awMsg"),
+          useLoc: document.getElementById("useMyLocation"),
+          placeInput: document.getElementById("placeQuery"),
+          setPlace: document.getElementById("setPlace"),
+        };
+
+        const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        const fmtTime12InZone = (date, tz) =>
+          new Intl.DateTimeFormat(undefined, {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: tz,
+          }).format(date);
+
+        const fmtYMDInZone = (date, tz) =>
+          new Intl.DateTimeFormat("en-CA", {
+            timeZone: tz,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(date);
+
+        const fToC = (f) => ((f - 32) * 5) / 9;
+        const cToF = (c) => (c * 9) / 5 + 32;
+
+        const stullWetBulbC = (tempC, rh) => {
+          const sqrt = Math.sqrt(rh + 8.313659);
+          const term1 = Math.atan(0.151977 * sqrt);
+          const term2 = Math.atan(tempC + rh);
+          const term3 = Math.atan(rh - 1.676331);
+          const term4 =
+            0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh);
+          return tempC * term1 + term2 - term3 + term4 - 4.686035;
+        };
+
+        const windChillF = (tempF, windMph) => {
+          if (tempF <= 50 && windMph >= 3) {
+            const v16 = Math.pow(windMph, 0.16);
+            return 35.74 + 0.6215 * tempF - 35.75 * v16 + 0.4275 * tempF * v16;
+          }
+          return null;
+        };
+
+        // Trail Wetness Score (decayed rain minus ET0)
+        const wetnessConfig = {
+          decay: 0.85, // per day
+          dryFactor: 0.6, // portion of ET0 (inches) to subtract per day
+          lookbackDays: 7,
+        };
+
+        // Fetch daily rain & ET0 for recent days; use inches and local timezone
+        const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
+          const key = `wetness_${lat}_${lon}_${dawnLocalDate.toISOString().split("T")[0]}`;
+          return fetchWithCache(key, async () => {
+            const params = new URLSearchParams({
+              latitude: lat,
+              longitude: lon,
+              daily: ["precipitation_sum", "et0_fao_evapotranspiration"].join(
+                ",",
+              ),
+              precipitation_unit: "inch",
+              timezone: tz || 'auto',
+              past_days: String(Math.max(7, wetnessConfig.lookbackDays + 1)),
+            });
+            const url = `https://api.open-meteo.com/v1/forecast?${params}`;
+            const r = await fetch(url);
+            if (!r.ok) throw new Error("wetness daily fetch failed");
+            const j = await r.json();
+
+            // Keep only days strictly BEFORE the dawn day (we're judging surface state going into dawn)
+            const dawnYMD = fmtYMDInZone(dawnLocalDate, tz || defaultTz);
+            const times = j.daily?.time || [];
+            const P = j.daily?.precipitation_sum || [];
+            const ET0mm = j.daily?.et0_fao_evapotranspiration || [];
+            const ET0in = ET0mm.map((v) =>
+              typeof v === "number" ? v / MM_TO_INCHES : null,
+            );
+
+            const rows = [];
+            for (let i = 0; i < times.length; i++) {
+              const dayStr = times[i]; // YYYY-MM-DD in requested tz
+              if (typeof dayStr === "string" && dayStr < dawnYMD) {
+                rows.push({ date: dayStr, rainIn: P[i] ?? 0, et0In: ET0in[i] ?? 0 });
+              }
+            }
+            return rows.slice(-wetnessConfig.lookbackDays); // last N days up to yesterday
+          });
+        };
+
+        const computeWetness = (rows) => {
+          // rows ordered oldest..newest -> reverse for i=0=most recent (yesterday)
+          const r = [...rows].reverse();
+          let wetness = 0;
+          for (let i = 0; i < r.length; i++) {
+            const day = r[i];
+            const eff = Math.max(
+              0,
+              (day.rainIn || 0) - wetnessConfig.dryFactor * (day.et0In || 0),
+            );
+            wetness += eff * Math.pow(wetnessConfig.decay, i);
+          }
+          return Math.max(0, wetness);
+        };
+
+        const categorizeWetness = (wetnessIn) => {
+          if (wetnessIn < 0.05) return { label: "Dry", idx: 0 };
+          if (wetnessIn < 0.2) return { label: "Moist", idx: 1 };
+          if (wetnessIn < 0.4) return { label: "Slick", idx: 2 };
+          if (wetnessIn < 0.8) return { label: "Muddy", idx: 3 };
+          return { label: "Soaked", idx: 4 };
+        };
+
+        const nearestIndex = (times, target) => {
+          const targetMs = target.getTime();
+          let best = 0;
+          let bestDiff = Infinity;
+          for (let i = 0; i < times.length; i += 1) {
+            const t = times[i];
+            const timeMs =
+              typeof t === "number" ? t * 1000 : new Date(t).getTime();
+            const diff = Math.abs(timeMs - targetMs);
+            if (diff < bestDiff) {
+              best = i;
+              bestDiff = diff;
+            }
+          }
+          return best;
+        };
+
+        // Utilities for place labels
+        const US_STATE_ABBR = {
+          Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
+          Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
+          Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
+          Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
+          Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
+          Montana: "MT", Nebraska: "NE", Nevada: "NV", New Hampshire: "NH", New Jersey: "NJ",
+          New Mexico: "NM", New York: "NY", North Carolina: "NC", North Dakota: "ND", Ohio: "OH",
+          Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", Rhode Island: "RI", South Carolina: "SC",
+          South Dakota: "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
+          Virginia: "VA", Washington: "WA", West Virginia: "WV", Wisconsin: "WI", Wyoming: "WY",
+          "District of Columbia": "DC",
+        };
+
+        const abbrUS = (admin1, isoSub) => {
+          if (isoSub && /^US-/.test(isoSub)) return isoSub.split("-")[1];
+          return US_STATE_ABBR[admin1] || admin1 || "US";
+        };
+
+        const formatPlaceLabel = ({ name, admin1, country, country_code, iso_sub }) => {
+          const cc = (country_code || "").toUpperCase();
+          if (cc === "US") {
+            const st = abbrUS(admin1, iso_sub);
+            return name ? `${name}, ${st}` : admin1 ? `${abbrUS(admin1, iso_sub)}, US` : "United States";
+          }
+          if (name && cc) return `${name}, ${cc}`;
+          if (name && country) return `${name}, ${country}`;
+          return name || admin1 || country || "Location";
+        };
+
+        const geocodePlace = async (name) => {
+          const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("geocoding failed");
+          const data = await res.json();
+          if (!data.results || !data.results.length)
+            throw new Error("place not found");
+          const match = data.results[0];
+          const city = formatPlaceLabel({
+            name: match.name,
+            admin1: match.admin1,
+            country: match.country,
+            country_code: match.country_code,
+          });
+          return {
+            lat: match.latitude,
+            lon: match.longitude,
+            city,
+            tz: match.timezone || defaultTz,
+          };
+        };
+
+        const reverseGeocode = async (lat, lon) => {
+          // Try Open‑Meteo reverse first (if/when available for this point)
+          try {
+            const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&count=1&format=json`;
+            const res = await fetch(url);
+            if (res.ok) {
+              const data = await res.json();
+              const r = data.results?.[0];
+              if (r) {
+                const city = formatPlaceLabel({
+                  name: r.name,
+                  admin1: r.admin1,
+                  country: r.country,
+                  country_code: r.country_code,
+                });
+                return { city, tz: r.timezone };
+              }
+            }
+          } catch {}
+
+          // Fallback to Nominatim (OSM)
+          try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+            const res = await fetch(url, { headers: { Accept: "application/json" } });
+            if (!res.ok) throw new Error("nominatim failed");
+            const data = await res.json();
+            const a = data.address || {};
+            const locality = a.city || a.town || a.village || a.hamlet || a.suburb || a.county;
+            const region = a.state || a.region || a.province || a.county;
+            const country = a.country;
+            const city = formatPlaceLabel({
+              name: locality,
+              admin1: region,
+              country,
+              country_code: (a.country_code || "").toUpperCase(),
+              iso_sub: (a["ISO3166-2-lvl4"] || a["ISO3166-2-lvl3"] || ""),
+            });
+            return { city };
+          } catch {}
+
+          // Last resort: coordinates string
+          return { city: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+        };
+
+        const saveCoords = (lat, lon, city, tz) => {
+          try {
+            localStorage.setItem(weatherStorage.lat, String(lat));
+            localStorage.setItem(weatherStorage.lon, String(lon));
+            if (city) localStorage.setItem(weatherStorage.city, city);
+            if (tz) localStorage.setItem(weatherStorage.tz, tz);
+          } catch (error) {
+            console.warn("Unable to save coordinates", error);
+          }
+        };
+
+        const readCoords = () => {
+          try {
+            const lat = parseFloat(localStorage.getItem(weatherStorage.lat));
+            const lon = parseFloat(localStorage.getItem(weatherStorage.lon));
+            const city = localStorage.getItem(weatherStorage.city) || "";
+            const tz = localStorage.getItem(weatherStorage.tz) || defaultTz;
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+            return { lat, lon, city, tz };
+          } catch (error) {
+            return null;
+          }
+        };
+
+        const fetchWithCache = async (key, fetcher) => {
+          // Check localStorage cache first
+          try {
+            const raw = localStorage.getItem(key);
+            const time = Number(localStorage.getItem(key + ":t"));
+            if (raw && time && Date.now() - time < CACHE_DURATION) {
+              return JSON.parse(raw);
+            }
+          } catch {}
+
+          // Check in-memory cache
+          const cached = weatherCache[key];
+          if (cached && Date.now() - cached.time < CACHE_DURATION) {
+            return cached.data;
+          }
+
+          // Fetch fresh data
+          const data = await fetcher();
+
+          // Update both caches
+          weatherCache[key] = { data, time: Date.now() };
+          try {
+            localStorage.setItem(key, JSON.stringify(data));
+            localStorage.setItem(key + ":t", String(Date.now()));
+          } catch {}
+
+          return data;
+        };
+
+        const fetchDawn = async (lat, lon) => {
+          return fetchWithCache(`dawn_${lat}_${lon}`, async () => {
+            const url = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=tomorrow&time_format=unix`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("dawn fetch failed");
+            const data = await res.json();
+            if (!data.results || data.status !== "OK")
+              throw new Error("no dawn results");
+            const dawnEpoch = data.results.dawn;
+            return new Date(dawnEpoch * 1000);
+          });
+        };
+
+        const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
+          const hrKey = `hourly_${lat}_${lon}_${Math.floor(
+            whenLocal.getTime() / (60 * 60 * 1000),
+          )}`;
+          return fetchWithCache(hrKey, async () => {
+            const params = new URLSearchParams({
+              latitude: lat,
+              longitude: lon,
+              hourly:
+                "temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation_probability,wet_bulb_temperature_2m",
+              temperature_unit: "fahrenheit",
+              wind_speed_unit: "mph",
+              timezone: tz || 'auto',
+              timeformat: "unixtime",
+            });
+            const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("weather fetch failed");
+            const data = await res.json();
+
+            const index = nearestIndex(data.hourly.time, whenLocal);
+            const tempF = data.hourly.temperature_2m?.[index];
+            const rh = data.hourly.relative_humidity_2m?.[index];
+            const windMph = data.hourly.wind_speed_10m?.[index];
+            const pop = data.hourly.precipitation_probability?.[index];
+            let wetBulbF = data.hourly.wet_bulb_temperature_2m?.[index];
+            const wetUnit = data.hourly_units?.wet_bulb_temperature_2m || "°F";
+            if (wetBulbF != null && /°C/i.test(wetUnit)) {
+              wetBulbF = cToF(wetBulbF);
+            }
+            if (
+              (wetBulbF == null || Number.isNaN(wetBulbF)) &&
+              tempF != null &&
+              rh != null
+            ) {
+              wetBulbF = cToF(stullWetBulbC(fToC(tempF), rh));
+            }
+            const windChill =
+              tempF != null && windMph != null
+                ? windChillF(tempF, windMph)
+                : null;
+            return { tempF, rh, windMph, pop, wetBulbF, windChillF: windChill };
+          });
+        };
+
+        const renderAwareness = ({
+          tz,
+          city,
+          dawn,
+          windChillF,
+          pop,
+          wetBulbF,
+          tempF,
+          windMph,
+          wetnessLabel,
+        }) => {
+          if (!wels.awCity) return;
+          wels.awCity.textContent = city || "Loading location...";
+          wels.awCity.title = city || ""; // Add tooltip for full name
+          if (dawn) {
+            wels.awDawn.textContent = fmtTime12InZone(dawn, tz || defaultTz);
+            wels.awDawn.setAttribute("datetime", dawn.toISOString());
+            wels.awDawn.title = `Around dawn local time (${tz || defaultTz})`;
+          } else {
+            wels.awDawn.textContent = "—";
+            wels.awDawn.removeAttribute("datetime");
+          }
+
+          let windText = "—";
+          if (windChillF != null) {
+            windText = `${Math.round(windChillF)}°F`;
+          } else if (typeof tempF === "number") {
+            const tempLabel = `${Math.round(tempF)}°F`;
+            if (typeof windMph === "number" && windMph < 3) {
+              windText = `${tempLabel} (calm)`;
+            } else if (typeof windMph === "number") {
+              windText = tempLabel;
+            } else {
+              windText = tempLabel;
+            }
+          }
+          wels.awWindChill.textContent = windText;
+
+          wels.awPoP.textContent =
+            typeof pop === "number" && pop >= 0 ? `${Math.round(pop)}%` : "—";
+          wels.awPoP.title = "Probability of precip for the hour around dawn";
+          wels.awWetBulb.textContent =
+            typeof wetBulbF === "number" ? `${Math.round(wetBulbF)}°F` : "—";
+          wels.awWetness.textContent = wetnessLabel || "—";
+        };
+
+        // Track request IDs to prevent stale responses
+        let awReqId = 0;
+
+        const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
+          if (!wels.awMsg) return;
+          const id = ++awReqId;
+          try {
+            wels.awMsg.textContent = "Loading…";
+
+            // Fetch dawn first
+            const dawnDate = await fetchDawn(lat, lon);
+
+            // Parallel fetch weather & wetness
+            const [weather, wetnessInfo] = await Promise.all([
+              fetchWeatherAround(lat, lon, dawnDate, tz),
+              fetchWetnessInputs(lat, lon, dawnDate, tz)
+                .then((rows) => {
+                  const value = computeWetness(rows);
+                  const { label } = categorizeWetness(value);
+                  return { label, value };
+                })
+                .catch(() => ({ label: "—", value: null })),
+            ]);
+
+            // Ignore stale responses
+            if (id !== awReqId) return;
+
+            const wetnessLabel =
+              wetnessInfo.value != null
+                ? `${wetnessInfo.label} (${wetnessInfo.value.toFixed(2)}")`
+                : wetnessInfo.label;
+
+            renderAwareness({
+              tz,
+              city,
+              dawn: dawnDate,
+              windChillF: weather.windChillF,
+              pop: weather.pop,
+              wetBulbF: weather.wetBulbF,
+              tempF: weather.tempF,
+              windMph: weather.windMph,
+              wetnessLabel,
+            });
+            wels.awMsg.textContent = "";
+          } catch (error) {
+            console.error(error);
+            if (id === awReqId) {
+              wels.awMsg.textContent = "Failed to load conditions.";
+            }
+          }
+        };
+
+        const attachAwarenessEvents = () => {
+          wels.useLoc?.addEventListener("click", () => {
+            if (!navigator.geolocation) {
+              wels.awMsg.textContent = "Geolocation not supported.";
+              return;
+            }
+            wels.awMsg.textContent = "Getting location…";
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                try {
+                  const info = await reverseGeocode(latitude, longitude);
+                  const label = info.city || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                  const tz = info.tz || defaultTz;
+                  saveCoords(latitude, longitude, label, tz);
+                  await refreshAwareness(latitude, longitude, label, tz);
+                } catch (error) {
+                  console.warn('Reverse geocoding failed:', error);
+                  const fallback = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                  saveCoords(latitude, longitude, fallback, defaultTz);
+                  await refreshAwareness(latitude, longitude, fallback, defaultTz);
+                }
+              },
+              (err) => {
+                console.warn(err);
+                wels.awMsg.textContent = "Location denied.";
+              },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+            );
+          });
+
+          wels.setPlace?.addEventListener("click", async () => {
+            const query = (wels.placeInput?.value || "").trim();
+            if (!query) return;
+            try {
+              wels.awMsg.textContent = "Looking up…";
+              const loc = await geocodePlace(query);
+              saveCoords(loc.lat, loc.lon, loc.city, loc.tz);
+              await refreshAwareness(loc.lat, loc.lon, loc.city, loc.tz);
+            } catch (error) {
+              console.error(error);
+              wels.awMsg.textContent = "Not found.";
+            }
+          });
+        };
+
+        const initAwareness = async () => {
+          if (!document.getElementById("awareness")) return;
+          attachAwarenessEvents();
+          const saved = readCoords();
+          if (saved) {
+            await refreshAwareness(saved.lat, saved.lon, saved.city, saved.tz);
+          } else if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                // Try reverse geocode silently on startup
+                try {
+                  const info = await reverseGeocode(latitude, longitude);
+                  const label = info.city || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                  const tz = info.tz || defaultTz;
+                  saveCoords(latitude, longitude, label, tz);
+                  await refreshAwareness(latitude, longitude, label, tz);
+                } catch (error) {
+                  console.warn('Silent reverse geocoding failed:', error);
+                  const fallback = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                  saveCoords(latitude, longitude, fallback, defaultTz);
+                  await refreshAwareness(latitude, longitude, fallback, defaultTz);
+                }
+              },
+              () => {},
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
+            );
+          }
+        };
+
+        const renderResult = (
+          wakeMinutes,
+          totalMinutes,
+          prevDay,
+          durations,
+        ) => {
+          const wake24 = fromMinutes(wakeMinutes);
+          const wake12 = format12(wake24);
+
+          // Calculate latest wake (meeting - run - 45 prep)
+          const firstValue = elements.first.value || defaults.firstMeeting;
+          const firstMinutes = toMinutes(firstValue);
+          const latestWakeMinutes = firstMinutes - durations.run - PREP_MINUTES;
+          const latest24 = fromMinutes(latestWakeMinutes < 0 ? latestWakeMinutes + MINUTES_PER_DAY : latestWakeMinutes);
+          const latest12 = format12(latest24);
+
+          elements.latestWake.textContent = latest12;
+          elements.chosenWake.textContent = wake12;
+          elements.breakdown.textContent = `${durations.run} (run) + ${PREP_MINUTES} (prep) + ${durations.travel} (travel) + ${durations.breakfast} (breakfast)`;
+        };
+
+        const showEmptyState = () => {
+          elements.latestWake.textContent = "--:--";
+          elements.chosenWake.textContent = "--:--";
+          elements.breakdown.textContent = `0 (run) + ${PREP_MINUTES} (prep) + 0 (travel) + 0 (breakfast)`;
+        };
+
+        const recalculate = () => {
+          const firstValue = elements.first.value || defaults.firstMeeting;
+          const firstMinutes = toMinutes(firstValue);
+          if (firstMinutes === null) {
+            showEmptyState();
+            return;
+          }
+          const run = sanitizeMinutes(elements.run.value, 0);
+          const prep = PREP_MINUTES;
+          const travel = sanitizeMinutes(elements.travel.value, 0);
+          const breakfast = sanitizeMinutes(elements.breakfast.value, 0);
+
+          const total = run + prep + travel + breakfast;
+          let wake = firstMinutes - total;
+          let previousDay = false;
+          if (wake < 0) {
+            wake += MINUTES_PER_DAY;
+            previousDay = true;
+          }
+
+          renderResult(wake, total, previousDay, { run, travel, breakfast });
+        };
+
+        const attachEvents = () => {
+          elements.form.addEventListener("input", () => {
+            recalculate();
+            saveValues();
+          });
+          elements.first.addEventListener("change", () => {
+            recalculate();
+            saveValues();
+          });
+          elements.location.addEventListener("change", () => {
+            // Always sync travel with location changes
+            syncTravelWithLocation();
+            recalculate();
+            saveValues();
+          });
+
+          elements.showTravel?.addEventListener("click", () => {
+            elements.travelGroup.style.display = "block";
+            elements.showTravel.style.display = "none";
+            elements.travel.focus();
+          });
+
+          elements.clearTravel?.addEventListener("click", () => {
+            elements.travelGroup.style.display = "none";
+            elements.showTravel.style.display = "block";
+            syncTravelWithLocation();
+            recalculate();
+            saveValues();
+          });
+
+          elements.form.addEventListener("submit", (event) =>
+            event.preventDefault(),
+          );
+        };
+
+        loadValues();
+        attachEvents();
+        recalculate();
+        initAwareness();
+      })();
+    </script>
+  </body>
+</html>
