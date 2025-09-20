@@ -237,8 +237,8 @@ body {
         font-weight: 500;
       }
       .aw-credits {
-        margin: 0.25rem 0 0;
-        font-size: 0.75rem;
+        margin: 0.1rem 0 0;
+        font-size: 0.65rem;
         color: #7d8ca2;
       }
       .aw-credits a {
@@ -1046,6 +1046,13 @@ body {
           if (!wels.awCity) return;
           wels.awCity.textContent = city || "Verify location";
           wels.awCity.title = city || ""; // Add tooltip for full name
+
+          // Update badge color: green when resolved, yellow when verifying
+          if (city && city !== "Verify location") {
+            wels.awCity.className = "badge badge-success badge-outline text-xs md:text-sm";
+          } else {
+            wels.awCity.className = "badge badge-warning badge-outline text-xs md:text-sm";
+          }
           if (dawn) {
             wels.awDawn.textContent = fmtTime12InZone(dawn, tz || defaultTz);
             wels.awDawn.setAttribute("datetime", dawn.toISOString());
