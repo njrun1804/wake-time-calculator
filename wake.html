@@ -636,7 +636,6 @@
                   Run Start
                 </div>
                 <div class="text-xl font-bold text-gray-900 mt-1" id="runStart">--:--</div>
-                <div class="text-xs text-red-600 font-semibold mt-1 hidden" id="daylightWarning"></div>
               </div>
             </div>
           </div>
@@ -913,11 +912,9 @@
         // Check if we need daylight warning based on run start time vs dawn
         const updateLocationHeadlamp = () => {
           const badge = document.getElementById('locHeadlamp');
-          const warning = document.getElementById('daylightWarning');
 
           if (!currentDawnDate) {
             if (badge) badge.classList.add('hidden');
-            if (warning) warning.classList.add('hidden');
             return;
           }
 
@@ -926,7 +923,6 @@
           const firstMinutes = toMinutes(firstValue);
           if (firstMinutes === null) {
             if (badge) badge.classList.add('hidden');
-            if (warning) warning.classList.add('hidden');
             return;
           }
 
@@ -948,34 +944,21 @@
           // Calculate difference (no buffer)
           const minutesFromDawn = (runStartMinutes % MINUTES_PER_DAY) - dawnTotalMinutes;
 
-          // Always show the daylight info if we're within 30 minutes of dawn
-          if (Math.abs(minutesFromDawn) <= 30) {
-            if (minutesFromDawn < 0) {
-              // Running before dawn (dark)
-              const minBefore = Math.abs(minutesFromDawn);
-              if (badge) {
-                badge.classList.remove('hidden');
+          // Only show warning if running at or before dawn
+          if (minutesFromDawn <= 0) {
+            // Running at or before dawn (dark)
+            const minBefore = Math.abs(minutesFromDawn);
+            if (badge) {
+              badge.classList.remove('hidden');
+              if (minBefore === 0) {
+                badge.textContent = `Check daylight (at dawn)`;
+              } else {
                 badge.textContent = `Check daylight (${minBefore} min before dawn)`;
-              }
-              if (warning) {
-                warning.classList.remove('hidden');
-                warning.textContent = `⚠️ ${minBefore} min before dawn - need lights`;
-              }
-            } else {
-              // Running just after dawn (might still be dim)
-              if (badge) {
-                badge.classList.remove('hidden');
-                badge.textContent = `Check daylight (${minutesFromDawn} min after dawn)`;
-              }
-              if (warning) {
-                warning.classList.remove('hidden');
-                warning.textContent = `🌅 ${minutesFromDawn} min after dawn - may be dim`;
               }
             }
           } else {
-            // Running well after dawn, no concern
+            // Running after dawn, no warning needed
             if (badge) badge.classList.add('hidden');
-            if (warning) warning.classList.add('hidden');
           }
         };
 

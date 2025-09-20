@@ -17,11 +17,11 @@ const { chromium } = require('playwright');
     }
   });
 
-  // Fill in the form to test daylight warning (early meeting = early run)
-  await page.selectOption('#firstMeeting', '07:15');
-  await page.fill('#runMinutes', '33');
+  // Fill in the form to test daylight warning (very early meeting = run before dawn)
+  await page.selectOption('#firstMeeting', '06:45');
+  await page.fill('#runMinutes', '45');
   await page.selectOption('#runLocation', 'allaire');
-  await page.selectOption('#breakfastMinutes', '20');
+  await page.selectOption('#breakfastMinutes', '0');
 
   // Wait for calculation
   await page.waitForTimeout(500);
@@ -34,21 +34,14 @@ const { chromium } = require('playwright');
   console.log('Latest wake:', await page.textContent('#latestWake'));
   console.log('Run start:', await page.textContent('#runStart'));
 
-  // Check if daylight warnings are visible
+  // Check if daylight warning is visible
   const badge = await page.locator('#locHeadlamp');
-  const warning = await page.locator('#daylightWarning');
-
   const badgeVisible = await badge.isVisible();
-  const warningVisible = await warning.isVisible();
 
   if (badgeVisible) {
-    console.log('Location badge:', await badge.textContent());
-  }
-  if (warningVisible) {
-    console.log('Daylight warning:', await warning.textContent());
-  }
-  if (!badgeVisible && !warningVisible) {
-    console.log('No daylight warnings (running well after dawn)');
+    console.log('Daylight check:', await badge.textContent());
+  } else {
+    console.log('No daylight warning (running after dawn)');
   }
 
   await browser.close();
