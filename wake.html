@@ -428,7 +428,7 @@ body {
                 </option>
               </optgroup>
               <optgroup label="No dirt">
-                <option value="round-town" data-travel="0">Round town</option>
+                <option value="round-town" data-travel="0" selected>Round town</option>
                 <option value="sandy-hook" data-travel="32">Sandy hook</option>
                 <option value="henry-hudson" data-travel="32">
                   Henry Hudson
@@ -643,19 +643,11 @@ body {
 
         const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const locationNeedsHeadlamp = () => {
-          const opt = elements.location.options[elements.location.selectedIndex];
-          if (!opt) return false;
-          try {
-            const group = opt.parentElement && opt.parentElement.label;
-            if (typeof group !== 'string') return false;
-            const g = group.trim().toLowerCase();
-            // Only show for the explicit Dirt group; exclude "No dirt"
-            return g.startsWith('dirt');
-          } catch {
-            return false;
-          }
-        };
+        // Explicit list of dirt locations (robust across browsers)
+        const DIRT_LOCATIONS = new Set([
+          'figure8','huber','tatum','holmdel','shark-river','allaire','rez','battlefield',
+        ]);
+        const locationNeedsHeadlamp = () => DIRT_LOCATIONS.has(elements.location.value);
 
         // Simple run-location headlamp badge (dirt only)
         const updateLocationHeadlamp = () => {
