@@ -248,24 +248,11 @@
         color: #7d8ca2;
         margin: 0;
       }
-      /* Clothes section */
-      .clothes {
-        border-radius: 12px;
-        background: linear-gradient(145deg, #f8fbff, #eef2f8);
-        padding: 1rem;
-        display: grid;
-        gap: 0.4rem;
-      }
-      .clothes .label {
-        font-size: 0.75rem;
-        color: #61748f;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-      }
-      .clothes .value {
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
+      /* Inline clothes text */
+      .inline-subtle {
+        font-size: 1rem; /* slightly bigger for readability */
+        color: #52606d;
+        font-weight: 500;
       }
       .aw-credits {
         margin: 0;
@@ -385,6 +372,8 @@
           Latest wake: <span id="latestWake">--:--</span> •
           Chosen wake: <span id="chosenWake">--:--</span>
         </span>
+        <br>
+        <span class="inline-subtle">Clothes at dawn: <span id="clothesInline">—</span></span>
       </h1>
       <form id="wakeForm" aria-describedby="status">
         <div class="form-row">
@@ -494,11 +483,6 @@
         <div class="breakdown" id="breakdown">
           0 (run) + 45 (prep) + 0 (travel) + 0 (breakfast)
         </div>
-      </section>
-      <section class="clothes" aria-live="polite">
-        <div class="label">Clothes at dawn</div>
-        <div class="value" id="clothesReco">—</div>
-        <p class="note" id="clothesNote">Based on wind chill around dawn.</p>
       </section>
     </main>
     <script>
@@ -670,8 +654,7 @@
           useLoc: document.getElementById("useMyLocation"),
           placeInput: document.getElementById("placeQuery"),
           setPlace: document.getElementById("setPlace"),
-          clothes: document.getElementById("clothesReco"),
-          clothesNote: document.getElementById("clothesNote"),
+          clothes: document.getElementById("clothesInline"),
         };
 
         const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -715,7 +698,7 @@
 
         const clothesSuggestion = (f) => {
           if (f == null || Number.isNaN(f)) return null;
-          if (f >= 55) return "Shorts + tee";
+          if (f >= 55) return "Standard";
           if (f >= 50) return "Shorts + tee + light gloves";
           if (f >= 45) return "Shorts + long‑sleeve + gloves";
           if (f >= 30) return "Shorts + long‑sleeve + gloves + headband";
@@ -981,7 +964,7 @@
               latitude: lat,
               longitude: lon,
               hourly:
-                "temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation_probability,wet_bulb_temperature_2m",
+                "temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation_probability,wet_bulb_temperature_2m,weathercode,snowfall",
               temperature_unit: "fahrenheit",
               wind_speed_unit: "mph",
               timezone: tz || 'auto',
@@ -997,6 +980,8 @@
             const rh = data.hourly.relative_humidity_2m?.[index];
             const windMph = data.hourly.wind_speed_10m?.[index];
             const pop = data.hourly.precipitation_probability?.[index];
+            const weatherCode = data.hourly.weathercode?.[index];
+            const snowfall = data.hourly.snowfall?.[index];
             let wetBulbF = data.hourly.wet_bulb_temperature_2m?.[index];
             const wetUnit = data.hourly_units?.wet_bulb_temperature_2m || "°F";
             if (wetBulbF != null && /°C/i.test(wetUnit)) {
@@ -1013,7 +998,12 @@
               tempF != null && windMph != null
                 ? windChillF(tempF, windMph)
                 : null;
-            return { tempF, rh, windMph, pop, wetBulbF, windChillF: windChill };
+            const snowCodes = new Set([
+              71, 73, 75, 77, // snow
+              85, 86,         // snow showers
+            ]);
+            const isSnow = (typeof weatherCode === 'number' && snowCodes.has(weatherCode)) || (typeof snowfall === 'number' && snowfall > 0);
+            return { tempF, rh, windMph, pop, wetBulbF, windChillF: windChill, isSnow };
           });
         };
 
@@ -1028,6 +1018,7 @@
           windMph,
           wetnessLabel,
           wetnessValue,
+          isSnow,
         }) => {
           if (!wels.awCity) return;
           wels.awCity.textContent = city || "Loading location...";
@@ -1068,7 +1059,10 @@
           }
 
           // Clothing suggestion based on wind chill/temperature
-          const reco = clothesSuggestion(windMetric);
+          let reco = clothesSuggestion(windMetric);
+          if (reco && typeof pop === 'number' && pop >= 60 && !isSnow) {
+            reco += " + rain jacket";
+          }
           if (wels.clothes) wels.clothes.textContent = reco || "—";
 
           wels.awPoP.textContent =
@@ -1137,6 +1131,7 @@
               windMph: weather.windMph,
               wetnessLabel,
               wetnessValue: wetnessInfo.value,
+              isSnow: weather.isSnow,
             });
             wels.awMsg.textContent = "";
           } catch (error) {
