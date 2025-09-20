@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting…</title>
+    <meta http-equiv="refresh" content="0; url=wake.html">
+    <script>
+      // Preserve querystring and hash when redirecting
+      (function () {
+        var target = 'wake.html' + (window.location.search || '') + (window.location.hash || '');
+        // Use replace so back button doesn't go to redirect page
+        window.location.replace(target);
+      })();
+    </script>
+    <style>
+      html, body { height: 100%; }
+      body { display: grid; place-items: center; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      a { color: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <p>Redirecting to <a href="wake.html">wake.html</a>…</p>
+  </body>
+  </html>
+
