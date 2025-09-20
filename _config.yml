@@ -1,0 +1,32 @@
+# GitHub Pages configuration for wake-time-calculator
+# Optimized for fast builds and deployment
+
+# Skip Jekyll processing (we're serving static HTML)
+plugins: []
+
+# Exclude unnecessary files from the build
+exclude:
+  - README.md
+  - CLAUDE.md
+  - agent.md
+  - .htmlvalidate.json
+  - .prettierrc
+  - .github/
+  - src/
+  - wake-tests.js
+  - wake.min.html
+  - "*.md"
+  - "*.yml"
+  - "*.json"
+  - node_modules/
+  - package*.json
+
+# Include only necessary files
+include:
+  - wake.html
+  - index.html
+  - _config.yml
+  - .nojekyll
+
+# Performance optimizations
+incremental: true
