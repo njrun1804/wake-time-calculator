@@ -71,6 +71,12 @@
         letter-spacing: -0.02em;
         line-height: 1.1;
       }
+      .hidden {
+        display: none !important;
+      }
+      .mt-neg-half {
+        margin-top: -0.5rem;
+      }
       form {
         display: grid;
         gap: 1rem;
@@ -455,18 +461,16 @@
             </select>
           </div>
         </div>
-        <div class="field-group" id="travelGroup" style="display: none">
-          <label for="travelMinutes">
-            Travel override (minutes)
-            <button
-              type="button"
-              id="clearTravel"
-              class="btn btn-xs btn-ghost"
-              style="margin-left: 0.5rem"
-            >
-              Clear
-            </button>
-          </label>
+        <div class="field-group hidden" id="travelGroup">
+          <label for="travelMinutes"> Travel override (minutes) </label>
+          <button
+            type="button"
+            id="clearTravel"
+            class="btn btn-xs btn-ghost ml-2"
+            aria-label="Clear travel override"
+          >
+            Clear
+          </button>
           <input
             id="travelMinutes"
             name="travelMinutes"
@@ -477,11 +481,13 @@
             class="input input-bordered w-full"
           />
         </div>
-        <div style="margin-top: -0.5rem">
+        <div class="mt-neg-half">
           <button type="button" id="showTravel" class="btn btn-sm btn-ghost">
             Override travel time
           </button>
         </div>
+        <!-- Hidden submit button for HTML validation -->
+        <button type="submit" class="hidden" tabindex="-1">Submit</button>
       </form>
       <div class="status" id="status" role="status" aria-live="polite"></div>
       <section class="output bg-base-200 rounded-2xl" aria-live="polite">
@@ -584,8 +590,8 @@
           // Show travel override if user had custom value
           if (stored.travel && stored.travel !== '0') {
             elements.travel.value = stored.travel;
-            elements.travelGroup.style.display = 'block';
-            elements.showTravel.style.display = 'none';
+            elements.travelGroup.classList.remove('hidden');
+            elements.showTravel.classList.add('hidden');
           } else {
             syncTravelWithLocation();
           }
@@ -1367,14 +1373,14 @@
           });
 
           elements.showTravel?.addEventListener('click', () => {
-            elements.travelGroup.style.display = 'block';
-            elements.showTravel.style.display = 'none';
+            elements.travelGroup.classList.remove('hidden');
+            elements.showTravel.classList.add('hidden');
             elements.travel.focus();
           });
 
           elements.clearTravel?.addEventListener('click', () => {
-            elements.travelGroup.style.display = 'none';
-            elements.showTravel.style.display = 'block';
+            elements.travelGroup.classList.add('hidden');
+            elements.showTravel.classList.remove('hidden');
             syncTravelWithLocation();
             recalculate();
             saveValues();
