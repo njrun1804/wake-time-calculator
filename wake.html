@@ -3,6 +3,7 @@
   <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Calculate wake/run times with local dawn and weather awareness (sunrise, precip, wetness).">
     <title>Wake Time Calculator</title>
     <style>
       :root {
@@ -647,8 +648,13 @@ body {
           if (!opt) return false;
           try {
             const group = opt.parentElement && opt.parentElement.label;
-            return typeof group === 'string' && /dirt/i.test(group);
-          } catch { return false; }
+            if (typeof group !== 'string') return false;
+            const g = group.trim().toLowerCase();
+            // Only show for the explicit Dirt group; exclude "No dirt"
+            return g.startsWith('dirt');
+          } catch {
+            return false;
+          }
         };
 
         // Simple run-location headlamp badge (dirt only)
