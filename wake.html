@@ -264,12 +264,12 @@
   <body>
     <main class="max-w-3xl w-full">
       <section class="awareness bg-base-200 rounded-2xl shadow-md" id="awareness" aria-live="polite">
-        <div class="aw-top">
+        <div class="aw-top flex items-center justify-start gap-2 flex-wrap">
           <div class="aw-where">
-            <span id="awCity">Verify location</span>
+            <span id="awCity" class="badge badge-warning badge-outline text-xs md:text-sm">Verify location</span>
           </div>
-            <div class="aw-actions">
-            <button type="button" id="useMyLocation" class="btn btn-sm">
+            <div class="aw-actions rounded-xl bg-base-100/70 border border-base-300 px-2 py-1 flex gap-2 flex-wrap">
+            <button type="button" id="useMyLocation" class="btn btn-primary btn-sm">
               Use my location
             </button>
             <input
@@ -279,7 +279,7 @@
               aria-label="City or ZIP"
               class="input input-bordered input-sm w-40"
             >
-            <button type="button" id="setPlace" class="btn btn-sm btn-primary">Set</button>
+            <button type="button" id="setPlace" class="btn btn-ghost btn-sm">Set</button>
           </div>
         </div>
 
@@ -320,15 +320,24 @@
           >
         </p>
       </section>
-      <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-base-content">
+      <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-base-content text-center">
         Wake time
       </h1>
-      <div class="mt-1 text-sm md:text-base text-base-content/70 font-medium">
-        Latest wake: <span id="latestWake">--:--</span> •
-        Chosen wake: <span id="chosenWake">--:--</span>
+      <div class="mt-2 flex justify-center gap-x-6 gap-y-2 flex-wrap text-center">
+        <div class="inline-flex items-baseline gap-1.5">
+          <span class="text-xs uppercase tracking-wide text-base-content/60">Latest wake</span>
+          <span id="latestWake" class="text-lg md:text-xl font-semibold text-base-content">--:--</span>
+        </div>
+        <div class="inline-flex items-baseline gap-1.5">
+          <span class="text-xs uppercase tracking-wide text-base-content/60">Chosen wake</span>
+          <span id="chosenWake" class="text-lg md:text-xl font-semibold text-base-content">--:--</span>
+        </div>
       </div>
-      <div class="mt-1 text-base md:text-lg text-base-content/80 font-semibold">
-        Clothes at dawn: <span id="clothesInline">—</span>
+      <div class="mt-1 flex justify-center text-center">
+        <div class="inline-flex items-baseline gap-1.5">
+          <span class="text-xs uppercase tracking-wide text-base-content/60">Clothes at dawn</span>
+          <span id="clothesInline" class="text-base md:text-lg font-semibold text-base-content">—</span>
+        </div>
       </div>
       <form id="wakeForm" aria-describedby="status">
         <div class="form-row">
