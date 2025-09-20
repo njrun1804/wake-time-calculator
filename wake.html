@@ -1565,11 +1565,10 @@
           const wake24 = fromMinutes(wakeMinutes);
           const wake12 = format12(wake24);
 
-          // Calculate latest wake (meeting - run - prep - travel - breakfast)
+          // Calculate latest wake (meeting - prep - run only, no breakfast/travel)
           const firstValue = elements.first.value || defaults.firstMeeting;
           const firstMinutes = toMinutes(firstValue);
-          const latestWakeMinutes =
-            firstMinutes - (durations.run + PREP_MINUTES + durations.travel + durations.breakfast);
+          const latestWakeMinutes = firstMinutes - (durations.run + PREP_MINUTES);
           const latest24 = fromMinutes(
             latestWakeMinutes < 0 ? latestWakeMinutes + MINUTES_PER_DAY : latestWakeMinutes
           );

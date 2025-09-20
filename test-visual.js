@@ -17,11 +17,11 @@ const { chromium } = require('playwright');
     }
   });
 
-  // Fill in the form to test daylight warning (very early meeting = run before dawn)
-  await page.selectOption('#firstMeeting', '06:45');
-  await page.fill('#runMinutes', '45');
-  await page.selectOption('#runLocation', 'allaire');
-  await page.selectOption('#breakfastMinutes', '0');
+  // Fill in the form to test latest wake calculation
+  await page.selectOption('#firstMeeting', '08:00');
+  await page.fill('#runMinutes', '40');
+  await page.selectOption('#runLocation', 'huber');
+  await page.selectOption('#breakfastMinutes', '45');
 
   // Wait for calculation
   await page.waitForTimeout(500);
