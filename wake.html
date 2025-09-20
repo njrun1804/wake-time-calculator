@@ -544,7 +544,6 @@
         <!-- Hidden submit button for HTML validation -->
         <button type="submit" class="hidden" tabindex="-1">Submit</button>
       </form>
-      <div class="status" id="status" role="status" aria-live="polite"></div>
 
       <!-- Wake Time Display Section -->
       <section class="wake-display-section">
@@ -633,6 +632,7 @@
                   Run Start
                 </div>
                 <div class="text-xl font-bold text-gray-900 mt-1" id="runStart">--:--</div>
+                <div class="text-xs text-red-600 font-semibold mt-1 hidden" id="daylightWarning"></div>
               </div>
             </div>
           </div>
@@ -773,7 +773,6 @@
           latestWake: document.getElementById('latestWake'),
           chosenWake: document.getElementById('chosenWake'),
           runStart: document.getElementById('runStart'),
-          status: document.getElementById('status'),
         };
 
         const toMinutes = (time) => {
@@ -910,10 +909,11 @@
         // Check if we need daylight warning based on run start time vs dawn
         const updateLocationHeadlamp = () => {
           const badge = document.getElementById('locHeadlamp');
-          if (!badge) return;
+          const warning = document.getElementById('daylightWarning');
 
           if (!currentDawnDate) {
-            badge.classList.add('hidden');
+            if (badge) badge.classList.add('hidden');
+            if (warning) warning.classList.add('hidden');
             return;
           }
 
@@ -921,7 +921,8 @@
           const firstValue = elements.first.value || defaults.firstMeeting;
           const firstMinutes = toMinutes(firstValue);
           if (firstMinutes === null) {
-            badge.classList.add('hidden');
+            if (badge) badge.classList.add('hidden');
+            if (warning) warning.classList.add('hidden');
             return;
           }
 
@@ -945,11 +946,18 @@
 
           if (minutesBeforeDawn > 0) {
             // Running before dawn
-            badge.classList.remove('hidden');
-            badge.textContent = `Check daylight (${minutesBeforeDawn} min before dawn)`;
+            if (badge) {
+              badge.classList.remove('hidden');
+              badge.textContent = `Check daylight (${minutesBeforeDawn} min before dawn)`;
+            }
+            if (warning) {
+              warning.classList.remove('hidden');
+              warning.textContent = `⚠️ ${minutesBeforeDawn} min before dawn`;
+            }
           } else {
             // Running after dawn
-            badge.classList.add('hidden');
+            if (badge) badge.classList.add('hidden');
+            if (warning) warning.classList.add('hidden');
           }
         };
 

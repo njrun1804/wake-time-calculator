@@ -7,10 +7,14 @@ const { chromium } = require('playwright');
   await page.goto('file://' + __dirname + '/wake.html');
   await page.setViewportSize({ width: 1280, height: 800 });
 
-  // Fill in the form
-  await page.selectOption('#firstMeeting', '09:00');
-  await page.fill('#runMinutes', '45');
-  await page.selectOption('#runLocation', 'figure8');
+  // First get location for dawn data
+  await page.click('text="Use my location"');
+  await page.waitForTimeout(2000); // Wait for location and dawn data
+
+  // Fill in the form to test daylight warning (early meeting = early run)
+  await page.selectOption('#firstMeeting', '07:15');
+  await page.fill('#runMinutes', '33');
+  await page.selectOption('#runLocation', 'allaire');
   await page.selectOption('#breakfastMinutes', '20');
 
   // Wait for calculation
