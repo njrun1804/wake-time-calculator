@@ -39,3 +39,20 @@ Open this folder in VS Code and edit `wake.html` directly. If you installed the 
 
 - The app uses public APIs for sunrise and weather; be mindful of rate limits.
 - `wake.min.html` is produced by minifying `wake.html` and can be used for production deployment.
+
+## Repository
+
+This project is hosted at `https://github.com/njrun1804/wake-time-calculator`. Please open issues or PRs there. For local development, avoid committing `node_modules` — use the provided `.gitignore`.
+
+## Local setup
+
+For development on any machine:
+
+```bash
+git clone https://github.com/njrun1804/wake-time-calculator.git
+cd wake-time-calculator
+npm install    # installs dev tools and any runtime deps (do this locally)
+npm start      # serves at http://localhost:8000/wake.html
+```
+
+Do not commit `node_modules/` to the repository; it's intentionally excluded by `.gitignore`.
