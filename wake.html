@@ -304,11 +304,6 @@ body {
               class="input input-bordered input-sm w-40"
             >
             <button type="button" id="setPlace" class="btn btn-ghost btn-sm">Set</button>
-            <select id="racePreset" class="select select-bordered select-sm">
-              <option value="">— Race preset —</option>
-              <option value="boston">Boston (Copley)</option>
-              <option value="nyc">NYC (Staten Island)</option>
-            </select>
           </div>
         </div>
 
@@ -654,13 +649,6 @@ body {
           placeInput: document.getElementById("placeQuery"),
           setPlace: document.getElementById("setPlace"),
           clothes: document.getElementById("clothesInline"),
-          racePreset: document.getElementById("racePreset"),
-        };
-
-        // Race presets (place + tz)
-        const racePresets = {
-          boston: { lat: 42.3496, lon: -71.0787, city: "Boston, MA", tz: "America/New_York" },
-          nyc: { lat: 40.5779, lon: -74.1451, city: "Staten Island, NY", tz: "America/New_York" },
         };
 
         const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -1225,15 +1213,6 @@ body {
         };
 
         const attachAwarenessEvents = () => {
-          // Race preset change
-          wels.racePreset?.addEventListener("change", async (e) => {
-            const key = e.target.value;
-            const p = racePresets[key];
-            if (!p) return;
-            saveCoords(p.lat, p.lon, p.city, p.tz);
-            await refreshAwareness(p.lat, p.lon, p.city, p.tz);
-          });
-
           wels.useLoc?.addEventListener("click", () => {
             if (!navigator.geolocation) {
               wels.awMsg.textContent = "Geolocation not supported.";
