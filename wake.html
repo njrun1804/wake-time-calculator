@@ -79,7 +79,8 @@
       }
       form {
         display: grid;
-        gap: 1rem;
+        gap: 0.75rem;
+        margin-bottom: 0;
       }
       .form-row {
         display: grid;
@@ -153,6 +154,9 @@
         }
       }
 
+      .wake-display-section {
+        margin-top: 0.5rem;
+      }
       .wake-hero-card {
         position: relative;
         overflow: hidden;
@@ -942,20 +946,34 @@
           const dawnTotalMinutes = dawnHours * 60 + dawnMins;
 
           // Calculate difference (no buffer)
-          const minutesBeforeDawn = dawnTotalMinutes - (runStartMinutes % MINUTES_PER_DAY);
+          const minutesFromDawn = (runStartMinutes % MINUTES_PER_DAY) - dawnTotalMinutes;
 
-          if (minutesBeforeDawn > 0) {
-            // Running before dawn
-            if (badge) {
-              badge.classList.remove('hidden');
-              badge.textContent = `Check daylight (${minutesBeforeDawn} min before dawn)`;
-            }
-            if (warning) {
-              warning.classList.remove('hidden');
-              warning.textContent = `⚠️ ${minutesBeforeDawn} min before dawn`;
+          // Always show the daylight info if we're within 30 minutes of dawn
+          if (Math.abs(minutesFromDawn) <= 30) {
+            if (minutesFromDawn < 0) {
+              // Running before dawn (dark)
+              const minBefore = Math.abs(minutesFromDawn);
+              if (badge) {
+                badge.classList.remove('hidden');
+                badge.textContent = `Check daylight (${minBefore} min before dawn)`;
+              }
+              if (warning) {
+                warning.classList.remove('hidden');
+                warning.textContent = `⚠️ ${minBefore} min before dawn - need lights`;
+              }
+            } else {
+              // Running just after dawn (might still be dim)
+              if (badge) {
+                badge.classList.remove('hidden');
+                badge.textContent = `Check daylight (${minutesFromDawn} min after dawn)`;
+              }
+              if (warning) {
+                warning.classList.remove('hidden');
+                warning.textContent = `🌅 ${minutesFromDawn} min after dawn - may be dim`;
+              }
             }
           } else {
-            // Running after dawn
+            // Running well after dawn, no concern
             if (badge) badge.classList.add('hidden');
             if (warning) warning.classList.add('hidden');
           }
@@ -1756,6 +1774,17 @@
           initAwareness();
           updateLocationHeadlamp();
         }
+
+        // Expose for testing
+        window.currentDawnDate = currentDawnDate;
+        window.updateLocationHeadlamp = updateLocationHeadlamp;
+        window.setTestDawn = (hours, minutes) => {
+          const date = new Date();
+          date.setHours(hours, minutes, 0, 0);
+          currentDawnDate = date;
+          window.currentDawnDate = date;
+          updateLocationHeadlamp();
+        };
       })();
     </script>
   </body>
