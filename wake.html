@@ -708,6 +708,7 @@
       (() => {
         // Constants
         const PREP_MINUTES = 45; // Fixed prep time - not user-configurable by design
+        const PREP_BEFORE_RUN = 20; // Portion of prep before leaving for run
         const MINUTES_PER_DAY = 1440;
         const MINUTES_PER_HOUR = 60;
         const MM_TO_INCHES = 25.4;
@@ -897,7 +898,7 @@
           let wake = firstMinutes - total;
           if (wake < 0) wake += MINUTES_PER_DAY;
 
-          const runStartMinutes = wake + PREP_MINUTES + travel;
+          const runStartMinutes = wake + PREP_BEFORE_RUN + Math.floor(travel / 2); // Half travel for one-way
 
           // Get dawn time in minutes
           const dawnHours = currentDawnDate.getHours();
@@ -1584,8 +1585,8 @@
             else badge.classList.add('hidden');
           }
 
-          // Update run start time (wake + prep + travel)
-          const runStartMinutes = wakeMinutes + PREP_MINUTES + durations.travel;
+          // Update run start time (wake + prep portion + half travel for one-way)
+          const runStartMinutes = wakeMinutes + PREP_BEFORE_RUN + Math.floor(durations.travel / 2);
           const runStart12 = format12(fromMinutes(runStartMinutes));
           if (elements.runStart) elements.runStart.textContent = runStart12;
 
