@@ -310,10 +310,7 @@ body {
         <div class="aw-grid grid grid-cols-5 gap-2">
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Dawn</div>
-            <div class="value">
-              <time id="awDawn" datetime="">—</time>
-              <span id="awHeadlamp" class="hidden ml-1 align-middle badge badge-error badge-outline text-[0.6rem]">Headlamp</span>
-            </div>
+            <time class="value" id="awDawn" datetime="">—</time>
           </div>
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Wind chill</div>
@@ -421,7 +418,7 @@ body {
             </select>
           </div>
           <div class="field-group">
-            <label for="runLocation">Run location</label>
+            <label for="runLocation">Run location <span id="locHeadlamp" class="hidden ml-2 badge badge-error badge-outline text-[0.6rem] align-middle">Headlamp</span></label>
             <select id="runLocation" name="runLocation" class="select select-bordered w-full">
               <optgroup label="Dirt by distance">
                 <option value="figure8" data-travel="14">Figure 8</option>
@@ -653,10 +650,6 @@ body {
 
         const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        // Track last dawn + tz for headlamp computations
-        let lastDawn = null;
-        let lastTz = defaultTz;
-
         const locationNeedsHeadlamp = () => {
           const opt = elements.location.options[elements.location.selectedIndex];
           if (!opt) return false;
@@ -666,37 +659,12 @@ body {
           } catch { return false; }
         };
 
-        const minutesOfDay = (date) => date.getHours() * 60 + date.getMinutes();
-
-        const computeArrivalMinutes = () => {
-          const firstValue = elements.first.value || defaults.firstMeeting;
-          const firstMinutes = toMinutes(firstValue);
-          if (firstMinutes == null) return null;
-          const run = sanitizeMinutes(elements.run.value, 0);
-          const breakfast = sanitizeMinutes(elements.breakfast.value, 0);
-          const afterArrival = run + PREP_MINUTES + breakfast;
-          let arrival = firstMinutes - afterArrival;
-          if (arrival < 0) arrival += MINUTES_PER_DAY;
-          return arrival;
-        };
-
-        const updateHeadlampHint = () => {
-          const badge = document.getElementById('awHeadlamp');
+        // Simple run-location headlamp badge (dirt only)
+        const updateLocationHeadlamp = () => {
+          const badge = document.getElementById('locHeadlamp');
           if (!badge) return;
-          badge.classList.add('hidden');
-          badge.textContent = 'Headlamp';
-          if (!lastDawn || !locationNeedsHeadlamp()) return;
-          const arrivalMin = computeArrivalMinutes();
-          if (arrivalMin == null) return;
-          const dawnMin = minutesOfDay(lastDawn);
-          const buffer = 10; // canopy buffer minutes for dirt
-          const diff = arrivalMin - dawnMin; // negative = before dawn
-          if (arrivalMin < dawnMin + buffer) {
-            const label = diff < 0 ? `${Math.abs(diff)}m before` : `${diff}m after`;
-            badge.classList.remove('hidden');
-            badge.textContent = `Headlamp · ${label}`;
-            badge.title = `Arrival ${label} dawn (buffer ${buffer}m)`;
-          }
+          if (locationNeedsHeadlamp()) badge.classList.remove('hidden');
+          else badge.classList.add('hidden');
         };
 
         const fmtTime12InZone = (date, tz) =>
@@ -1145,10 +1113,8 @@ body {
             wels.awWetness.classList.add("bad");
           }
 
-          // Update headlamp hint based on arrival vs dawn
-          lastDawn = dawn || null;
-          lastTz = tz || defaultTz;
-          updateHeadlampHint();
+          // Update location headlamp badge (dirt routes)
+          updateLocationHeadlamp();
         };
 
         // Track request IDs to prevent stale responses
@@ -1343,19 +1309,19 @@ body {
           elements.form.addEventListener("input", () => {
             recalculate();
             saveValues();
-            updateHeadlampHint();
+            updateLocationHeadlamp();
           });
           elements.first.addEventListener("change", () => {
             recalculate();
             saveValues();
-            updateHeadlampHint();
+            updateLocationHeadlamp();
           });
           elements.location.addEventListener("change", () => {
             // Always sync travel with location changes
             syncTravelWithLocation();
             recalculate();
             saveValues();
-            updateHeadlampHint();
+            updateLocationHeadlamp();
           });
 
           elements.showTravel?.addEventListener("click", () => {
@@ -1370,7 +1336,7 @@ body {
             syncTravelWithLocation();
             recalculate();
             saveValues();
-            updateHeadlampHint();
+            updateLocationHeadlamp();
           });
 
           elements.form.addEventListener("submit", (event) =>
@@ -1385,12 +1351,14 @@ body {
             attachEvents();
             recalculate();
             initAwareness();
+            updateLocationHeadlamp();
           });
         } else {
           loadValues();
           attachEvents();
           recalculate();
           initAwareness();
+          updateLocationHeadlamp();
         }
       })();
     </script>
