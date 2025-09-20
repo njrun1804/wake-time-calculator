@@ -696,14 +696,18 @@ body {
           const badge = document.getElementById('awHeadlamp');
           if (!badge) return;
           badge.classList.add('hidden');
+          badge.textContent = 'Headlamp';
           if (!lastDawn || !locationNeedsHeadlamp()) return;
           const arrivalMin = computeArrivalMinutes();
           if (arrivalMin == null) return;
           const dawnMin = minutesOfDay(lastDawn);
           const buffer = 10; // canopy buffer minutes for dirt
+          const diff = arrivalMin - dawnMin; // negative = before dawn
           if (arrivalMin < dawnMin + buffer) {
+            const label = diff < 0 ? `${Math.abs(diff)}m before` : `${diff}m after`;
             badge.classList.remove('hidden');
-            badge.title = 'Arrival before dawn; bring a headlamp';
+            badge.textContent = `Headlamp · ${label}`;
+            badge.title = `Arrival ${label} dawn (buffer ${buffer}m)`;
           }
         };
 
@@ -1359,16 +1363,19 @@ body {
           elements.form.addEventListener("input", () => {
             recalculate();
             saveValues();
+            updateHeadlampHint();
           });
           elements.first.addEventListener("change", () => {
             recalculate();
             saveValues();
+            updateHeadlampHint();
           });
           elements.location.addEventListener("change", () => {
             // Always sync travel with location changes
             syncTravelWithLocation();
             recalculate();
             saveValues();
+            updateHeadlampHint();
           });
 
           elements.showTravel?.addEventListener("click", () => {
@@ -1383,6 +1390,7 @@ body {
             syncTravelWithLocation();
             recalculate();
             saveValues();
+            updateHeadlampHint();
           });
 
           elements.form.addEventListener("submit", (event) =>
