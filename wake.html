@@ -920,7 +920,7 @@ body {
           }
         };
 
-        const fetchWithCache = async (key, fetcher) => {
+        const fetchWithCache = async (key, fetcher, signal = null) => {
           let stale;
 
           // Check localStorage cache first
@@ -944,7 +944,7 @@ body {
 
           // Try to fetch fresh data
           try {
-            const data = await fetcher();
+            const data = await fetcher(signal);
 
             // Update both caches
             weatherCache[key] = { data, time: Date.now() };
@@ -965,11 +965,11 @@ body {
           timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit"
         }).format(new Date(Date.now() + 24*60*60*1000));
 
-        const fetchDawn = async (lat, lon, tz = defaultTz) => {
+        const fetchDawn = async (lat, lon, tz = defaultTz, signal = null) => {
           const ymd = tomorrowYMD(tz);
-          return fetchWithCache(`dawn_${lat}_${lon}_${ymd}`, async () => {
+          return fetchWithCache(`dawn_${lat}_${lon}_${ymd}`, async (signal) => {
             const url = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=tomorrow&time_format=unix`;
-            const res = await fetch(url);
+            const res = await fetch(url, signal ? { signal } : {});
             if (!res.ok) throw new Error("dawn fetch failed");
             const data = await res.json();
             if (!data.results || data.status !== "OK")
@@ -1132,7 +1132,7 @@ body {
             wels.awMsg.textContent = "Loading…";
 
             // Fetch dawn first
-            const dawnDate = await fetchDawn(lat, lon, tz);
+            const dawnDate = await fetchDawn(lat, lon, tz, signal);
 
             // Parallel fetch weather & wetness
             const [weather, wetnessInfo] = await Promise.all([
