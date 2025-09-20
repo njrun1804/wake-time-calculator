@@ -547,12 +547,12 @@
       <div class="status" id="status" role="status" aria-live="polite"></div>
 
       <!-- Wake Time Display Section -->
-      <section class="wake-display-section py-6">
+      <section class="wake-display-section py-2">
         <!-- Main Wake Time Card -->
         <div
-          class="wake-hero-card rounded-3xl p-8 mb-6 text-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-2xl relative overflow-hidden"
+          class="wake-hero-card rounded-3xl p-4 mb-4 text-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-2xl relative overflow-hidden"
         >
-          <div class="flex items-center justify-center gap-2 mb-3">
+          <div class="flex items-center justify-center gap-2 mb-2">
             <svg
               class="w-6 h-6 text-white/90"
               fill="none"
@@ -566,22 +566,22 @@
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               ></path>
             </svg>
-            <h1 class="text-xl md:text-2xl font-bold text-white">Wake Time</h1>
+            <h1 class="text-lg md:text-xl font-bold text-white">Wake Time</h1>
           </div>
           <div class="wake-time-display">
-            <div class="text-3xl md:text-4xl font-black text-white mb-2" id="chosenWake">--:--</div>
+            <div class="text-2xl md:text-3xl font-black text-white mb-1" id="chosenWake">--:--</div>
             <span id="prevDayBadge" class="badge badge-warning badge-sm align-middle hidden mb-2"
               >Previous day</span
             >
-            <div class="text-base text-white/80 mt-1">Your optimal wake time</div>
+            <div class="text-sm text-white/80">Your optimal wake time</div>
           </div>
         </div>
 
         <!-- Info Cards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <!-- Latest Wake Card -->
           <div
-            class="info-card bg-white rounded-2xl p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
+            class="info-card bg-white rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
           >
             <div class="flex items-center gap-2 mb-3">
               <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
@@ -603,14 +603,14 @@
                 <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
                   Latest Wake
                 </div>
-                <div class="text-2xl font-bold text-gray-900 mt-1" id="latestWake">--:--</div>
+                <div class="text-xl font-bold text-gray-900 mt-1" id="latestWake">--:--</div>
               </div>
             </div>
           </div>
 
           <!-- Run Start Card -->
           <div
-            class="info-card bg-white rounded-2xl p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
+            class="info-card bg-white rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
           >
             <div class="flex items-center gap-2 mb-3">
               <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -632,14 +632,14 @@
                 <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
                   Run Start
                 </div>
-                <div class="text-2xl font-bold text-gray-900 mt-1" id="runStart">--:--</div>
+                <div class="text-xl font-bold text-gray-900 mt-1" id="runStart">--:--</div>
               </div>
             </div>
           </div>
 
           <!-- Clothes Card -->
           <div
-            class="info-card bg-white rounded-2xl p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
+            class="info-card bg-white rounded-2xl p-4 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col"
           >
             <div class="flex items-center gap-2 mb-3">
               <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -668,12 +668,12 @@
         </div>
 
         <!-- Time Breakdown Bar -->
-        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <h3 class="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-4">
+        <div class="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
+          <h3 class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-3">
             Time Allocation
           </h3>
           <div class="relative">
-            <div class="flex rounded-full overflow-hidden h-12 bg-gray-100 mb-4" id="timeBar">
+            <div class="flex rounded-full overflow-hidden h-10 bg-gray-100 mb-3" id="timeBar">
               <div
                 class="bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-xs font-semibold text-white transition-all duration-500 relative overflow-hidden"
                 id="runBar"
