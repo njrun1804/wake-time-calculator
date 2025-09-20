@@ -755,7 +755,8 @@ body {
 
         // Fetch daily rain & ET0 for recent days; use inches and local timezone
         const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
-          const key = `wetness_${lat}_${lon}_${dawnLocalDate.toISOString().split("T")[0]}`;
+          const dawnYMD = fmtYMDInZone(dawnLocalDate, tz || defaultTz);
+          const key = `wetness_${lat}_${lon}_${dawnYMD}`;
           return fetchWithCache(key, async () => {
             const params = new URLSearchParams({
               latitude: lat,
