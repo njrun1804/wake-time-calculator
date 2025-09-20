@@ -3,7 +3,6 @@
   <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Calculate wake/run times with local dawn and weather awareness (sunrise, precip, wetness).">
     <title>Wake Time Calculator</title>
     <style>
       :root {
@@ -560,7 +559,8 @@ body {
           );
 
           setFirstMeeting(stored.firstMeeting ?? defaults.firstMeeting);
-          setRunLocation(stored.location ?? defaults.location);
+          // Always start on default location (ignore any saved value)
+          setRunLocation(defaults.location);
           elements.run.value = stored.run ?? defaults.run;
           // prep fixed at PREP_MINUTES
           elements.breakfast.value = stored.breakfast ?? defaults.breakfast;
