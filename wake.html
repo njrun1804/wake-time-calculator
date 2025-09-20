@@ -215,7 +215,7 @@
       }
 
       /* Hide labels when segment is too small */
-      #timeBar > div[style*="display: none"] {
+      #timeBar > div[style*='display: none'] {
         width: 0;
         padding: 0;
         overflow: hidden;
@@ -451,7 +451,12 @@
           class="wake-hero-card rounded-3xl p-8 mb-6 text-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-2xl relative overflow-hidden"
         >
           <div class="flex items-center justify-center gap-2 mb-3">
-            <svg class="w-6 h-6 text-white/90" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            <svg
+              class="w-6 h-6 text-white/90"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -462,10 +467,10 @@
             <h1 class="text-xl md:text-2xl font-bold text-white">Wake Time</h1>
           </div>
           <div class="wake-time-display">
-            <div class="text-5xl md:text-7xl font-black text-white mb-2" id="chosenWake">
-              --:--
-            </div>
-            <span id="prevDayBadge" class="badge badge-warning badge-sm align-middle hidden mb-2">Previous day</span>
+            <div class="text-5xl md:text-7xl font-black text-white mb-2" id="chosenWake">--:--</div>
+            <span id="prevDayBadge" class="badge badge-warning badge-sm align-middle hidden mb-2"
+              >Previous day</span
+            >
             <div class="text-base text-white/80 mt-1">Your optimal wake time</div>
           </div>
         </div>
@@ -480,20 +485,22 @@
               <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
                 <svg
                   class="w-5 h-5 text-amber-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
-              </svg>
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
               </div>
               <div class="flex-1">
-                <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Latest Wake</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                  Latest Wake
+                </div>
                 <div class="text-2xl font-bold text-gray-900 mt-1" id="latestWake">--:--</div>
               </div>
             </div>
@@ -521,7 +528,9 @@
                 </svg>
               </div>
               <div class="flex-1">
-                <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Run Start</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                  Run Start
+                </div>
                 <div class="text-2xl font-bold text-gray-900 mt-1" id="runStart">--:--</div>
               </div>
             </div>
@@ -534,7 +543,12 @@
           >
             <div class="flex items-center gap-2 mb-3">
               <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  class="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
@@ -544,7 +558,9 @@
                 </svg>
               </div>
               <div class="flex-1">
-                <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Attire</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                  Attire
+                </div>
                 <div class="text-base font-bold text-gray-900 mt-1" id="clothesInline">—</div>
               </div>
             </div>
@@ -591,20 +607,32 @@
             <!-- Legend -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
               <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-600"></div>
-                <span class="text-gray-600"><span id="runMinDisplay" class="font-semibold">0</span> min run</span>
+                <div
+                  class="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-600"
+                ></div>
+                <span class="text-gray-600"
+                  ><span id="runMinDisplay" class="font-semibold">0</span> min run</span
+                >
               </div>
               <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
+                <div
+                  class="w-3 h-3 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600"
+                ></div>
                 <span class="text-gray-600"><span class="font-semibold">45</span> min prep</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600"></div>
-                <span class="text-gray-600"><span id="travelMinDisplay" class="font-semibold">0</span> min travel</span>
+                <div
+                  class="w-3 h-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600"
+                ></div>
+                <span class="text-gray-600"
+                  ><span id="travelMinDisplay" class="font-semibold">0</span> min travel</span
+                >
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-3 h-3 rounded-full bg-gradient-to-r from-cyan-500 to-cyan-600"></div>
-                <span class="text-gray-600"><span id="breakfastMinDisplay" class="font-semibold">0</span> min breakfast</span>
+                <span class="text-gray-600"
+                  ><span id="breakfastMinDisplay" class="font-semibold">0</span> min breakfast</span
+                >
               </div>
             </div>
           </div>
@@ -1556,7 +1584,8 @@
           // Calculate latest wake (meeting - run - prep - travel - breakfast)
           const firstValue = elements.first.value || defaults.firstMeeting;
           const firstMinutes = toMinutes(firstValue);
-          const latestWakeMinutes = firstMinutes - (durations.run + PREP_MINUTES + durations.travel + durations.breakfast);
+          const latestWakeMinutes =
+            firstMinutes - (durations.run + PREP_MINUTES + durations.travel + durations.breakfast);
           const latest24 = fromMinutes(
             latestWakeMinutes < 0 ? latestWakeMinutes + MINUTES_PER_DAY : latestWakeMinutes
           );
@@ -1585,7 +1614,17 @@
           const runDurationEl = document.getElementById('runDuration');
           if (runDurationEl) runDurationEl.textContent = `${durations.run} min run`;
 
-          // Update breakdown
+          // Update legend displays
+          const runMinDisplay = document.getElementById('runMinDisplay');
+          if (runMinDisplay) runMinDisplay.textContent = durations.run;
+
+          const travelMinDisplay = document.getElementById('travelMinDisplay');
+          if (travelMinDisplay) travelMinDisplay.textContent = durations.travel;
+
+          const breakfastMinDisplay = document.getElementById('breakfastMinDisplay');
+          if (breakfastMinDisplay) breakfastMinDisplay.textContent = durations.breakfast;
+
+          // Update breakdown (if element still exists for backwards compatibility)
           const breakdownEl = document.getElementById('breakdown');
           if (breakdownEl) {
             breakdownEl.textContent = `${durations.run} (run) + ${PREP_MINUTES} (prep) + ${durations.travel} (travel) + ${durations.breakfast} (breakfast)`;
