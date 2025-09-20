@@ -7,3 +7,9 @@ wake.min.html
 npm-debug.log*
 /.vscode/
 dist/
+
+# Test artifacts
+test-visual.js
+wake-updated.png
+test-results/
+wake-tests.js

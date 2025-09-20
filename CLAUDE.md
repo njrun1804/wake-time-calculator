@@ -48,13 +48,22 @@ Search for `categorizeWetness` function
 ### Modify cache duration
 Search for `CACHE_DURATION` constant
 
+### Daylight check logic
+Search for `updateLocationHeadlamp` function - shows warning when run starts at/before dawn
+
+### Test functions (for debugging)
+- `window.setTestDawn(hours, minutes)` - Set a test dawn time
+- `window.updateLocationHeadlamp()` - Trigger daylight check update
+
 ## APIs
 No API keys required — public services:
 - SunriseSunset.io (dawn)
 - Open‑Meteo (hourly + daily weather, geocoding, WMO weathercode)
 
 ## Notes
-- App uses localStorage for persistence
+- App uses localStorage for persistence (keys prefixed with 'wake:')
 - 15-minute cache for API responses (localStorage + in‑memory)
 - Responsive design with mobile breakpoints
 - Tailwind + DaisyUI via CDN (no build process) — edit and refresh
+- Travel time auto-syncs with location selection (no manual override)
+- Daylight check appears on Run location badge when running at/before dawn
