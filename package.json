@@ -2,6 +2,10 @@
   "name": "wake-time-calculator",
   "version": "1.0.0",
   "description": "Wake time calculator with weather awareness",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/njrun1804/wake-time-calculator.git"
+  },
   "scripts": {
     "serve": "python3 -m http.server 8000",
     "start": "npx http-server ./ -p 8000 -c-1",
