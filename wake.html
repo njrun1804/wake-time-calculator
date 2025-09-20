@@ -4,7 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wake Time Calculator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       :root {
         color-scheme: light;
@@ -12,7 +11,7 @@
       * {
         box-sizing: border-box;
       }
-      body {
+body {
         margin: 0;
         min-height: 100vh;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -22,6 +21,30 @@
         align-items: center;
         justify-content: center;
         padding: 1.25rem;
+}
+      /* Hero background + glass effect */
+      :root {
+        /* Optional image path, e.g., url('img/boston.jpg'); leave none for gradients */
+        --hero-img: none;
+      }
+      .hero-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(180deg, rgba(21, 64, 159, 0.65), rgba(255, 208, 0, 0.35)),
+          var(--hero-img) center/cover no-repeat,
+          conic-gradient(from 200deg at 50% 0%, #15409f, #0b2a7a, #15409f);
+        filter: saturate(1.05);
+      }
+      @media (prefers-color-scheme: dark) {
+        .hero-bg { filter: brightness(0.85) saturate(1.1); }
+      }
+      .glass-main {
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        -webkit-backdrop-filter: blur(8px) saturate(1.05);
+        backdrop-filter: blur(8px) saturate(1.05);
       }
       main {
         width: min(100%, 720px);
@@ -262,7 +285,8 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
   </head>
   <body>
-    <main class="max-w-3xl w-full">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <main class="max-w-3xl w-full glass-main">
       <section class="awareness bg-base-200 rounded-2xl shadow-md" id="awareness" aria-live="polite">
         <div class="aw-top flex items-center justify-start gap-2 flex-wrap">
           <div class="aw-where">
@@ -280,13 +304,21 @@
               class="input input-bordered input-sm w-40"
             >
             <button type="button" id="setPlace" class="btn btn-ghost btn-sm">Set</button>
+            <select id="racePreset" class="select select-bordered select-sm">
+              <option value="">— Race preset —</option>
+              <option value="boston">Boston (Copley)</option>
+              <option value="nyc">NYC (Staten Island)</option>
+            </select>
           </div>
         </div>
 
         <div class="aw-grid grid grid-cols-5 gap-2">
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Dawn</div>
-            <time class="value" id="awDawn" datetime="">—</time>
+            <div class="value">
+              <time id="awDawn" datetime="">—</time>
+              <span id="awHeadlamp" class="hidden ml-1 align-middle badge badge-error badge-outline text-[0.6rem]">Headlamp</span>
+            </div>
           </div>
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Wind chill</div>
@@ -622,9 +654,58 @@
           placeInput: document.getElementById("placeQuery"),
           setPlace: document.getElementById("setPlace"),
           clothes: document.getElementById("clothesInline"),
+          racePreset: document.getElementById("racePreset"),
+        };
+
+        // Race presets (place + tz)
+        const racePresets = {
+          boston: { lat: 42.3496, lon: -71.0787, city: "Boston, MA", tz: "America/New_York" },
+          nyc: { lat: 40.5779, lon: -74.1451, city: "Staten Island, NY", tz: "America/New_York" },
         };
 
         const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        // Track last dawn + tz for headlamp computations
+        let lastDawn = null;
+        let lastTz = defaultTz;
+
+        const locationNeedsHeadlamp = () => {
+          const opt = elements.location.options[elements.location.selectedIndex];
+          if (!opt) return false;
+          try {
+            const group = opt.parentElement && opt.parentElement.label;
+            return typeof group === 'string' && /dirt/i.test(group);
+          } catch { return false; }
+        };
+
+        const minutesOfDay = (date) => date.getHours() * 60 + date.getMinutes();
+
+        const computeArrivalMinutes = () => {
+          const firstValue = elements.first.value || defaults.firstMeeting;
+          const firstMinutes = toMinutes(firstValue);
+          if (firstMinutes == null) return null;
+          const run = sanitizeMinutes(elements.run.value, 0);
+          const breakfast = sanitizeMinutes(elements.breakfast.value, 0);
+          const afterArrival = run + PREP_MINUTES + breakfast;
+          let arrival = firstMinutes - afterArrival;
+          if (arrival < 0) arrival += MINUTES_PER_DAY;
+          return arrival;
+        };
+
+        const updateHeadlampHint = () => {
+          const badge = document.getElementById('awHeadlamp');
+          if (!badge) return;
+          badge.classList.add('hidden');
+          if (!lastDawn || !locationNeedsHeadlamp()) return;
+          const arrivalMin = computeArrivalMinutes();
+          if (arrivalMin == null) return;
+          const dawnMin = minutesOfDay(lastDawn);
+          const buffer = 10; // canopy buffer minutes for dirt
+          if (arrivalMin < dawnMin + buffer) {
+            badge.classList.remove('hidden');
+            badge.title = 'Arrival before dawn; bring a headlamp';
+          }
+        };
 
         const fmtTime12InZone = (date, tz) =>
           new Intl.DateTimeFormat(undefined, {
@@ -881,36 +962,53 @@
         };
 
         const fetchWithCache = async (key, fetcher) => {
+          let stale;
+
           // Check localStorage cache first
           try {
             const raw = localStorage.getItem(key);
             const time = Number(localStorage.getItem(key + ":t"));
+            if (raw) stale = JSON.parse(raw);
             if (raw && time && Date.now() - time < CACHE_DURATION) {
-              return JSON.parse(raw);
+              return stale; // Fresh enough
             }
           } catch {}
 
           // Check in-memory cache
           const cached = weatherCache[key];
-          if (cached && Date.now() - cached.time < CACHE_DURATION) {
-            return cached.data;
+          if (cached) {
+            if (!stale) stale = cached.data;
+            if (Date.now() - cached.time < CACHE_DURATION) {
+              return cached.data; // Fresh enough
+            }
           }
 
-          // Fetch fresh data
-          const data = await fetcher();
-
-          // Update both caches
-          weatherCache[key] = { data, time: Date.now() };
+          // Try to fetch fresh data
           try {
-            localStorage.setItem(key, JSON.stringify(data));
-            localStorage.setItem(key + ":t", String(Date.now()));
-          } catch {}
+            const data = await fetcher();
 
-          return data;
+            // Update both caches
+            weatherCache[key] = { data, time: Date.now() };
+            try {
+              localStorage.setItem(key, JSON.stringify(data));
+              localStorage.setItem(key + ":t", String(Date.now()));
+            } catch {}
+
+            return data;
+          } catch (error) {
+            // If fetch fails and we have stale data, return it
+            if (stale) return stale;
+            throw error; // No stale data available, re-throw error
+          }
         };
 
-        const fetchDawn = async (lat, lon) => {
-          return fetchWithCache(`dawn_${lat}_${lon}`, async () => {
+        const tomorrowYMD = (tz) => new Intl.DateTimeFormat("en-CA", {
+          timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit"
+        }).format(new Date(Date.now() + 24*60*60*1000));
+
+        const fetchDawn = async (lat, lon, tz = defaultTz) => {
+          const ymd = tomorrowYMD(tz);
+          return fetchWithCache(`dawn_${lat}_${lon}_${ymd}`, async () => {
             const url = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=tomorrow&time_format=unix`;
             const res = await fetch(url);
             if (!res.ok) throw new Error("dawn fetch failed");
@@ -1053,19 +1151,31 @@
           if (typeof wetnessValue === "number" && wetnessValue >= 0.4) {
             wels.awWetness.classList.add("bad");
           }
+
+          // Update headlamp hint based on arrival vs dawn
+          lastDawn = dawn || null;
+          lastTz = tz || defaultTz;
+          updateHeadlampHint();
         };
 
         // Track request IDs to prevent stale responses
         let awReqId = 0;
+        let awAbort;
 
         const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
           if (!wels.awMsg) return;
+
+          // Abort previous request
+          awAbort?.abort();
+          awAbort = new AbortController();
+          const { signal } = awAbort;
+
           const id = ++awReqId;
           try {
             wels.awMsg.textContent = "Loading…";
 
             // Fetch dawn first
-            const dawnDate = await fetchDawn(lat, lon);
+            const dawnDate = await fetchDawn(lat, lon, tz);
 
             // Parallel fetch weather & wetness
             const [weather, wetnessInfo] = await Promise.all([
@@ -1102,6 +1212,7 @@
             });
             wels.awMsg.textContent = "";
           } catch (error) {
+            if (error.name === "AbortError") return; // Request was cancelled
             console.error(error);
             if (id === awReqId) {
               wels.awMsg.textContent = "Failed to load conditions.";
@@ -1110,6 +1221,15 @@
         };
 
         const attachAwarenessEvents = () => {
+          // Race preset change
+          wels.racePreset?.addEventListener("change", async (e) => {
+            const key = e.target.value;
+            const p = racePresets[key];
+            if (!p) return;
+            saveCoords(p.lat, p.lon, p.city, p.tz);
+            await refreshAwareness(p.lat, p.lon, p.city, p.tz);
+          });
+
           wels.useLoc?.addEventListener("click", () => {
             if (!navigator.geolocation) {
               wels.awMsg.textContent = "Geolocation not supported.";
