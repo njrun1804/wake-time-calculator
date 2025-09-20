@@ -539,12 +539,7 @@
           </div>
         </div>
         <!-- Travel time auto-synced with location (hidden, derived from data-travel attribute) -->
-        <input
-          id="travelMinutes"
-          name="travelMinutes"
-          type="hidden"
-          value="0"
-        />
+        <input id="travelMinutes" name="travelMinutes" type="hidden" value="0" />
         <!-- Hidden submit button for HTML validation -->
         <button type="submit" class="hidden" tabindex="-1">Submit</button>
       </form>
@@ -1605,13 +1600,18 @@
 
           // Update bar text with minutes
           const runBarText = document.getElementById('runBarText');
-          if (runBarText) runBarText.textContent = durations.run > 0 ? `Run ${durations.run}m` : 'Run';
+          if (runBarText)
+            runBarText.textContent = durations.run > 0 ? `Run ${durations.run}m` : 'Run';
 
           const travelBarText = document.getElementById('travelBarText');
-          if (travelBarText) travelBarText.textContent = durations.travel > 0 ? `Travel ${durations.travel}m` : 'Travel';
+          if (travelBarText)
+            travelBarText.textContent =
+              durations.travel > 0 ? `Travel ${durations.travel}m` : 'Travel';
 
           const breakfastBarText = document.getElementById('breakfastBarText');
-          if (breakfastBarText) breakfastBarText.textContent = durations.breakfast > 0 ? `Breakfast ${durations.breakfast}m` : 'Breakfast';
+          if (breakfastBarText)
+            breakfastBarText.textContent =
+              durations.breakfast > 0 ? `Breakfast ${durations.breakfast}m` : 'Breakfast';
 
           // Update breakdown (if element still exists for backwards compatibility)
           const breakdownEl = document.getElementById('breakdown');
