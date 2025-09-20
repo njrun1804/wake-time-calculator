@@ -240,10 +240,32 @@
         letter-spacing: -0.02em;
         line-height: 1.2;
       }
+      .aw-item .value.bad {
+        color: #b91c1c;
+      }
       .aw-note {
         font-size: 0.85rem;
         color: #7d8ca2;
         margin: 0;
+      }
+      /* Clothes section */
+      .clothes {
+        border-radius: 12px;
+        background: linear-gradient(145deg, #f8fbff, #eef2f8);
+        padding: 1rem;
+        display: grid;
+        gap: 0.4rem;
+      }
+      .clothes .label {
+        font-size: 0.75rem;
+        color: #61748f;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .clothes .value {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
       }
       .aw-credits {
         margin: 0;
@@ -473,6 +495,11 @@
           0 (run) + 45 (prep) + 0 (travel) + 0 (breakfast)
         </div>
       </section>
+      <section class="clothes" aria-live="polite">
+        <div class="label">Clothes at dawn</div>
+        <div class="value" id="clothesReco">—</div>
+        <p class="note" id="clothesNote">Based on wind chill around dawn.</p>
+      </section>
     </main>
     <script>
       (() => {
@@ -643,6 +670,8 @@
           useLoc: document.getElementById("useMyLocation"),
           placeInput: document.getElementById("placeQuery"),
           setPlace: document.getElementById("setPlace"),
+          clothes: document.getElementById("clothesReco"),
+          clothesNote: document.getElementById("clothesNote"),
         };
 
         const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -682,6 +711,16 @@
             return 35.74 + 0.6215 * tempF - 35.75 * v16 + 0.4275 * tempF * v16;
           }
           return null;
+        };
+
+        const clothesSuggestion = (f) => {
+          if (f == null || Number.isNaN(f)) return null;
+          if (f >= 55) return "Shorts + tee";
+          if (f >= 50) return "Shorts + tee + light gloves";
+          if (f >= 45) return "Shorts + long‑sleeve + gloves";
+          if (f >= 30) return "Shorts + long‑sleeve + gloves + headband";
+          if (f >= 20) return "Pants + long‑sleeve + gloves + headband";
+          return "Pants + long‑sleeve + jacket + gloves + headband";
         };
 
         // Trail Wetness Score (decayed rain minus ET0)
@@ -772,16 +811,16 @@
 
         // Utilities for place labels
         const US_STATE_ABBR = {
-          Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
-          Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
-          Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
-          Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
-          Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
-          Montana: "MT", Nebraska: "NE", Nevada: "NV", New Hampshire: "NH", New Jersey: "NJ",
-          New Mexico: "NM", New York: "NY", North Carolina: "NC", North Dakota: "ND", Ohio: "OH",
-          Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", Rhode Island: "RI", South Carolina: "SC",
-          South Dakota: "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
-          Virginia: "VA", Washington: "WA", West Virginia: "WV", Wisconsin: "WI", Wyoming: "WY",
+          "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
+          "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "Florida": "FL", "Georgia": "GA",
+          "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
+          "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+          "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS", "Missouri": "MO",
+          "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+          "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH",
+          "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+          "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
+          "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
           "District of Columbia": "DC",
         };
 
@@ -988,6 +1027,7 @@
           tempF,
           windMph,
           wetnessLabel,
+          wetnessValue,
         }) => {
           if (!wels.awCity) return;
           wels.awCity.textContent = city || "Loading location...";
@@ -1015,13 +1055,43 @@
             }
           }
           wels.awWindChill.textContent = windText;
+          // Threshold: 15°F or colder is bad (use wind chill if available)
+          wels.awWindChill.classList.remove("bad");
+          const windMetric =
+            typeof windChillF === "number"
+              ? windChillF
+              : typeof tempF === "number"
+              ? tempF
+              : null;
+          if (windMetric != null && windMetric <= 15) {
+            wels.awWindChill.classList.add("bad");
+          }
+
+          // Clothing suggestion based on wind chill/temperature
+          const reco = clothesSuggestion(windMetric);
+          if (wels.clothes) wels.clothes.textContent = reco || "—";
 
           wels.awPoP.textContent =
             typeof pop === "number" && pop >= 0 ? `${Math.round(pop)}%` : "—";
           wels.awPoP.title = "Probability of precip for the hour around dawn";
+          // Threshold: 60% or higher is bad
+          wels.awPoP.classList.remove("bad");
+          if (typeof pop === "number" && pop >= 60) {
+            wels.awPoP.classList.add("bad");
+          }
           wels.awWetBulb.textContent =
             typeof wetBulbF === "number" ? `${Math.round(wetBulbF)}°F` : "—";
+          // Threshold: 75°F or higher is bad
+          wels.awWetBulb.classList.remove("bad");
+          if (typeof wetBulbF === "number" && wetBulbF >= 75) {
+            wels.awWetBulb.classList.add("bad");
+          }
           wels.awWetness.textContent = wetnessLabel || "—";
+          // Threshold: 0.40" or higher is bad
+          wels.awWetness.classList.remove("bad");
+          if (typeof wetnessValue === "number" && wetnessValue >= 0.4) {
+            wels.awWetness.classList.add("bad");
+          }
         };
 
         // Track request IDs to prevent stale responses
@@ -1066,6 +1136,7 @@
               tempF: weather.tempF,
               windMph: weather.windMph,
               wetnessLabel,
+              wetnessValue: wetnessInfo.value,
             });
             wels.awMsg.textContent = "";
           } catch (error) {
@@ -1237,10 +1308,20 @@
           );
         };
 
-        loadValues();
-        attachEvents();
-        recalculate();
-        initAwareness();
+        // Ensure DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => {
+            loadValues();
+            attachEvents();
+            recalculate();
+            initAwareness();
+          });
+        } else {
+          loadValues();
+          attachEvents();
+          recalculate();
+          initAwareness();
+        }
       })();
     </script>
   </body>
