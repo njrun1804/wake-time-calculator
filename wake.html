@@ -344,23 +344,15 @@ body {
           >
         </p>
       </section>
-      <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-base-content text-center">
-        Wake time
-      </h1>
-      <div class="mt-2 flex justify-center gap-x-6 gap-y-2 flex-wrap text-center">
-        <div class="inline-flex items-baseline gap-1.5">
-          <span class="text-xs uppercase tracking-wide text-base-content/60">Latest wake</span>
-          <span id="latestWake" class="text-lg md:text-xl font-semibold text-base-content">--:--</span>
-        </div>
-        <div class="inline-flex items-baseline gap-1.5">
-          <span class="text-xs uppercase tracking-wide text-base-content/60">Chosen wake</span>
-          <span id="chosenWake" class="text-lg md:text-xl font-semibold text-base-content">--:--</span>
-        </div>
-      </div>
-      <div class="mt-1 flex justify-center text-center">
-        <div class="inline-flex items-baseline gap-1.5">
-          <span class="text-xs uppercase tracking-wide text-base-content/60">Clothes at dawn</span>
-          <span id="clothesInline" class="text-base md:text-lg font-semibold text-base-content">—</span>
+      <div class="text-center">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-base-content mb-2">
+          Wake Time
+        </h1>
+        <div class="text-5xl md:text-6xl font-bold text-primary mb-3" id="chosenWake">--:--</div>
+        <div class="text-sm text-base-content/70 space-x-4">
+          <span>Latest possible: <span id="latestWake" class="font-semibold">--:--</span></span>
+          <span>•</span>
+          <span>Clothes: <span id="clothesInline" class="font-semibold">—</span></span>
         </div>
       </div>
       <form id="wakeForm" aria-describedby="status">
