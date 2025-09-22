@@ -984,9 +984,19 @@
 
         // Load meals
         function loadMeals() {
-            meals = embeddedMeals;
+            console.log('Loading meals, embeddedMeals:', typeof embeddedMeals);
+            if (typeof embeddedMeals !== 'undefined') {
+                meals = embeddedMeals;
+            } else {
+                console.log('embeddedMeals not found, meals already has', meals.length, 'items');
+            }
+            window.meals = meals; // Expose for testing
+            console.log('Set window.meals:', window.meals ? window.meals.length : 'undefined');
             initFuzzySearch();
             loadDailyPlan();
+
+            // CRITICAL FIX: Setup event listeners AFTER meals are loaded
+            setupAllEventListeners();
         }
 
         function initFuzzySearch() {
@@ -1021,6 +1031,7 @@
             displayModalMeals(filteredMeals, otherMeals);
             modal.showModal();
         }
+        window.selectMealForSlot = selectMealForSlot; // Expose for testing
 
         function displayModalMeals(mealList, otherMeals) {
             const container = document.getElementById('modalMeals');
@@ -1358,7 +1369,7 @@
         // Initialize everything when DOM is ready
         function initializeApp() {
             loadMeals();
-            setupAllEventListeners();
+            // setupAllEventListeners is now called at the end of loadMeals()
         }
 
         // Setup all event listeners after DOM is ready
@@ -1432,6 +1443,11 @@
                 day: 'numeric'
             });
         }
+
+        // Expose functions for testing
+        window.initializeApp = initializeApp;
+        window.loadMeals = loadMeals;
+        window.setupAllEventListeners = setupAllEventListeners;
 
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
