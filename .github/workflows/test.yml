@@ -126,8 +126,8 @@ jobs:
         npm ci
         npm install -D @axe-core/playwright
 
-    - name: Install Playwright
-      run: npx playwright install --with-deps chromium
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
 
     - name: Create accessibility test
       run: |
