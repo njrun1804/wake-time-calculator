@@ -1,0 +1,187 @@
+name: Enhanced Smoke Test - All Variants
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  smoke-test-variants:
+    runs-on: ubuntu-latest
+    name: 🔍 Multi-Variant Smoke Test
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { file: "wake.html", name: "Legacy Monolithic", type: "legacy", hasModules: false }
+          - { file: "index-modular.html", name: "Basic Modular", type: "modular", hasModules: true, mainJS: "js/main.js" }
+          - { file: "index-full-modular.html", name: "Full Modular", type: "full-modular", hasModules: true, mainJS: "js/main-full.js" }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Start HTTP server
+      run: |
+        python3 -m http.server 8000 & echo $! > server.pid
+        sleep 2
+
+    - name: Test ${{ matrix.variant.name }} accessibility
+      run: |
+        echo "Testing ${{ matrix.variant.name }} (${{ matrix.variant.file }})"
+
+        # Basic connectivity test
+        if curl -sSfI http://localhost:8000/${{ matrix.variant.file }} >/dev/null; then
+          echo "✅ ${{ matrix.variant.name }} is accessible"
+        else
+          echo "❌ ${{ matrix.variant.name }} is not accessible"
+          exit 1
+        fi
+
+    - name: Test ES6 module structure (modular variants only)
+      if: matrix.variant.hasModules
+      run: |
+        echo "Testing ES6 module structure for ${{ matrix.variant.name }}"
+
+        # Check for module script tags
+        if curl -sSf http://localhost:8000/${{ matrix.variant.file }} | grep -q 'type="module"'; then
+          echo "✅ ES6 module script tag found"
+        else
+          echo "❌ ES6 module script tag not found"
+          exit 1
+        fi
+
+        # Check main JS file exists
+        if curl -sSfI http://localhost:8000/${{ matrix.variant.mainJS }} >/dev/null; then
+          echo "✅ Main JS file (${{ matrix.variant.mainJS }}) accessible"
+        else
+          echo "❌ Main JS file (${{ matrix.variant.mainJS }}) not accessible"
+          exit 1
+        fi
+
+        # Check for core module files
+        CORE_MODULES=("js/core/calculator.js" "js/core/storage.js" "js/core/constants.js")
+        for module in "${CORE_MODULES[@]}"; do
+          if curl -sSfI http://localhost:8000/$module >/dev/null; then
+            echo "✅ Core module $module accessible"
+          else
+            echo "❌ Core module $module not accessible"
+            exit 1
+          fi
+        done
+
+    - name: Test full modular specific modules
+      if: matrix.variant.type == 'full-modular'
+      run: |
+        echo "Testing weather awareness modules for Full Modular variant"
+
+        WEATHER_MODULES=("js/modules/weather.js" "js/modules/location.js" "js/modules/dawn.js" "js/modules/awareness.js")
+        for module in "${WEATHER_MODULES[@]}"; do
+          if curl -sSfI http://localhost:8000/$module >/dev/null; then
+            echo "✅ Weather module $module accessible"
+          else
+            echo "❌ Weather module $module not accessible"
+            exit 1
+          fi
+        done
+
+    - name: Test CSS resources
+      run: |
+        # Test CSS file exists (for modular variants)
+        if [[ "${{ matrix.variant.hasModules }}" == "true" ]]; then
+          if curl -sSfI http://localhost:8000/css/main.css >/dev/null; then
+            echo "✅ CSS file accessible"
+          else
+            echo "❌ CSS file not accessible"
+            exit 1
+          fi
+        else
+          echo "✅ Legacy variant uses inline CSS"
+        fi
+
+    - name: Test basic HTML structure
+      run: |
+        echo "Testing HTML structure for ${{ matrix.variant.name }}"
+
+        # Download the HTML and check for essential elements
+        HTML_CONTENT=$(curl -sSf http://localhost:8000/${{ matrix.variant.file }})
+
+        # Check for essential form elements
+        if echo "$HTML_CONTENT" | grep -q 'id="firstMeeting"'; then
+          echo "✅ Meeting time input found"
+        else
+          echo "❌ Meeting time input not found"
+          exit 1
+        fi
+
+        if echo "$HTML_CONTENT" | grep -q 'id="runMinutes"'; then
+          echo "✅ Run minutes input found"
+        else
+          echo "❌ Run minutes input not found"
+          exit 1
+        fi
+
+        if echo "$HTML_CONTENT" | grep -q 'id="chosenWake"'; then
+          echo "✅ Wake time display found"
+        else
+          echo "❌ Wake time display not found"
+          exit 1
+        fi
+
+    - name: Test variant-specific features
+      run: |
+        HTML_CONTENT=$(curl -sSf http://localhost:8000/${{ matrix.variant.file }})
+
+        if [[ "${{ matrix.variant.type }}" == "full-modular" ]]; then
+          # Check for weather awareness elements
+          if echo "$HTML_CONTENT" | grep -q 'awareness-section'; then
+            echo "✅ Weather awareness section found"
+          else
+            echo "❌ Weather awareness section not found"
+            exit 1
+          fi
+
+          if echo "$HTML_CONTENT" | grep -q 'id="useMyLocation"'; then
+            echo "✅ Location detection button found"
+          else
+            echo "❌ Location detection button not found"
+            exit 1
+          fi
+        else
+          echo "✅ Variant-specific feature check passed (non-full-modular)"
+        fi
+
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ -f server.pid ]; then
+          kill $(cat server.pid) || true
+          rm server.pid
+        fi
+
+  smoke-summary:
+    runs-on: ubuntu-latest
+    name: 📋 Smoke Test Summary
+    needs: smoke-test-variants
+    if: always()
+
+    steps:
+    - name: Report results
+      run: |
+        echo "# 🔍 Multi-Variant Smoke Test Results"
+        echo ""
+        echo "Smoke test result: ${{ needs.smoke-test-variants.result }}"
+        echo ""
+
+        if [[ "${{ needs.smoke-test-variants.result }}" == "success" ]]; then
+          echo "🎉 All architectural variants passed smoke tests!"
+          echo ""
+          echo "✅ Legacy monolithic variant: Basic structure verified"
+          echo "✅ Basic modular variant: ES6 modules and core structure verified"
+          echo "✅ Full modular variant: Weather awareness and full structure verified"
+        else
+          echo "❌ One or more variants failed smoke tests"
+          echo "Please check the individual test logs above for details"
+          exit 1
+        fi
