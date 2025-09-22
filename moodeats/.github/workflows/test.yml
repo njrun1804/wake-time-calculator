@@ -1,0 +1,85 @@
+name: Test MoodEats
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-meals:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Run meal data tests
+      run: |
+        chmod +x test-meals.js
+        node test-meals.js
+
+    - name: Validate JSON syntax
+      run: |
+        echo "Validating meals.json syntax..."
+        python3 -m json.tool meals.json > /dev/null
+        echo "✓ meals.json is valid JSON"
+
+    - name: Check meal counts
+      run: |
+        echo "Checking meal counts by mood..."
+        node -e "
+        const meals = require('./meals.json');
+        const moods = ['breakfast', 'hearty', 'cozy', 'fresh', 'quick', 'seafood', 'asian', 'italian'];
+
+        console.log('Meal counts by mood:');
+        moods.forEach(mood => {
+          const count = meals.filter(m => m.moods.includes(mood)).length;
+          console.log(\`  \${mood}: \${count} meals\`);
+          if (mood === 'breakfast' && count < 10) {
+            console.error(\`❌ Not enough breakfast meals: \${count}\`);
+            process.exit(1);
+          }
+          if (mood === 'hearty' && count < 20) {
+            console.error(\`❌ Not enough hearty meals: \${count}\`);
+            process.exit(1);
+          }
+        });
+
+        console.log(\`\\nTotal meals: \${meals.length}\`);
+        "
+
+    - name: Test search terms
+      run: |
+        echo "Testing search functionality..."
+        node -e "
+        const meals = require('./meals.json');
+
+        // Test common search terms
+        const searchTests = [
+          { term: 'toast', minExpected: 3 },
+          { term: 'chicken', minExpected: 10 },
+          { term: 'quick', minExpected: 15 },
+          { term: 'pasta', minExpected: 5 }
+        ];
+
+        searchTests.forEach(test => {
+          const found = meals.filter(m =>
+            m.searchTerms.some(term => term.toLowerCase().includes(test.term.toLowerCase())) ||
+            m.name.toLowerCase().includes(test.term.toLowerCase())
+          );
+
+          console.log(\`Search '\${test.term}': found \${found.length} meals\`);
+
+          if (found.length < test.minExpected) {
+            console.error(\`❌ Not enough results for '\${test.term}': expected at least \${test.minExpected}, got \${found.length}\`);
+            process.exit(1);
+          }
+        });
+
+        console.log('✓ All search tests passed');
+        "

@@ -70,14 +70,9 @@
                         </div>
                         <div id="mealSuggestions" class="space-y-3">
                         </div>
-                        <div class="flex gap-2 mt-4">
-                            <button id="showMore" class="btn btn-ghost btn-sm">
-                                Show 3 more →
-                            </button>
-                            <button id="showAll" class="btn btn-ghost btn-sm">
-                                Show All
-                            </button>
-                        </div>
+                        <button id="showMore" class="btn btn-ghost btn-sm mt-4">
+                            Show 3 more →
+                        </button>
                     </div>
                 </div>
             </div>
@@ -116,7 +111,6 @@
         // Choice theory optimized settings
         const INITIAL_SHOW = 3;  // Show 3 initially (down from 5)
         const MORE_INCREMENT = 3; // Show 3 more each time
-        let showingAll = false;  // Track if showing all results
         const RECENT_MEALS_KEY = 'moodeats:recent';
         const MAX_RECENT = 3;
 
@@ -248,18 +242,15 @@
 
             document.getElementById('suggestionsArea').classList.remove('hidden');
 
-            // Show "Show 3 more" and "Show All" buttons if there are more meals
+            // Show "Show 3 more" button if there are more meals
             if (suggestionIndex + INITIAL_SHOW < currentSuggestions.length) {
                 document.getElementById('showMore').classList.remove('hidden');
-                document.getElementById('showAll').classList.remove('hidden');
                 const remaining = currentSuggestions.length - (suggestionIndex + INITIAL_SHOW);
                 const showCount = Math.min(MORE_INCREMENT, remaining);
                 document.getElementById('showMore').textContent =
                     remaining > MORE_INCREMENT ? `Show ${showCount} more →` : `Show last ${showCount} →`;
-                document.getElementById('showAll').textContent = `Show All (${currentSuggestions.length} results)`;
             } else {
                 document.getElementById('showMore').classList.add('hidden');
-                document.getElementById('showAll').classList.add('hidden');
             }
         }
 
@@ -351,7 +342,6 @@
                 const moodMeals = getMealsByMood(mood);
                 currentSuggestions = smartSort(moodMeals);
                 suggestionIndex = 0;
-                showingAll = false;
                 displaySuggestions();
 
                 document.getElementById('searchInput').value = '';
@@ -364,7 +354,6 @@
                 const results = searchMeals(query);
                 currentSuggestions = smartSort(results);
                 suggestionIndex = 0;
-                showingAll = false;
                 displaySuggestions();
 
                 document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
@@ -385,54 +374,6 @@
                 suggestionIndex = 0;
             }
             displaySuggestions();
-        });
-
-        document.getElementById('showAll').addEventListener('click', () => {
-            showingAll = true;
-            const container = document.getElementById('mealSuggestions');
-            container.innerHTML = '';
-
-            currentSuggestions.forEach((meal, index) => {
-                const mealCard = document.createElement('div');
-                mealCard.className = 'card bg-base-100 cursor-pointer hover:bg-base-300 transition-colors';
-
-                let priorityBadge = '';
-                if (index === 0) {
-                    priorityBadge = '<span class="badge badge-primary badge-sm">Popular</span>';
-                } else if (meal.moods.includes('quick')) {
-                    priorityBadge = '<span class="badge badge-accent badge-sm">Quick</span>';
-                }
-
-                mealCard.innerHTML = `
-                    <div class="card-body p-4">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-semibold">${meal.name}</h4>
-                            ${priorityBadge}
-                        </div>
-                        <div class="flex gap-2 mt-2">
-                            ${meal.moods.map(mood => {
-                                const moodEmoji = {
-                                    'cozy': '🍲',
-                                    'fresh': '🥗',
-                                    'hearty': '🍖',
-                                    'quick': '⚡',
-                                    'breakfast': '🌅',
-                                    'seafood': '🐟',
-                                    'asian': '🥢',
-                                    'italian': '🍝'
-                                }[mood] || '';
-                                return `<span class="badge badge-sm">${moodEmoji} ${mood}</span>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-                mealCard.addEventListener('click', () => selectMeal(meal));
-                container.appendChild(mealCard);
-            });
-
-            document.getElementById('showMore').classList.add('hidden');
-            document.getElementById('showAll').classList.add('hidden');
-            document.getElementById('resultCount').textContent = `Showing all ${currentSuggestions.length} meals`;
         });
 
         document.getElementById('clearSelection').addEventListener('click', () => {
