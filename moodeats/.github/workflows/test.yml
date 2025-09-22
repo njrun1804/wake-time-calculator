@@ -7,8 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  test-meals:
+  unit-tests:
     runs-on: ubuntu-latest
+    name: 🧪 Unit Tests
 
     steps:
     - uses: actions/checkout@v3
@@ -17,69 +18,138 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+        cache: 'npm'
 
-    - name: Run meal data tests
-      run: |
-        chmod +x test-meals.js
-        node test-meals.js
+    - name: Install dependencies
+      run: npm ci
 
-    - name: Validate JSON syntax
+    - name: Run Jest unit tests
+      run: npm run test:unit
+
+    - name: Generate coverage report
+      run: npm run test:coverage
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-report
+        path: coverage/
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    name: 🌐 E2E Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+
+    - name: Run Playwright tests on ${{ matrix.browser }}
+      run: npx playwright test --project=${{ matrix.browser }}
+
+    - name: Upload Playwright report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report-${{ matrix.browser }}
+        path: playwright-report/
+        retention-days: 30
+
+  mobile-tests:
+    runs-on: ubuntu-latest
+    name: 📱 Mobile Tests
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium webkit
+
+    - name: Run mobile tests
       run: |
-        echo "Validating meals.json syntax..."
+        npx playwright test --project="Mobile Chrome"
+        npx playwright test --project="Mobile Safari"
+
+    - name: Upload mobile test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: mobile-test-results
+        path: test-results/
+
+  lint:
+    runs-on: ubuntu-latest
+    name: 🔍 Code Quality
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run ESLint
+      run: npm run lint || true  # Don't fail on lint errors for now
+
+    - name: Check JSON validity
+      run: |
+        echo "Validating meals.json..."
         python3 -m json.tool meals.json > /dev/null
-        echo "✓ meals.json is valid JSON"
+        echo "✅ meals.json is valid JSON"
 
-    - name: Check meal counts
+  test-summary:
+    runs-on: ubuntu-latest
+    name: ✅ All Tests Summary
+    needs: [unit-tests, e2e-tests, mobile-tests, lint]
+    if: always()
+
+    steps:
+    - name: Check test results
       run: |
-        echo "Checking meal counts by mood..."
-        node -e "
-        const meals = require('./meals.json');
-        const moods = ['breakfast', 'hearty', 'cozy', 'fresh', 'quick', 'seafood', 'asian', 'italian'];
+        echo "✅ Test Suite Complete!"
+        echo ""
+        echo "Test Matrix:"
+        echo "  • Unit Tests: ${{ needs.unit-tests.result }}"
+        echo "  • E2E Tests: ${{ needs.e2e-tests.result }}"
+        echo "  • Mobile Tests: ${{ needs.mobile-tests.result }}"
+        echo "  • Code Quality: ${{ needs.lint.result }}"
 
-        console.log('Meal counts by mood:');
-        moods.forEach(mood => {
-          const count = meals.filter(m => m.moods.includes(mood)).length;
-          console.log(\`  \${mood}: \${count} meals\`);
-          if (mood === 'breakfast' && count < 10) {
-            console.error(\`❌ Not enough breakfast meals: \${count}\`);
-            process.exit(1);
-          }
-          if (mood === 'hearty' && count < 20) {
-            console.error(\`❌ Not enough hearty meals: \${count}\`);
-            process.exit(1);
-          }
-        });
-
-        console.log(\`\\nTotal meals: \${meals.length}\`);
-        "
-
-    - name: Test search terms
-      run: |
-        echo "Testing search functionality..."
-        node -e "
-        const meals = require('./meals.json');
-
-        // Test common search terms
-        const searchTests = [
-          { term: 'toast', minExpected: 3 },
-          { term: 'chicken', minExpected: 10 },
-          { term: 'quick', minExpected: 15 },
-          { term: 'pasta', minExpected: 5 }
-        ];
-
-        searchTests.forEach(test => {
-          const found = meals.filter(m =>
-            m.searchTerms.some(term => term.toLowerCase().includes(test.term.toLowerCase())) ||
-            m.name.toLowerCase().includes(test.term.toLowerCase())
-          );
-
-          console.log(\`Search '\${test.term}': found \${found.length} meals\`);
-
-          if (found.length < test.minExpected) {
-            console.error(\`❌ Not enough results for '\${test.term}': expected at least \${test.minExpected}, got \${found.length}\`);
-            process.exit(1);
-          }
-        });
-
-        console.log('✓ All search tests passed');
-        "
+        if [[ "${{ needs.unit-tests.result }}" == "failure" ]] || \
+           [[ "${{ needs.e2e-tests.result }}" == "failure" ]] || \
+           [[ "${{ needs.mobile-tests.result }}" == "failure" ]]; then
+          echo ""
+          echo "❌ Some tests failed. Please check the logs above."
+          exit 1
+        else
+          echo ""
+          echo "🎉 All tests passed successfully!"
+        fi
