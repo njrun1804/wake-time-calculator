@@ -1,199 +1,246 @@
-# MoodEats Maintenance Guide
+# MoodEats Maintenance Guide - v2.0
+
+## Project Structure (Refactored)
+
+```
+moodeats/
+├── index.html              # Production HTML (uses bundled JS)
+├── index-modular.html      # Development HTML (uses ES modules)
+├── dist/
+│   └── moodeats-bundle.js  # Bundled JavaScript for production
+├── src/
+│   ├── css/
+│   │   └── styles.css      # Custom styles
+│   ├── js/
+│   │   ├── app.js          # Main application logic
+│   │   ├── meals-data.js   # Meals array (76+ meals)
+│   │   ├── nutrition-data.js # Nutrition estimates
+│   │   ├── storage.js      # LocalStorage functions
+│   │   └── ui.js           # UI update functions
+│   └── data/
+│       └── (future: meals.json processed)
+├── scripts/
+│   └── build.js            # Build bundled version
+├── tests/
+│   ├── unit/               # Unit tests
+│   ├── e2e/                # End-to-end tests
+│   └── fixtures/           # Test data
+├── archive/                # Old versions for reference
+└── docs/                   # Documentation
+
+```
 
 ## Quick Commands
 
-### Add a new meal
+### Local Development
 ```bash
-# Open meals.json and add to the array
-open meals.json
-```
-
-### Test locally
-```bash
-# Serve with Python (has CORS headers for JSON)
+# Serve locally
 python3 -m http.server 8000
-open http://localhost:8000/moodeats-v2.html
+open http://localhost:8000/index.html
+
+# Run tests
+npm test
+
+# Lint code
+npm run lint
 ```
 
-### Deploy updates
+### Build & Deploy
 ```bash
+# Build bundled version
+node scripts/build.js
+
+# Deploy to GitHub Pages
 git add -A
-git commit -m "Update meals database"
+git commit -m "Your message"
 git push moodeats main
+
+# Site live at: https://njrun1804.github.io/moodeats/
 ```
 
-## File Structure
+## Architecture Overview
+
+### Modular Design
+The app is now split into logical modules:
+
+1. **meals-data.js** - Contains the array of 76+ meals
+2. **nutrition-data.js** - Nutrition estimates for each meal
+3. **storage.js** - All localStorage operations
+4. **ui.js** - DOM manipulation and display updates
+5. **app.js** - Main application logic and initialization
+
+### Data Flow
 ```
-moodeats/
-├── index.html          # Production (copy of moodeats-v2.html)
-├── moodeats-v2.html    # Latest version with choice optimization
-├── moodeats.html       # Old version (meals embedded)
-├── meals.json          # Meal database (76+ meals)
-├── choice-analysis.md  # Choice theory documentation
-└── README.md          # Public documentation
+app.js (coordinator)
+  ├── loads meals-data.js
+  ├── uses nutrition-data.js for calculations
+  ├── calls storage.js for persistence
+  └── updates DOM via ui.js
 ```
 
-## Meal Schema
-Each meal in `meals.json` must have:
-```json
+## Adding New Features
+
+### Add a New Meal
+1. Edit `src/js/meals-data.js`
+2. Add meal object to the `embeddedMeals` array:
+```javascript
 {
   "name": "Meal Name",
   "category": "breakfast|italian|japanese|chinese|texmex|seafood|soup|sandwich|side",
-  "moods": ["cozy", "fresh", "hearty", "quick", "breakfast", "seafood", "asian", "italian"],
+  "moods": ["cozy", "fresh", "hearty", "quick"],
   "ingredients": {
     "core": ["Main ingredients"],
     "pantry": ["Pantry staples"]
   },
-  "searchTerms": ["keywords", "for", "fuzzy", "search"]
+  "searchTerms": ["keywords"]
 }
 ```
 
-## Adding Meals
-
-### Valid moods (use existing only)
-- `cozy` - Comfort food, warm, soothing
-- `fresh` - Light, crisp, healthy
-- `hearty` - Filling, substantial, protein-heavy
-- `quick` - Under 30 minutes
-- `breakfast` - Morning meals
-- `seafood` - Fish/shellfish primary
-- `asian` - Japanese/Chinese cuisine
-- `italian` - Italian/Italian-American
-
-### Categories (for variety algorithm)
-- `breakfast` - Morning meals
-- `italian` - Pasta, pizza, Italian-American
-- `japanese` - Sushi, teriyaki, ramen, etc.
-- `chinese` - Stir-fry, takeout classics
-- `texmex` - Tacos, burritos, Tex-Mex
-- `seafood` - Fish/shellfish focused
-- `soup` - Soups and stews
-- `sandwich` - Sandwiches, wraps, subs
-- `side` - Side dishes
-
-### Search terms tips
-- Include common misspellings
-- Add related words (e.g., "pasta" for spaghetti dishes)
-- Include cooking methods (e.g., "baked", "fried")
-- Add dietary markers (e.g., "vegetarian", "no vinegar")
-
-## Testing Changes
-
-### Validate JSON
-```bash
-# Check JSON syntax
-python3 -c "import json; json.load(open('meals.json'))"
-```
-
-### Check for duplicates
-```bash
-# Find duplicate meal names
-grep '"name":' meals.json | sort | uniq -d
-```
-
-### Count meals by mood
-```bash
-# See mood distribution
-grep -o '"moods": \[.*\]' meals.json | grep -c "cozy"
-```
-
-## Choice Theory Implementation
-
-Current settings optimize for decision-making:
-- **Shows 3 meals initially** (not 5) - reduces decision paralysis
-- **"Show 3 more" button** - chunked decisions
-- **Smart ordering** - variety + quick options prioritized
-- **Recently viewed** - tracks last 3 selections
-
-To adjust:
+3. Add nutrition data in `src/js/nutrition-data.js`:
 ```javascript
-// In moodeats-v2.html
-const INITIAL_SHOW = 3;    // Meals shown initially
-const MORE_INCREMENT = 3;   // Meals added per click
-const MAX_RECENT = 3;      // Recent meals tracked
+"Meal Name": { protein: 30, carbs: 45, fat: 20, calories: 480 }
 ```
 
-## Common Maintenance Tasks
+4. Run build: `node scripts/build.js`
 
-### Remove a meal
-1. Open `meals.json`
-2. Find the meal by name
-3. Delete the entire object (including comma)
-4. Test locally
-5. Commit and push
+### Add a New Mood
+1. Update HTML buttons in `index.html`
+2. Add filtering logic in `app.js` → `selectMealForSlot()`
+3. Update meal data with new mood tags
 
-### Edit ingredients
-1. Find meal in `meals.json`
-2. Edit `ingredients.core` or `ingredients.pantry`
-3. Keep formatting consistent
-4. Test locally
+### Modify Nutrition Calculations
+- Edit `ui.js` → `calculateRunnerScore()` for scoring logic
+- Edit `ui.js` → `updateDailyTotals()` for totals display
 
-### Bulk operations
+## Key Functions Reference
+
+### app.js
+- `initializeApp()` - Entry point
+- `selectMealForSlot(slot)` - Opens modal for meal selection
+- `selectMeal(meal)` - Adds meal to daily plan
+- `addManualMeal()` - Adds custom typed meal
+
+### storage.js
+- `savePlanToStorage()` - Saves current plan
+- `loadDailyPlan()` - Loads saved plan
+- `saveDailyPlan()` - Archives daily plan
+
+### ui.js
+- `updateSlotDisplay(slot, meal)` - Updates meal slot UI
+- `updateDailyTotals()` - Calculates and displays totals
+- `displayModalMeals()` - Shows meals in selection modal
+
+## Testing
+
+### Unit Tests
+```bash
+npm run test:unit        # Run all unit tests
+npm run test:coverage    # With coverage report
+```
+
+### E2E Tests
+```bash
+npm run test:e2e         # Run all E2E tests
+npm run test:headed      # Run with browser visible
+npm run test:ui          # Open Playwright UI
+```
+
+## Maintenance Tasks
+
+### Update All Nutrition Values
+```bash
+# Future: Create script to calculate calories
+# calories = (protein * 4) + (carbs * 4) + (fat * 9)
+```
+
+### Clean Up Old Plans
 ```javascript
-// Example: Add "weeknight" searchTerm to all quick meals
-const meals = require('./meals.json');
-meals.forEach(meal => {
-  if (meal.moods.includes('quick') && !meal.searchTerms.includes('weeknight')) {
-    meal.searchTerms.push('weeknight');
-  }
-});
-require('fs').writeFileSync('meals.json', JSON.stringify(meals, null, 2));
+// In storage.js, adjust retention period (currently 30 days)
+cutoff.setDate(cutoff.getDate() - 30); // Change 30 to desired days
 ```
 
-## Deployment Checklist
+### Performance Optimization
+- Bundle is currently ~100KB
+- Consider lazy loading meal data if grows > 200KB
+- Use service worker for offline support
 
-1. [ ] JSON validates without errors
-2. [ ] No duplicate meal names
-3. [ ] Test locally with Python server
-4. [ ] Copy moodeats-v2.html to index.html
-5. [ ] Commit with descriptive message
-6. [ ] Push to moodeats repository
-7. [ ] Wait 2-3 minutes for GitHub Pages
-8. [ ] Test at https://njrun1804.github.io/moodeats/
+## User Preferences
 
-## User Preferences to Remember
-
-- **No cilantro** - Never add
-- **No pickled onions** - Never add
-- **Minimal citrus** - Zest only, no juice
-- **Low acid** - Use passata, not regular tomato sauce
-- **Mild spice** - Nothing beyond mild heat
-- **Melty > crumbly cheese** - Provolone, mozzarella preferred
-- **Minimal cream sauces** - Avoid heavy dairy
-
-## Future Enhancements
-
-### Phase 1 (Current)
-- ✅ Separated data from presentation
-- ✅ Choice theory optimization (3 meals)
-- ✅ Recently viewed tracking
-- ✅ Smart ordering
-
-### Phase 2 (Planned)
-- [ ] Favorites/stars system
-- [ ] "Not feeling these" temporary hiding
-- [ ] Time-aware suggestions
-- [ ] Meal history tracking
-
-### Phase 3 (Maybe)
-- [ ] Weather API integration
-- [ ] Grocery list generation
-- [ ] Meal planning mode
-- [ ] Share meal selections
+Current dietary restrictions handled:
+- No cilantro (excluded from ingredients)
+- Minimal citrus (zest only, no juice)
+- Low acid (passata instead of tomato sauce)
+- Mild spice only
+- Melty cheese preferred (provolone, mozzarella)
 
 ## Troubleshooting
 
-### Meals not loading
-- Check browser console for CORS errors
-- Ensure meals.json is valid JSON
-- Use Python server for local testing (not file://)
+### Meals Not Loading
+1. Check browser console for errors
+2. Verify `embeddedMeals` exists in meals-data.js
+3. Check Fuse.js CDN is loading
+4. Run build script: `node scripts/build.js`
 
-### Search not working
-- Check Fuse.js CDN is accessible
-- Verify searchTerms arrays in meals.json
-- Check threshold setting (currently 0.4)
+### LocalStorage Issues
+- Check localStorage quota (usually 5-10MB)
+- Clear old data: `localStorage.clear()`
+- Check for 'moodeats:' prefix on all keys
 
-### GitHub Pages not updating
-- Check Actions tab for build errors
-- Ensure index.html is updated
-- Clear browser cache (Cmd+Shift+R)
+### Build Issues
+- Ensure Node.js installed
+- Check file paths in build.js
+- Verify src files exist before building
+
+## Future Enhancements
+
+### Phase 1 ✅ (Completed)
+- Modular architecture
+- Nutrition tracking
+- Manual meal entry
+- Snacks section
+
+### Phase 2 (Next)
+- [ ] Favorites system
+- [ ] Meal history export
+- [ ] Weekly planning
+- [ ] Shopping list generation
+
+### Phase 3 (Future)
+- [ ] Recipe integration
+- [ ] Nutrition API integration
+- [ ] Multi-user support
+- [ ] Mobile app version
+
+## Git Workflow
+
+```bash
+# Feature branch
+git checkout -b feature-name
+# Make changes
+git add -A
+git commit -m "feat: description"
+git push origin feature-name
+
+# Merge to main
+git checkout main
+git merge feature-name
+git push moodeats main
+```
+
+## Performance Metrics
+
+Target metrics:
+- Initial load: < 2s
+- Time to interactive: < 3s
+- Lighthouse score: > 90
+- Bundle size: < 200KB
+
+Current (after refactor):
+- HTML: 11KB (was 65KB)
+- JavaScript: ~100KB bundled
+- CSS: 1KB
+- Total: ~112KB (was 65KB monolithic)
+
+---
+
+*Last updated: Sep 22, 2025 - Major refactoring to modular architecture*

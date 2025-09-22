@@ -1,4 +1,7 @@
-[
+// Meals data extracted from moodeats-planner.html
+// This file contains all meal definitions
+
+const embeddedMeals = [
   {
     "name": "Greek Yogurt Parfait with Berries & Muesli",
     "category": "breakfast",
@@ -7,10 +10,7 @@
       "core": ["Greek yogurt", "Mixed berries", "Muesli"],
       "pantry": ["Honey or maple syrup", "Salt (pinch)"]
     },
-    "searchTerms": ["yogurt", "berries", "healthy", "light", "fruit", "morning", "easy"],
-    "protein": 25,
-    "carbs": 68,
-    "fat": 10
+    "searchTerms": ["yogurt", "berries", "healthy", "light", "fruit", "morning", "easy"]
   },
   {
     "name": "Oatmeal with Banana & PB",
@@ -20,10 +20,7 @@
       "core": ["Oats", "Banana", "Peanut butter"],
       "pantry": ["Water or milk", "Cinnamon (optional)"]
     },
-    "searchTerms": ["oats", "oatmeal", "banana", "peanut butter", "warm", "filling", "comfort"],
-    "protein": 10,
-    "carbs": 58,
-    "fat": 11
+    "searchTerms": ["oats", "oatmeal", "banana", "peanut butter", "warm", "filling", "comfort"]
   },
   {
     "name": "Scrambled Eggs on Buttered Rye",
@@ -33,10 +30,7 @@
       "core": ["Eggs", "Rye bread", "Cherry tomatoes"],
       "pantry": ["Butter", "Olive oil", "Garlic", "Flaky salt"]
     },
-    "searchTerms": ["eggs", "scrambled", "rye", "toast", "tomatoes", "savory", "protein", "bread"],
-    "protein": 24,
-    "carbs": 30,
-    "fat": 28
+    "searchTerms": ["eggs", "scrambled", "rye", "toast", "tomatoes", "savory", "protein", "bread"]
   },
   {
     "name": "Spinach & Mozzarella Omelet",
@@ -46,10 +40,7 @@
       "core": ["Eggs", "Spinach", "Mozzarella or provolone"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["omelet", "eggs", "spinach", "cheese", "melty", "protein", "veggie"],
-    "protein": 25,
-    "carbs": 1,
-    "fat": 32
+    "searchTerms": ["omelet", "eggs", "spinach", "cheese", "melty", "protein", "veggie"]
   },
   {
     "name": "Bagel with Lox & Cream Cheese",
@@ -59,10 +50,7 @@
       "core": ["Bagel", "Smoked salmon", "Cream cheese"],
       "pantry": ["Dill", "Capers (rinsed)", "Lemon zest (optional)"]
     },
-    "searchTerms": ["bagel", "lox", "salmon", "cream cheese", "deli", "jewish", "brunch"],
-    "protein": 29,
-    "carbs": 56,
-    "fat": 20
+    "searchTerms": ["bagel", "lox", "salmon", "cream cheese", "deli", "jewish", "brunch"]
   },
   {
     "name": "Breakfast Burrito",
@@ -72,10 +60,7 @@
       "core": ["Eggs", "Potatoes", "Cheese", "Tortilla"],
       "pantry": ["Mild salsa (cilantro-free)", "Guacamole (optional)"]
     },
-    "searchTerms": ["burrito", "eggs", "potato", "cheese", "wrap", "mexican", "filling"],
-    "protein": 29,
-    "carbs": 66,
-    "fat": 21
+    "searchTerms": ["burrito", "eggs", "potato", "cheese", "wrap", "mexican", "filling"]
   },
   {
     "name": "Avocado Toast with Egg",
@@ -85,10 +70,7 @@
       "core": ["Avocado", "Bread", "Egg"],
       "pantry": ["Salt", "Olive oil"]
     },
-    "searchTerms": ["avocado", "toast", "egg", "healthy", "trendy", "millennial", "brunch", "bread"],
-    "protein": 14,
-    "carbs": 36,
-    "fat": 33
+    "searchTerms": ["avocado", "toast", "egg", "healthy", "trendy", "millennial", "brunch", "bread"]
   },
   {
     "name": "Savory Oats with Egg",
@@ -98,10 +80,7 @@
       "core": ["Oats", "Egg", "Parmesan"],
       "pantry": ["Chicken stock", "Black pepper"]
     },
-    "searchTerms": ["oats", "savory", "egg", "different", "unique", "umami", "broth"],
-    "protein": 13,
-    "carbs": 27,
-    "fat": 9
+    "searchTerms": ["oats", "savory", "egg", "different", "unique", "umami", "broth"]
   },
   {
     "name": "Rye Toast with Burrata & Warm Tomatoes",
@@ -111,10 +90,7 @@
       "core": ["Rye bread", "Burrata", "Cherry tomatoes"],
       "pantry": ["Olive oil", "Garlic", "Salt", "Lemon zest (optional)"]
     },
-    "searchTerms": ["burrata", "tomatoes", "toast", "fancy", "italian", "creamy", "warm", "bread", "rye"],
-    "protein": 14,
-    "carbs": 37,
-    "fat": 25
+    "searchTerms": ["burrata", "tomatoes", "toast", "fancy", "italian", "creamy", "warm", "bread", "rye"]
   },
   {
     "name": "Fruit & Nuts Plate",
@@ -124,10 +100,7 @@
       "core": ["Melon", "Grapes", "Nectarine or plum", "Mixed nuts"],
       "pantry": []
     },
-    "searchTerms": ["fruit", "nuts", "healthy", "light", "raw", "no cook", "simple"],
-    "protein": 7,
-    "carbs": 54,
-    "fat": 15
+    "searchTerms": ["fruit", "nuts", "healthy", "light", "raw", "no cook", "simple"]
   },
   {
     "name": "Egg & Cheese Bagel",
@@ -137,10 +110,7 @@
       "core": ["Bagel", "Eggs", "Provolone or mozzarella"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick", "sandwich", "bread"],
-    "protein": 29,
-    "carbs": 55,
-    "fat": 29
+    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick", "sandwich", "bread"]
   },
   {
     "name": "Turkey Sausage, Egg & Cheese on Rye",
@@ -150,10 +120,7 @@
       "core": ["Rye bread", "Turkey sausage", "Eggs", "Provolone"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic", "toast", "bread"],
-    "protein": 33,
-    "carbs": 33,
-    "fat": 34
+    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic", "toast", "bread"]
   },
   {
     "name": "Lox, Eggs & Onions Scramble",
@@ -163,10 +130,7 @@
       "core": ["Eggs", "Smoked salmon", "Onion"],
       "pantry": ["Butter", "Salt", "Pepper", "Dill (optional)"]
     },
-    "searchTerms": ["lox and eggs", "scramble", "deli", "classic", "smoked salmon"],
-    "protein": 35,
-    "carbs": 0,
-    "fat": 34
+    "searchTerms": ["lox and eggs", "scramble", "deli", "classic", "smoked salmon"]
   },
   {
     "name": "Spaghetti with Turkey Bolognese",
@@ -779,23 +743,4 @@
     "searchTerms": ["mashed potatoes", "no cream", "olive oil", "comfort", "classic"]
   },
   {
-    "name": "Edamame with Sea Salt",
-    "category": "side",
-    "moods": ["fresh", "quick"],
-    "ingredients": {
-      "core": ["Edamame"],
-      "pantry": ["Salt"]
-    },
-    "searchTerms": ["edamame", "side", "snack", "japanese", "sea salt", "simple"]
-  },
-  {
-    "name": "Garlic Bread (Rye or Sourdough)",
-    "category": "side",
-    "moods": ["hearty", "italian"],
-    "ingredients": {
-      "core": ["Rye or sourdough"],
-      "pantry": ["Butter", "Garlic", "Parsley", "Salt"]
-    },
-    "searchTerms": ["garlic bread", "side", "italian", "toasty", "classic", "toast", "bread", "appetizer"]
-  }
-]
+export { embeddedMeals };
