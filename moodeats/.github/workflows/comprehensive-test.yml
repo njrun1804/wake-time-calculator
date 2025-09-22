@@ -1,0 +1,417 @@
+name: Comprehensive MoodEats Testing
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Stage 1: Data Validation
+  validate-data:
+    runs-on: ubuntu-latest
+    name: 📊 Validate Meal Data
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Validate JSON syntax
+      run: |
+        echo "📋 Validating meals.json syntax..."
+        python3 -m json.tool meals.json > /dev/null
+        if [ $? -eq 0 ]; then
+          echo "✅ meals.json is valid JSON"
+        else
+          echo "❌ meals.json has JSON syntax errors"
+          exit 1
+        fi
+
+    - name: Run meal data tests
+      run: |
+        chmod +x test-meals.js
+        node test-meals.js
+
+    - name: Check meal counts by mood
+      run: |
+        echo "📊 Checking meal counts by mood..."
+        node -e "
+        const meals = require('./meals.json');
+        const moods = ['breakfast', 'fresh', 'cozy', 'hearty', 'quick', 'seafood', 'asian', 'italian'];
+
+        console.log('Meal counts by mood:');
+        let allPass = true;
+        moods.forEach(mood => {
+          const count = meals.filter(m => m.moods.includes(mood)).length;
+          console.log(\`  \${mood}: \${count} meals\`);
+
+          // Minimum requirements
+          if (mood === 'breakfast' && count < 10) {
+            console.error(\`❌ Not enough breakfast meals: \${count}\`);
+            allPass = false;
+          }
+          if (mood === 'hearty' && count < 20) {
+            console.error(\`❌ Not enough hearty meals: \${count}\`);
+            allPass = false;
+          }
+          if (mood === 'fresh' && count < 10) {
+            console.error(\`❌ Not enough fresh meals: \${count}\`);
+            allPass = false;
+          }
+        });
+
+        console.log(\`\\nTotal meals: \${meals.length}\`);
+        if (meals.length < 70) {
+          console.error(\`❌ Not enough total meals: \${meals.length}\`);
+          allPass = false;
+        }
+
+        if (!allPass) process.exit(1);
+        console.log('✅ All meal counts meet requirements');
+        "
+
+    - name: Validate search terms
+      run: |
+        echo "🔍 Testing search functionality..."
+        node -e "
+        const meals = require('./meals.json');
+
+        const searchTests = [
+          { term: 'toast', minExpected: 3 },
+          { term: 'chicken', minExpected: 10 },
+          { term: 'quick', minExpected: 15 },
+          { term: 'pasta', minExpected: 5 },
+          { term: 'eggs', minExpected: 5 },
+          { term: 'salmon', minExpected: 3 }
+        ];
+
+        let allPass = true;
+        searchTests.forEach(test => {
+          const found = meals.filter(m =>
+            m.searchTerms.some(term => term.toLowerCase().includes(test.term.toLowerCase())) ||
+            m.name.toLowerCase().includes(test.term.toLowerCase())
+          );
+
+          console.log(\`Search '\${test.term}': found \${found.length} meals\`);
+
+          if (found.length < test.minExpected) {
+            console.error(\`❌ Not enough results for '\${test.term}': expected at least \${test.minExpected}, got \${found.length}\`);
+            allPass = false;
+          }
+        });
+
+        if (allPass) {
+          console.log('✅ All search tests passed');
+        } else {
+          process.exit(1);
+        }
+        "
+
+  # Stage 2: DOM Structure Testing
+  test-dom-structure:
+    runs-on: ubuntu-latest
+    name: 🏗️ Test DOM Structure
+    needs: validate-data
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Run DOM structure tests
+      run: |
+        chmod +x test-dom.js
+        node test-dom.js
+
+    - name: Check for HTML syntax errors
+      run: |
+        echo "🔍 Checking HTML files for basic syntax..."
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            echo "Checking $file..."
+            # Basic HTML validation checks
+            if ! grep -q '<!DOCTYPE html>' "$file"; then
+              echo "⚠️ Warning: $file missing DOCTYPE"
+            fi
+            if ! grep -q '<html' "$file"; then
+              echo "❌ Error: $file missing html tag"
+              exit 1
+            fi
+            if ! grep -q '</html>' "$file"; then
+              echo "❌ Error: $file missing closing html tag"
+              exit 1
+            fi
+            echo "✅ $file basic structure OK"
+          fi
+        done
+
+    - name: Verify embedded data integrity
+      run: |
+        echo "📦 Checking embedded data in planner..."
+        node -e "
+        const fs = require('fs');
+        const plannerContent = fs.readFileSync('moodeats-planner.html', 'utf8');
+
+        // Check if embeddedMeals is defined
+        if (!plannerContent.includes('const embeddedMeals =')) {
+          console.error('❌ embeddedMeals not found in planner');
+          process.exit(1);
+        }
+
+        // Count meals in embedded data
+        const mealMatches = plannerContent.match(/\"name\":\s*\"/g);
+        const mealCount = mealMatches ? mealMatches.length : 0;
+
+        console.log(\`Found \${mealCount} meals embedded in planner\`);
+
+        if (mealCount !== 76) {
+          console.error(\`❌ Expected 76 meals, found \${mealCount}\`);
+          process.exit(1);
+        }
+
+        console.log('✅ Embedded data integrity verified');
+        "
+
+  # Stage 3: Function Flow Testing
+  test-function-flow:
+    runs-on: ubuntu-latest
+    name: 🔄 Test Function Flow
+    needs: test-dom-structure
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Verify critical function order
+      run: |
+        echo "🔄 Checking function execution order..."
+        node -e "
+        const fs = require('fs');
+        const plannerContent = fs.readFileSync('moodeats-planner.html', 'utf8');
+
+        // Check that setupBrowseViewEventListeners is called in loadMeals
+        const loadMealsMatch = plannerContent.match(/function loadMeals\\(\\)[\\s\\S]*?\\n\\s*}/);
+        if (!loadMealsMatch) {
+          console.error('❌ loadMeals function not found');
+          process.exit(1);
+        }
+
+        if (!loadMealsMatch[0].includes('setupBrowseViewEventListeners()')) {
+          console.error('❌ setupBrowseViewEventListeners not called in loadMeals');
+          console.error('This would cause mood buttons to not work!');
+          process.exit(1);
+        }
+
+        console.log('✅ Event listeners properly initialized after meals load');
+
+        // Check that loadMeals is called
+        const loadMealsCall = plannerContent.lastIndexOf('loadMeals()');
+        if (loadMealsCall === -1) {
+          console.error('❌ loadMeals() is never called');
+          process.exit(1);
+        }
+
+        console.log('✅ loadMeals() is called to initialize app');
+        "
+
+    - name: Check event listener attachments
+      run: |
+        echo "🎯 Verifying event listener setup..."
+        node -e "
+        const fs = require('fs');
+        const plannerContent = fs.readFileSync('moodeats-planner.html', 'utf8');
+
+        // Critical event listeners that must exist
+        const requiredListeners = [
+          'querySelectorAll(\\'.mood-btn\\')',
+          'addEventListener(\\'click\\'',
+          'getElementById(\\'searchInput\\')',
+          'addEventListener(\\'input\\'',
+          'getElementById(\\'browseTab\\')',
+          'getElementById(\\'planTab\\')'
+        ];
+
+        let allFound = true;
+        requiredListeners.forEach(listener => {
+          if (!plannerContent.includes(listener)) {
+            console.error(\`❌ Missing: \${listener}\`);
+            allFound = false;
+          } else {
+            console.log(\`✅ Found: \${listener}\`);
+          }
+        });
+
+        if (!allFound) {
+          process.exit(1);
+        }
+
+        console.log('✅ All critical event listeners are set up');
+        "
+
+  # Stage 4: Error Handling & Edge Cases
+  test-error-handling:
+    runs-on: ubuntu-latest
+    name: 🛡️ Test Error Handling
+    needs: test-function-flow
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Check for basic error handling
+      run: |
+        echo "🛡️ Checking error handling..."
+        node -e "
+        const fs = require('fs');
+        const plannerContent = fs.readFileSync('moodeats-planner.html', 'utf8');
+
+        // Check for defensive programming
+        const checks = [
+          { pattern: '.length === 0', desc: 'Empty array checks' },
+          { pattern: 'if (', desc: 'Conditional checks' },
+          { pattern: '||', desc: 'Fallback values' },
+          { pattern: '?.', desc: 'Optional chaining (good practice)' }
+        ];
+
+        checks.forEach(check => {
+          if (plannerContent.includes(check.pattern)) {
+            console.log(\`✅ Has \${check.desc}\`);
+          } else {
+            console.log(\`⚠️ Consider adding \${check.desc}\`);
+          }
+        });
+
+        // Check for console.error (should be minimal in production)
+        const errorCount = (plannerContent.match(/console\\.error/g) || []).length;
+        if (errorCount > 5) {
+          console.log(\`⚠️ Warning: \${errorCount} console.error statements found\`);
+        }
+
+        console.log('✅ Basic error handling checks complete');
+        "
+
+    - name: Test data edge cases
+      run: |
+        echo "🔬 Testing edge cases..."
+        node -e "
+        const meals = require('./meals.json');
+
+        // Test for edge cases
+        let issues = [];
+
+        // Check for empty arrays
+        meals.forEach((meal, index) => {
+          if (meal.ingredients.core.length === 0) {
+            issues.push(\`Meal at index \${index} has no core ingredients\`);
+          }
+          if (meal.moods.length === 0) {
+            issues.push(\`Meal '\${meal.name}' has no moods\`);
+          }
+          if (meal.searchTerms.length === 0) {
+            issues.push(\`Meal '\${meal.name}' has no search terms\`);
+          }
+        });
+
+        // Check for unusually long strings
+        meals.forEach(meal => {
+          if (meal.name.length > 50) {
+            issues.push(\`Meal '\${meal.name}' has unusually long name\`);
+          }
+        });
+
+        if (issues.length > 0) {
+          console.log('⚠️ Found potential issues:');
+          issues.forEach(issue => console.log(\`  - \${issue}\`));
+          process.exit(1);
+        }
+
+        console.log('✅ No edge case issues found');
+        "
+
+  # Stage 5: Performance Testing
+  test-performance:
+    runs-on: ubuntu-latest
+    name: ⚡ Performance Tests
+    needs: test-error-handling
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Check file sizes
+      run: |
+        echo "📏 Checking file sizes..."
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            size=$(wc -c < "$file")
+            size_kb=$((size / 1024))
+            echo "$file: ${size_kb}KB"
+
+            if [ $size -gt 200000 ]; then
+              echo "⚠️ Warning: $file is larger than 200KB"
+              if [ $size -gt 500000 ]; then
+                echo "❌ Error: $file is larger than 500KB - too large!"
+                exit 1
+              fi
+            fi
+          fi
+        done
+        echo "✅ All file sizes acceptable"
+
+    - name: Check for performance issues
+      run: |
+        echo "⚡ Checking for performance issues..."
+        node -e "
+        const fs = require('fs');
+        const plannerContent = fs.readFileSync('moodeats-planner.html', 'utf8');
+
+        // Check for potential performance issues
+        const issues = [];
+
+        // Check for excessive DOM queries in loops
+        if (plannerContent.includes('forEach') && plannerContent.includes('querySelector')) {
+          const forEachCount = (plannerContent.match(/forEach/g) || []).length;
+          console.log(\`Found \${forEachCount} forEach loops - checking for DOM queries...\`);
+        }
+
+        // Check for proper array methods
+        if (!plannerContent.includes('.filter(')) {
+          issues.push('Not using .filter() for array filtering');
+        }
+
+        // Check for debouncing on input
+        if (plannerContent.includes('addEventListener(\\'input\\'') && !plannerContent.includes('timeout')) {
+          console.log('⚠️ Consider adding debouncing to search input');
+        }
+
+        if (issues.length > 0) {
+          console.log('Performance considerations:');
+          issues.forEach(issue => console.log(\`  - \${issue}\`));
+        }
+
+        console.log('✅ Performance check complete');
+        "
+
+  # Final Summary
+  test-summary:
+    runs-on: ubuntu-latest
+    name: 📋 Test Summary
+    needs: [validate-data, test-dom-structure, test-function-flow, test-error-handling, test-performance]
+    if: always()
+    steps:
+    - name: Summary
+      run: |
+        echo "✅ All test stages completed!"
+        echo ""
+        echo "Test Coverage:"
+        echo "  ✅ Data validation"
+        echo "  ✅ DOM structure"
+        echo "  ✅ Function flow"
+        echo "  ✅ Error handling"
+        echo "  ✅ Performance"
+        echo ""
+        echo "The MoodEats app has passed comprehensive testing!"

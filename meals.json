@@ -7,7 +7,10 @@
       "core": ["Greek yogurt", "Mixed berries", "Muesli"],
       "pantry": ["Honey or maple syrup", "Salt (pinch)"]
     },
-    "searchTerms": ["yogurt", "berries", "healthy", "light", "fruit", "morning", "easy"]
+    "searchTerms": ["yogurt", "berries", "healthy", "light", "fruit", "morning", "easy"],
+    "protein": 25,
+    "carbs": 68,
+    "fat": 10
   },
   {
     "name": "Oatmeal with Banana & PB",
@@ -17,7 +20,10 @@
       "core": ["Oats", "Banana", "Peanut butter"],
       "pantry": ["Water or milk", "Cinnamon (optional)"]
     },
-    "searchTerms": ["oats", "oatmeal", "banana", "peanut butter", "warm", "filling", "comfort"]
+    "searchTerms": ["oats", "oatmeal", "banana", "peanut butter", "warm", "filling", "comfort"],
+    "protein": 10,
+    "carbs": 58,
+    "fat": 11
   },
   {
     "name": "Scrambled Eggs on Buttered Rye",
@@ -27,7 +33,10 @@
       "core": ["Eggs", "Rye bread", "Cherry tomatoes"],
       "pantry": ["Butter", "Olive oil", "Garlic", "Flaky salt"]
     },
-    "searchTerms": ["eggs", "scrambled", "rye", "toast", "tomatoes", "savory", "protein", "bread"]
+    "searchTerms": ["eggs", "scrambled", "rye", "toast", "tomatoes", "savory", "protein", "bread"],
+    "protein": 24,
+    "carbs": 30,
+    "fat": 28
   },
   {
     "name": "Spinach & Mozzarella Omelet",
@@ -37,7 +46,10 @@
       "core": ["Eggs", "Spinach", "Mozzarella or provolone"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["omelet", "eggs", "spinach", "cheese", "melty", "protein", "veggie"]
+    "searchTerms": ["omelet", "eggs", "spinach", "cheese", "melty", "protein", "veggie"],
+    "protein": 25,
+    "carbs": 1,
+    "fat": 32
   },
   {
     "name": "Bagel with Lox & Cream Cheese",
@@ -47,7 +59,10 @@
       "core": ["Bagel", "Smoked salmon", "Cream cheese"],
       "pantry": ["Dill", "Capers (rinsed)", "Lemon zest (optional)"]
     },
-    "searchTerms": ["bagel", "lox", "salmon", "cream cheese", "deli", "jewish", "brunch"]
+    "searchTerms": ["bagel", "lox", "salmon", "cream cheese", "deli", "jewish", "brunch"],
+    "protein": 29,
+    "carbs": 56,
+    "fat": 20
   },
   {
     "name": "Breakfast Burrito",
@@ -57,7 +72,10 @@
       "core": ["Eggs", "Potatoes", "Cheese", "Tortilla"],
       "pantry": ["Mild salsa (cilantro-free)", "Guacamole (optional)"]
     },
-    "searchTerms": ["burrito", "eggs", "potato", "cheese", "wrap", "mexican", "filling"]
+    "searchTerms": ["burrito", "eggs", "potato", "cheese", "wrap", "mexican", "filling"],
+    "protein": 29,
+    "carbs": 66,
+    "fat": 21
   },
   {
     "name": "Avocado Toast with Egg",
@@ -67,7 +85,10 @@
       "core": ["Avocado", "Bread", "Egg"],
       "pantry": ["Salt", "Olive oil"]
     },
-    "searchTerms": ["avocado", "toast", "egg", "healthy", "trendy", "millennial", "brunch", "bread"]
+    "searchTerms": ["avocado", "toast", "egg", "healthy", "trendy", "millennial", "brunch", "bread"],
+    "protein": 14,
+    "carbs": 36,
+    "fat": 33
   },
   {
     "name": "Savory Oats with Egg",
@@ -77,7 +98,10 @@
       "core": ["Oats", "Egg", "Parmesan"],
       "pantry": ["Chicken stock", "Black pepper"]
     },
-    "searchTerms": ["oats", "savory", "egg", "different", "unique", "umami", "broth"]
+    "searchTerms": ["oats", "savory", "egg", "different", "unique", "umami", "broth"],
+    "protein": 13,
+    "carbs": 27,
+    "fat": 9
   },
   {
     "name": "Rye Toast with Burrata & Warm Tomatoes",
@@ -87,7 +111,10 @@
       "core": ["Rye bread", "Burrata", "Cherry tomatoes"],
       "pantry": ["Olive oil", "Garlic", "Salt", "Lemon zest (optional)"]
     },
-    "searchTerms": ["burrata", "tomatoes", "toast", "fancy", "italian", "creamy", "warm", "bread", "rye"]
+    "searchTerms": ["burrata", "tomatoes", "toast", "fancy", "italian", "creamy", "warm", "bread", "rye"],
+    "protein": 14,
+    "carbs": 37,
+    "fat": 25
   },
   {
     "name": "Fruit & Nuts Plate",
@@ -97,7 +124,10 @@
       "core": ["Melon", "Grapes", "Nectarine or plum", "Mixed nuts"],
       "pantry": []
     },
-    "searchTerms": ["fruit", "nuts", "healthy", "light", "raw", "no cook", "simple"]
+    "searchTerms": ["fruit", "nuts", "healthy", "light", "raw", "no cook", "simple"],
+    "protein": 7,
+    "carbs": 54,
+    "fat": 15
   },
   {
     "name": "Egg & Cheese Bagel",
@@ -107,7 +137,10 @@
       "core": ["Bagel", "Eggs", "Provolone or mozzarella"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick", "sandwich", "bread"]
+    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick", "sandwich", "bread"],
+    "protein": 29,
+    "carbs": 55,
+    "fat": 29
   },
   {
     "name": "Turkey Sausage, Egg & Cheese on Rye",
@@ -117,7 +150,10 @@
       "core": ["Rye bread", "Turkey sausage", "Eggs", "Provolone"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic", "toast", "bread"]
+    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic", "toast", "bread"],
+    "protein": 33,
+    "carbs": 33,
+    "fat": 34
   },
   {
     "name": "Lox, Eggs & Onions Scramble",
@@ -127,7 +163,10 @@
       "core": ["Eggs", "Smoked salmon", "Onion"],
       "pantry": ["Butter", "Salt", "Pepper", "Dill (optional)"]
     },
-    "searchTerms": ["lox and eggs", "scramble", "deli", "classic", "smoked salmon"]
+    "searchTerms": ["lox and eggs", "scramble", "deli", "classic", "smoked salmon"],
+    "protein": 35,
+    "carbs": 0,
+    "fat": 34
   },
   {
     "name": "Spaghetti with Turkey Bolognese",
