@@ -13,8 +13,8 @@ export default defineConfig({
   ].filter(Boolean),
 
   use: {
-    // Use file:// URL - Playwright will resolve relative paths
-    baseURL: process.env.CI ? 'http://localhost:8000' : `file://${process.cwd()}`,
+    // Use HTTP server for ES6 modules, file:// for basic tests
+    baseURL: 'http://localhost:8000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -47,10 +47,10 @@ export default defineConfig({
     },
   ],
 
-  // Web server for CI only
-  webServer: process.env.CI ? {
+  // Web server for ES6 module testing
+  webServer: {
     command: 'python3 -m http.server 8000',
     port: 8000,
-    reuseExistingServer: false,
-  } : undefined,
+    reuseExistingServer: !process.env.CI,
+  },
 });

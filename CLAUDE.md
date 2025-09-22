@@ -1,69 +1,194 @@
 # Claude Code Instructions
 
 ## Project Context
-This is a single-file wake time calculator app with weather awareness. The app entry is `wake.html` at the repository root.
+This is a comprehensive wake time calculator for runners with weather awareness, now available in both monolithic and modular architectures. The project demonstrates a complete transformation from a single-file application to a maintainable ES6 modular system.
+
+## Architecture Overview
+
+### Three Versions Available
+1. **Monolithic**: `wake.html` - Original 1742-line single file (legacy)
+2. **Basic Modular**: `index-modular.html` + `js/main.js` - Core functionality with modules
+3. **Full Modular**: `index-full-modular.html` + `js/main-full.js` - Complete functionality including weather awareness
+
+### Module Structure
+```
+js/
+├── core/                    # Core business logic
+│   ├── calculator.js        # Time calculations (pure functions)
+│   ├── storage.js          # Data persistence & localStorage
+│   └── constants.js        # Shared constants & defaults
+├── modules/                 # Feature modules
+│   ├── weather.js          # Weather API & data processing
+│   ├── location.js         # Geocoding & GPS services
+│   ├── dawn.js             # Dawn time & daylight calculations
+│   ├── awareness.js        # Weather awareness UI
+│   └── ui.js              # UI utilities & helpers
+├── utils/                  # Utility functions
+│   └── time.js            # Time formatting & manipulation
+├── main.js                 # Basic modular app orchestration
+└── main-full.js           # Full modular app orchestration
+```
 
 ## Development Guidelines
 
 ### Code Style
-- Keep edits concise and focused; avoid unrelated refactors
-- Maintain existing patterns and conventions
-- Prefer no inline comments unless clarifying tradeoffs
-- Preserve indentation and formatting
-- Allowed: Tailwind + DaisyUI via CDN (already used); avoid adding build steps
+- **ES6 Modules**: Use native browser modules (no build step)
+- **Pure Functions**: Separate business logic from DOM manipulation
+- **Module Boundaries**: Clear interfaces between modules
+- **No Comments**: Avoid inline comments unless clarifying complex tradeoffs
+- **Consistent Patterns**: Follow existing module structure and naming
 
-### Testing Commands
-None currently configured - app runs directly in browser.
+### Module Design Principles
+- **Core modules**: Pure functions, no DOM dependencies
+- **Feature modules**: Focused on specific functionality
+- **UI modules**: Handle DOM manipulation and user interactions
+- **Utils**: Reusable helper functions
 
-### File Structure
+### Testing Strategy
+```bash
+# Run all tests
+npx playwright test
+
+# Unit tests (pure functions)
+npx playwright test tests/unit/
+
+# Integration tests (full app)
+npx playwright test tests/integration/
+
+# HTTP server for ES6 modules
+python3 -m http.server 8000
+```
+
+## File Structure
 ```
 repo/
-├── wake.html      # Main application (HTML + inline CSS/JS)
-├── index.html     # Redirect to wake.html (for GitHub Pages)
-├── README.md      # Project overview and usage
-├── agent.md       # Technical documentation for agents
-└── CLAUDE.md      # This file
+├── wake.html                # Legacy monolithic version
+├── index.html              # GitHub Pages redirect
+├── index-modular.html      # Basic modular demo
+├── index-full-modular.html # Complete modular demo
+├── css/
+│   └── main.css           # Extracted styles
+├── js/                    # Modular JavaScript (see above)
+├── tests/                 # Playwright test suite
+│   ├── unit/             # Pure function tests
+│   ├── integration/      # Full app tests
+│   └── debug/            # Diagnostic tests
+├── package.json          # Test dependencies
+├── playwright.config.js  # Test configuration
+├── README.md            # Updated documentation
+└── CLAUDE.md           # This file
 ```
 
-## Quick Commands
+## Development Workflows
 
-### Open in browser
+### Working with Core Logic
 ```bash
-open wake.html
+# Edit calculator functions
+nano js/core/calculator.js
+
+# Test calculations
+npx playwright test tests/unit/calculator.test.js
 ```
 
-### View full source
+### Adding Weather Features
 ```bash
-sed -n '1,200p' wake.html
+# Edit weather module
+nano js/modules/weather.js
+
+# Test weather integration
+npx playwright test tests/integration/modular.test.js
+```
+
+### Working with UI
+```bash
+# Edit UI utilities
+nano js/modules/ui.js
+
+# Edit main orchestration
+nano js/main-full.js
+
+# Test in browser
+python3 -m http.server 8000
+open http://localhost:8000/index-full-modular.html
 ```
 
 ## Common Edits
 
-### Update run locations
-Search for `<optgroup label="Dirt by distance">` or `<optgroup label="No dirt">` in wake.html
+### Update Run Locations
+**Modular**: Edit constants in `js/core/constants.js` and update HTML selects
+**Legacy**: Search for `<optgroup label="Dirt by distance">` in `wake.html`
 
-### Adjust wetness thresholds
-Search for `categorizeWetness` function
+### Adjust Weather Thresholds
+**Modular**: Edit `categorizeWetness` function in `js/modules/weather.js`
+**Legacy**: Search for `categorizeWetness` function in `wake.html`
 
-### Modify cache duration
-Search for `CACHE_DURATION` constant
+### Modify Cache Duration
+**Modular**: Edit `CACHE_DURATION` in `js/core/constants.js`
+**Legacy**: Search for `CACHE_DURATION` constant in `wake.html`
 
-### Daylight check logic
-Search for `updateLocationHeadlamp` function - shows warning when run starts at/before dawn
+### Daylight Check Logic
+**Modular**: Edit `checkDaylightNeeded` in `js/modules/dawn.js`
+**Legacy**: Search for `updateLocationHeadlamp` function in `wake.html`
 
-### Test functions (for debugging)
-- `window.setTestDawn(hours, minutes)` - Set a test dawn time
-- `window.updateLocationHeadlamp()` - Trigger daylight check update
+## Testing & Debugging
 
-## APIs
-No API keys required — public services:
-- SunriseSunset.io (dawn)
-- Open‑Meteo (hourly + daily weather, geocoding, WMO weathercode)
+### Unit Tests
+- Calculator functions: `tests/unit/calculator.test.js`
+- Storage functions: `tests/unit/storage.test.js`
 
-## Notes
-- App uses localStorage for persistence (keys prefixed with 'wake:')
-- 15-minute cache for API responses (localStorage + in‑memory)
-- Responsive design with mobile breakpoints
-- Tailwind + DaisyUI via CDN (no build process) — edit and refresh
-- Travel time auto-syncs with location selection (no manual override)
-- Daylight check appears on Run location badge when running at/before dawn
+### Integration Tests
+- Full modular app: `tests/integration/modular.test.js`
+- Cross-browser compatibility included
+
+### Debug Functions
+```javascript
+// Set test dawn time
+window.setTestDawn(6, 30);
+
+// Trigger daylight check
+window.updateLocationHeadlamp();
+
+// Check current dawn
+window.currentDawnDate;
+```
+
+## APIs & Services
+
+### Weather & Location (No API Keys Required)
+- **Open-Meteo**: Weather data, forecasts, geocoding
+- **SunriseSunset.io**: Dawn/sunrise times
+- **Browser Geolocation**: Optional GPS detection
+
+### Data Persistence
+- **localStorage**: User preferences, location data, API cache
+- **Keys**: Prefixed with 'wake:' (e.g., 'wake:meeting', 'wake:run')
+- **Cache**: 15-minute duration for API responses
+
+## Architecture Benefits
+
+### Maintainability
+- **Separation of Concerns**: Pure functions vs DOM manipulation
+- **Module Boundaries**: Clear interfaces and dependencies
+- **Testability**: Isolated functions easy to unit test
+
+### Performance
+- **Native ES6 Modules**: No build step, browser-optimized
+- **Selective Loading**: Load only needed functionality
+- **Efficient Caching**: Layered caching strategy
+
+### Development Experience
+- **Hot Reload**: Edit and refresh, no compilation
+- **Clear Structure**: Easy to locate and modify functionality
+- **Comprehensive Tests**: Confident refactoring and changes
+
+## Migration Notes
+
+When migrating functionality from `wake.html` to modules:
+1. **Extract pure functions first** → `js/core/`
+2. **Group related functionality** → `js/modules/`
+3. **Separate DOM logic** → `js/modules/ui.js` or awareness
+4. **Update main orchestration** → `js/main-full.js`
+5. **Add tests** → `tests/unit/` or `tests/integration/`
+6. **Test cross-browser** → `npx playwright test`
+
+This modular architecture maintains all original functionality while providing a maintainable, testable, and extensible foundation for future development.

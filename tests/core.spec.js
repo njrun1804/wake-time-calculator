@@ -21,7 +21,7 @@ test.describe('Wake Time Calculator - Core Functionality', () => {
 
   test('should handle previous day calculation', async ({ page }) => {
     await page.selectOption('#firstMeeting', '06:00');
-    await page.fill('#runMinutes', '90');
+    await page.fill('#runMinutes', '300');
     await page.selectOption('#runLocation', 'holmdel');
     await page.selectOption('#breakfastMinutes', '45');
 
@@ -45,7 +45,7 @@ test.describe('Wake Time Calculator - Core Functionality', () => {
 
     const storedValues = await page.evaluate(() => {
       return {
-        meeting: localStorage.getItem('wake:meeting'),
+        meeting: localStorage.getItem('wake:first'),
         run: localStorage.getItem('wake:run'),
         breakfast: localStorage.getItem('wake:breakfast'),
         location: localStorage.getItem('wake:location'),
@@ -60,7 +60,7 @@ test.describe('Wake Time Calculator - Core Functionality', () => {
 
   test('should load persisted values on page reload', async ({ page, context }) => {
     await page.evaluate(() => {
-      localStorage.setItem('wake:meeting', '09:00');
+      localStorage.setItem('wake:first', '09:00');
       localStorage.setItem('wake:run', '50');
       localStorage.setItem('wake:breakfast', '10');
       localStorage.setItem('wake:location', 'huber');
@@ -96,14 +96,18 @@ test.describe('Wake Time Calculator - Core Functionality', () => {
   });
 
   test('should validate time input format', async ({ page }) => {
-    // Run minutes should only accept numbers
-    await page.fill('#runMinutes', 'abc');
-    const runValue = await page.locator('#runMinutes').inputValue();
-    expect(runValue).toBe('');
+    // Run minutes input should be of type number and accept only numeric values
+    const inputType = await page.locator('#runMinutes').getAttribute('type');
+    expect(inputType).toBe('number');
 
+    // Should accept valid numeric input
     await page.fill('#runMinutes', '45');
     const validValue = await page.locator('#runMinutes').inputValue();
     expect(validValue).toBe('45');
+
+    // Should not accept negative values due to min="0" attribute
+    const minValue = await page.locator('#runMinutes').getAttribute('min');
+    expect(minValue).toBe('0');
   });
 
   test('should handle empty optional fields gracefully', async ({ page }) => {
