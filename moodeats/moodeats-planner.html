@@ -987,6 +987,7 @@
             meals = embeddedMeals;
             initFuzzySearch();
             loadDailyPlan();
+            setupBrowseViewEventListeners();
         }
 
         function initFuzzySearch() {
@@ -1297,36 +1298,43 @@
             });
         });
 
-        // Browse view mood buttons
-        document.querySelectorAll('.mood-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
-                btn.classList.add('btn-primary');
+        // Setup browse view event listeners (called after meals are loaded)
+        function setupBrowseViewEventListeners() {
+            // Browse view mood buttons
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
+                    btn.classList.add('btn-primary');
 
-                const mood = btn.dataset.mood;
-                const moodMeals = meals.filter(m => m.moods.includes(mood));
+                    const mood = btn.dataset.mood;
+                    const moodMeals = meals.filter(m => m.moods.includes(mood));
 
-                const container = document.getElementById('mealSuggestions');
-                container.innerHTML = '';
+                    const container = document.getElementById('mealSuggestions');
+                    container.innerHTML = '';
 
-                moodMeals.slice(0, 6).forEach(meal => {
-                    const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
-                    const mealCard = document.createElement('div');
-                    mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
-                    mealCard.innerHTML = `
-                        <h4 class="font-semibold">${meal.name}</h4>
-                        <p class="text-xs text-base-content/60 mt-1">
-                            ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
-                        </p>
-                    `;
-                    container.appendChild(mealCard);
+                    if (moodMeals.length === 0) {
+                        container.innerHTML = '<p class="text-base-content/60">No meals found for this mood.</p>';
+                    } else {
+                        moodMeals.slice(0, 6).forEach(meal => {
+                            const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
+                            const mealCard = document.createElement('div');
+                            mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
+                            mealCard.innerHTML = `
+                                <h4 class="font-semibold">${meal.name}</h4>
+                                <p class="text-xs text-base-content/60 mt-1">
+                                    ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
+                                </p>
+                            `;
+                            container.appendChild(mealCard);
+                        });
+                    }
+
+                    document.getElementById('suggestionsArea').classList.remove('hidden');
                 });
-
-                document.getElementById('suggestionsArea').classList.remove('hidden');
             });
-        });
+        }
 
-        // Browse view search
+        // Browse view search (this can stay here since it doesn't depend on meals being loaded)
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.trim();
             if (query && fuse) {

@@ -18,6 +18,6 @@ jobs:
       - name: Install (no deps required for npx tools)
         run: npm ci --no-audit --no-fund || true
       - name: Prettier check
-        run: npx prettier --check wake.html
+        run: npx prettier --check index.html
       - name: HTML validate
-        run: npx html-validate wake.html
+        run: npx html-validate index.html
