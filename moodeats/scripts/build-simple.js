@@ -39,7 +39,9 @@ const uiJs = fs.readFileSync(path.join(srcDir, 'ui.js'), 'utf8')
 const appJs = fs.readFileSync(path.join(srcDir, 'app.js'), 'utf8')
     .replace(/export\s*{[^}]*};?/g, '')
     .replace(/import\s*{[^}]*}\s*from\s*['""][^'"]*['""];?/g, '')
-    .replace(/^\/\/.*$/gm, '');
+    .replace(/^\/\/.*$/gm, '')
+    // Remove the DOMContentLoaded listener since we'll add our own
+    .replace(/document\.addEventListener\('DOMContentLoaded'[\s\S]*?\}\);/g, '');
 
 // Create the bundle with proper initialization
 const bundle = `// MoodEats Bundle - Auto-generated
@@ -66,11 +68,19 @@ const bundle = `// MoodEats Bundle - Auto-generated
     // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing MoodEats...');
+            if (typeof setCurrentDate === 'function') {
+                setCurrentDate();
+            }
             if (typeof initializeApp === 'function') {
                 initializeApp();
             }
         });
     } else {
+        console.log('Initializing MoodEats (DOM ready)...');
+        if (typeof setCurrentDate === 'function') {
+            setCurrentDate();
+        }
         if (typeof initializeApp === 'function') {
             initializeApp();
         }
