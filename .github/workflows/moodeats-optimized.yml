@@ -1,0 +1,318 @@
+name: MoodEats CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'moodeats/**'
+      - '.github/workflows/moodeats-*'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'moodeats/**'
+
+# Cancel in-progress runs when new push happens
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  CACHE_KEY: moodeats-v1
+
+jobs:
+  # Quick checks run first - fail fast
+  quick-checks:
+    runs-on: ubuntu-latest
+    name: ⚡ Quick Checks
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          moodeats
+
+    - name: Validate JSON
+      run: |
+        cd moodeats
+        echo "🔍 Validating JSON files..."
+        for file in *.json; do
+          if [ -f "$file" ]; then
+            python3 -m json.tool "$file" > /dev/null || exit 1
+            echo "✅ $file is valid"
+          fi
+        done
+
+    - name: Check file sizes
+      run: |
+        cd moodeats
+        echo "📏 Checking file sizes..."
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            size=$(wc -c < "$file")
+            if [ $size -gt 500000 ]; then
+              echo "❌ $file is too large: $(($size/1024))KB"
+              exit 1
+            fi
+          fi
+        done
+        echo "✅ All files within size limits"
+
+    - name: Security scan
+      run: |
+        cd moodeats
+        echo "🔒 Security scanning..."
+        # Check for exposed API keys or secrets
+        if grep -r "api[_-]key\|secret\|password" *.html *.js 2>/dev/null | grep -v "searchTerms"; then
+          echo "⚠️ Potential secrets detected"
+          exit 1
+        fi
+        echo "✅ No secrets detected"
+
+  # Unit tests with caching
+  unit-tests:
+    runs-on: ubuntu-latest
+    name: 🧪 Unit Tests
+    needs: quick-checks
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          moodeats
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: moodeats/package-lock.json
+
+    - name: Cache dependencies
+      id: cache-deps
+      uses: actions/cache@v3
+      with:
+        path: moodeats/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('moodeats/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install dependencies
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+      run: |
+        cd moodeats
+        npm ci --prefer-offline --no-audit
+
+    - name: Run Jest tests with coverage
+      run: |
+        cd moodeats
+        npm run test:unit -- --coverage --coverageReporters=json-summary --coverageReporters=text
+
+    - name: Coverage summary
+      if: always()
+      run: |
+        cd moodeats
+        if [ -f coverage/coverage-summary.json ]; then
+          echo "📊 Coverage Report:"
+          node -e "
+          const coverage = require('./coverage/coverage-summary.json');
+          const total = coverage.total;
+          console.log('  Lines:', total.lines.pct + '%');
+          console.log('  Statements:', total.statements.pct + '%');
+          console.log('  Functions:', total.functions.pct + '%');
+          console.log('  Branches:', total.branches.pct + '%');
+          "
+        fi
+
+    - name: Upload coverage
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: moodeats/coverage/
+        retention-days: 7
+
+  # E2E tests - run in parallel by browser
+  e2e-chrome:
+    runs-on: ubuntu-latest
+    name: 🌐 E2E Chrome
+    needs: quick-checks
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: moodeats/package-lock.json
+
+    - name: Cache Playwright
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('moodeats/package-lock.json') }}
+
+    - name: Install deps
+      run: |
+        cd moodeats
+        npm ci --prefer-offline --no-audit
+        npx playwright install chromium --with-deps
+
+    - name: Run Chrome tests
+      run: |
+        cd moodeats
+        npx playwright test --project=chromium --reporter=dot
+
+    - name: Upload results
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: chrome-results
+        path: moodeats/test-results/
+
+  e2e-firefox:
+    runs-on: ubuntu-latest
+    name: 🌐 E2E Firefox
+    needs: quick-checks
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: moodeats/package-lock.json
+
+    - name: Cache Playwright
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('moodeats/package-lock.json') }}
+
+    - name: Install deps
+      run: |
+        cd moodeats
+        npm ci --prefer-offline --no-audit
+        npx playwright install firefox --with-deps
+
+    - name: Run Firefox tests
+      run: |
+        cd moodeats
+        npx playwright test --project=firefox --reporter=dot
+
+    - name: Upload results
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: firefox-results
+        path: moodeats/test-results/
+
+  # Deploy only after all tests pass
+  deploy:
+    runs-on: ubuntu-latest
+    name: 🚀 Deploy to GitHub Pages
+    needs: [unit-tests, e2e-chrome, e2e-firefox]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Optimize assets
+      run: |
+        cd moodeats
+        echo "🗜️ Optimizing assets..."
+
+        # Minify HTML (simple approach)
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            # Remove comments and extra whitespace
+            sed -i 's/<!--.*-->//g' "$file"
+            sed -i '/^[[:space:]]*$/d' "$file"
+            echo "✅ Optimized $file"
+          fi
+        done
+
+        # Report sizes
+        echo ""
+        echo "📦 Final sizes:"
+        du -h *.html | sort -h
+
+    - name: Setup GitHub Pages
+      uses: actions/configure-pages@v3
+
+    - name: Upload to Pages
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: 'moodeats'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
+
+    - name: Verify deployment
+      run: |
+        echo "✅ Deployed to GitHub Pages"
+        echo "🔗 URL: https://njrun1804.github.io/moodeats/"
+
+        # Wait for deployment to propagate
+        sleep 10
+
+        # Test the live site
+        response=$(curl -s -o /dev/null -w "%{http_code}" https://njrun1804.github.io/moodeats/)
+        if [ "$response" = "200" ]; then
+          echo "✅ Site is live and responding"
+        else
+          echo "⚠️ Site returned HTTP $response"
+        fi
+
+  # Performance monitoring
+  performance:
+    runs-on: ubuntu-latest
+    name: 🏎️ Performance Check
+    needs: deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Lighthouse CI
+      run: |
+        npm install -g @lhci/cli
+        lhci autorun \
+          --collect.url=https://njrun1804.github.io/moodeats/ \
+          --collect.url=https://njrun1804.github.io/moodeats/moodeats-planner.html \
+          --assert.preset=lighthouse:no-pwa \
+          --upload.target=temporary-public-storage || true
+
+  # Summary job
+  summary:
+    runs-on: ubuntu-latest
+    name: 📊 Pipeline Summary
+    needs: [unit-tests, e2e-chrome, e2e-firefox, deploy]
+    if: always()
+
+    steps:
+    - name: Summary
+      run: |
+        echo "# 🎯 MoodEats Pipeline Summary"
+        echo ""
+        echo "## Test Results"
+        echo "- Quick Checks: ${{ needs.quick-checks.result || 'skipped' }}"
+        echo "- Unit Tests: ${{ needs.unit-tests.result }}"
+        echo "- E2E Chrome: ${{ needs.e2e-chrome.result }}"
+        echo "- E2E Firefox: ${{ needs.e2e-firefox.result }}"
+        echo ""
+        echo "## Deployment"
+        echo "- Deploy: ${{ needs.deploy.result || 'skipped' }}"
+        echo "- Performance: ${{ needs.performance.result || 'pending' }}"
+        echo ""
+
+        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "✅ **Successfully deployed to:** https://njrun1804.github.io/moodeats/"
+        fi
+
+        # Calculate total time
+        echo ""
+        echo "⏱️ Total pipeline time: ~$(( ($(date +%s) - ${{ github.run_started_at || '0' }}) / 60 )) minutes"
