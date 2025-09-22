@@ -987,7 +987,6 @@
             meals = embeddedMeals;
             initFuzzySearch();
             loadDailyPlan();
-            setupBrowseViewEventListeners();
         }
 
         function initFuzzySearch() {
@@ -998,20 +997,7 @@
             fuse = new Fuse(meals, options);
         }
 
-        // Tab switching
-        document.getElementById('browseTab').addEventListener('click', () => {
-            document.getElementById('browseTab').classList.add('tab-active');
-            document.getElementById('planTab').classList.remove('tab-active');
-            document.getElementById('browseView').classList.remove('hidden');
-            document.getElementById('planView').classList.add('hidden');
-        });
-
-        document.getElementById('planTab').addEventListener('click', () => {
-            document.getElementById('planTab').classList.add('tab-active');
-            document.getElementById('browseTab').classList.remove('tab-active');
-            document.getElementById('planView').classList.remove('hidden');
-            document.getElementById('browseView').classList.add('hidden');
-        });
+        // Tab switching - handled in setupAllEventListeners()
 
         // Meal selection for slot
         function selectMealForSlot(slot) {
@@ -1261,40 +1247,40 @@
             }
         }
 
-        // Modal search
-        document.getElementById('modalSearch').addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            if (query) {
-                const results = fuse.search(query).map(r => r.item);
-                displayModalMeals(results, []);
-            } else {
-                selectMealForSlot(currentSlot);
-            }
-        });
-
-        // Modal filter buttons
-        document.querySelectorAll('.modal-filter').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const filter = btn.dataset.filter;
-                document.querySelectorAll('.modal-filter').forEach(b => b.classList.remove('btn-primary'));
-                btn.classList.add('btn-primary');
-
-                let filteredMeals = meals;
-                if (currentSlot === 'breakfast') {
-                    filteredMeals = meals.filter(m => m.moods.includes('breakfast'));
-                } else {
-                    filteredMeals = meals.filter(m => !m.moods.includes('breakfast'));
-                }
-
-                if (filter !== 'all') {
-                    filteredMeals = filteredMeals.filter(m => m.moods.includes(filter));
-                }
-
-                const otherMeals = Object.entries(dailyPlan)
-                    .filter(([s, m]) => s !== currentSlot && m)
-                    .map(([s, m]) => m);
-
-                displayModalMeals(filteredMeals, otherMeals);
+// DUPLICATE -         // Modal search
+// DUPLICATE -         document.getElementById('modalSearch').addEventListener('input', (e) => {
+// DUPLICATE -             const query = e.target.value.trim();
+// DUPLICATE -             if (query) {
+// DUPLICATE -                 const results = fuse.search(query).map(r => r.item);
+// DUPLICATE -                 displayModalMeals(results, []);
+// DUPLICATE -             } else {
+// DUPLICATE -                 selectMealForSlot(currentSlot);
+// DUPLICATE -             }
+// DUPLICATE -         });
+// DUPLICATE - 
+// DUPLICATE -         // Modal filter buttons
+// DUPLICATE -         document.querySelectorAll('.modal-filter').forEach(btn => {
+// DUPLICATE -             btn.addEventListener('click', () => {
+// DUPLICATE -                 const filter = btn.dataset.filter;
+// DUPLICATE -                 document.querySelectorAll('.modal-filter').forEach(b => b.classList.remove('btn-primary'));
+// DUPLICATE -                 btn.classList.add('btn-primary');
+// DUPLICATE - 
+// DUPLICATE -                 let filteredMeals = meals;
+// DUPLICATE -                 if (currentSlot === 'breakfast') {
+// DUPLICATE -                     filteredMeals = meals.filter(m => m.moods.includes('breakfast'));
+// DUPLICATE -                 } else {
+// DUPLICATE -                     filteredMeals = meals.filter(m => !m.moods.includes('breakfast'));
+// DUPLICATE -                 }
+// DUPLICATE - 
+// DUPLICATE -                 if (filter !== 'all') {
+// DUPLICATE -                     filteredMeals = filteredMeals.filter(m => m.moods.includes(filter));
+// DUPLICATE -                 }
+// DUPLICATE - 
+// DUPLICATE -                 const otherMeals = Object.entries(dailyPlan)
+// DUPLICATE -                     .filter(([s, m]) => s !== currentSlot && m)
+// DUPLICATE -                     .map(([s, m]) => m);
+// DUPLICATE - 
+// DUPLICATE -                 displayModalMeals(filteredMeals, otherMeals);
             });
         });
 
@@ -1315,7 +1301,7 @@
                     if (moodMeals.length === 0) {
                         container.innerHTML = '<p class="text-base-content/60">No meals found for this mood.</p>';
                     } else {
-                        moodMeals.slice(0, 6).forEach(meal => {
+                        moodMeals.forEach(meal => {
                             const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
                             const mealCard = document.createElement('div');
                             mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
@@ -1334,31 +1320,31 @@
             });
         }
 
-        // Browse view search (this can stay here since it doesn't depend on meals being loaded)
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            if (query && fuse) {
-                const results = fuse.search(query).slice(0, 6).map(r => r.item);
-                const container = document.getElementById('mealSuggestions');
-                container.innerHTML = '';
-
-                results.forEach(meal => {
-                    const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
-                    const mealCard = document.createElement('div');
-                    mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
-                    mealCard.innerHTML = `
-                        <h4 class="font-semibold">${meal.name}</h4>
-                        <p class="text-xs text-base-content/60 mt-1">
-                            ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
-                        </p>
-                    `;
-                    container.appendChild(mealCard);
-                });
-
-                if (results.length > 0) {
-                    document.getElementById('suggestionsArea').classList.remove('hidden');
-                }
-            }
+// DUPLICATE -         // Browse view search (this can stay here since it doesn't depend on meals being loaded)
+// DUPLICATE -         document.getElementById('searchInput').addEventListener('input', (e) => {
+// DUPLICATE -             const query = e.target.value.trim();
+// DUPLICATE -             if (query && fuse) {
+// DUPLICATE -                 const results = fuse.search(query).slice(0, 6).map(r => r.item);
+// DUPLICATE -                 const container = document.getElementById('mealSuggestions');
+// DUPLICATE -                 container.innerHTML = '';
+// DUPLICATE - 
+// DUPLICATE -                 results.forEach(meal => {
+// DUPLICATE -                     const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
+// DUPLICATE -                     const mealCard = document.createElement('div');
+// DUPLICATE -                     mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
+// DUPLICATE -                     mealCard.innerHTML = `
+// DUPLICATE -                         <h4 class="font-semibold">${meal.name}</h4>
+// DUPLICATE -                         <p class="text-xs text-base-content/60 mt-1">
+// DUPLICATE -                             ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
+// DUPLICATE -                         </p>
+// DUPLICATE -                     `;
+// DUPLICATE -                     container.appendChild(mealCard);
+// DUPLICATE -                 });
+// DUPLICATE - 
+// DUPLICATE -                 if (results.length > 0) {
+// DUPLICATE -                     document.getElementById('suggestionsArea').classList.remove('hidden');
+// DUPLICATE -                 }
+// DUPLICATE -             }
         });
 
         // Set current date
@@ -1369,8 +1355,91 @@
             day: 'numeric'
         });
 
-        // Initialize
-        loadMeals();
+        // Initialize everything when DOM is ready
+        function initializeApp() {
+            loadMeals();
+            setupAllEventListeners();
+        }
+
+        // Setup all event listeners after DOM is ready
+        function setupAllEventListeners() {
+            // Tab switching
+            document.getElementById('browseTab').addEventListener('click', () => {
+                document.getElementById('browseTab').classList.add('tab-active');
+                document.getElementById('planTab').classList.remove('tab-active');
+                document.getElementById('browseView').classList.remove('hidden');
+                document.getElementById('planView').classList.add('hidden');
+            });
+
+            document.getElementById('planTab').addEventListener('click', () => {
+                document.getElementById('planTab').classList.add('tab-active');
+                document.getElementById('browseTab').classList.remove('tab-active');
+                document.getElementById('planView').classList.remove('hidden');
+                document.getElementById('browseView').classList.add('hidden');
+            });
+
+            // Browse view mood buttons
+            setupBrowseViewEventListeners();
+
+            // Modal search
+            document.getElementById('modalSearch').addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                if (query) {
+                    const results = fuse.search(query).map(r => r.item);
+                    displayModalMeals(results, []);
+                } else {
+                    selectMealForSlot(currentSlot);
+                }
+            });
+
+            // Modal filter buttons
+            document.querySelectorAll('.modal-filter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const filter = btn.dataset.filter;
+                    document.querySelectorAll('.modal-filter').forEach(b => b.classList.remove('btn-primary'));
+                    btn.classList.add('btn-primary');
+                    // Filter meals by mood and breakfast restriction
+                    const filteredMeals = currentSlot === 'breakfast' ?
+                        meals.filter(m => m.moods.includes('breakfast') && m.moods.includes(filter)) :
+                        meals.filter(m => !m.moods.includes('breakfast') && m.moods.includes(filter));
+                    displayModalMeals(filteredMeals, [filter]);
+                });
+            });
+
+            // Main search functionality
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const searchValue = e.target.value.trim();
+                if (searchValue.length === 0) {
+                    document.getElementById('suggestionsArea').classList.add('hidden');
+                    return;
+                }
+                const results = fuse.search(searchValue);
+                const foundMeals = results.map(r => r.item);
+                if (foundMeals.length > 0) {
+                    displaySearchResults(foundMeals);
+                    document.getElementById('suggestionsArea').classList.remove('hidden');
+                } else {
+                    document.getElementById('mealSuggestions').innerHTML = '<p class="text-base-content/60">No meals found matching your search.</p>';
+                    document.getElementById('suggestionsArea').classList.remove('hidden');
+                }
+            });
+
+            // Set current date
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            // DOM is already ready
+            initializeApp();
+        }
     </script>
 </body>
 </html>
