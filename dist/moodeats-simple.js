@@ -898,6 +898,10 @@ function setupEventListeners() {
     // Mood buttons
     document.querySelectorAll('.mood-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            // Clear search when clicking mood
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+
             document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
             btn.classList.add('btn-primary');
 
@@ -906,15 +910,21 @@ function setupEventListeners() {
         });
     });
 
-    // Search input
+    // Search input - always visible at top
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             if (query) {
+                // Clear mood selection when typing
+                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
+                currentMood = null;
                 searchMeals(query);
-            } else if (currentMood) {
-                showMealSuggestions(currentMood);
+            } else {
+                // Hide suggestions if no query and no mood selected
+                if (!currentMood) {
+                    document.getElementById('suggestionsArea').classList.add('hidden');
+                }
             }
         });
     }
@@ -923,23 +933,30 @@ function setupEventListeners() {
 
 function showMealSuggestions(mood) {
     const moodMeals = meals.filter(m => m.moods.includes(mood));
-    displayMeals(moodMeals);
+    displayMeals(moodMeals, `${mood.charAt(0).toUpperCase() + mood.slice(1)} meals`);
     document.getElementById('suggestionsArea').classList.remove('hidden');
 }
 
 
 function searchMeals(query) {
     const results = fuse.search(query).map(r => r.item);
-    displayMeals(results);
+    displayMeals(results, `Results for "${query}"`);
+    document.getElementById('suggestionsArea').classList.remove('hidden');
 }
 
 
-function displayMeals(mealList) {
+function displayMeals(mealList, title = 'Suggestions') {
     const container = document.getElementById('mealSuggestions');
+    const titleElement = document.getElementById('suggestionsTitle');
+
+    if (titleElement) {
+        titleElement.textContent = title;
+    }
+
     container.innerHTML = '';
 
     if (mealList.length === 0) {
-        container.innerHTML = '<p class="text-base-content/60">No meals found.</p>';
+        container.innerHTML = '<p class="text-base-content/60">No meals found. Try a different search term or browse by mood.</p>';
         return;
     }
 
