@@ -27,7 +27,7 @@
       "core": ["Eggs", "Rye bread", "Cherry tomatoes"],
       "pantry": ["Butter", "Olive oil", "Garlic", "Flaky salt"]
     },
-    "searchTerms": ["eggs", "scrambled", "rye", "toast", "tomatoes", "savory", "protein"]
+    "searchTerms": ["eggs", "scrambled", "rye", "toast", "tomatoes", "savory", "protein", "bread"]
   },
   {
     "name": "Spinach & Mozzarella Omelet",
@@ -67,7 +67,7 @@
       "core": ["Avocado", "Bread", "Egg"],
       "pantry": ["Salt", "Olive oil"]
     },
-    "searchTerms": ["avocado", "toast", "egg", "healthy", "trendy", "millennial", "brunch"]
+    "searchTerms": ["avocado", "toast", "egg", "healthy", "trendy", "millennial", "brunch", "bread"]
   },
   {
     "name": "Savory Oats with Egg",
@@ -87,7 +87,7 @@
       "core": ["Rye bread", "Burrata", "Cherry tomatoes"],
       "pantry": ["Olive oil", "Garlic", "Salt", "Lemon zest (optional)"]
     },
-    "searchTerms": ["burrata", "tomatoes", "toast", "fancy", "italian", "creamy", "warm"]
+    "searchTerms": ["burrata", "tomatoes", "toast", "fancy", "italian", "creamy", "warm", "bread", "rye"]
   },
   {
     "name": "Fruit & Nuts Plate",
@@ -107,7 +107,7 @@
       "core": ["Bagel", "Eggs", "Provolone or mozzarella"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick"]
+    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick", "sandwich", "bread"]
   },
   {
     "name": "Turkey Sausage, Egg & Cheese on Rye",
@@ -117,7 +117,7 @@
       "core": ["Rye bread", "Turkey sausage", "Eggs", "Provolone"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic"]
+    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic", "toast", "bread"]
   },
   {
     "name": "Lox, Eggs & Onions Scramble",
@@ -627,7 +627,7 @@
       "core": ["Canned tuna", "Rye bread", "Provolone or gouda"],
       "pantry": ["Mayo", "Dill", "Lemon zest"]
     },
-    "searchTerms": ["tuna", "melt", "sandwich", "rye", "cheese", "deli", "lunch"]
+    "searchTerms": ["tuna", "melt", "sandwich", "rye", "cheese", "deli", "lunch", "toast", "bread", "grilled"]
   },
   {
     "name": "Turkey Avocado Club",
@@ -757,6 +757,6 @@
       "core": ["Rye or sourdough"],
       "pantry": ["Butter", "Garlic", "Parsley", "Salt"]
     },
-    "searchTerms": ["garlic bread", "side", "italian", "toasty", "classic"]
+    "searchTerms": ["garlic bread", "side", "italian", "toasty", "classic", "toast", "bread", "appetizer"]
   }
 ]
