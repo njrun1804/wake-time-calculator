@@ -1,11 +1,11 @@
-// MoodEats Browse-Only Bundle
+// MoodEats Compact Grid Version
 // Generated from src/js/* files
 
 (function() {
     'use strict';
 
     // ===== MEALS DATA =====
-    
+
 
 
 const embeddedMeals = [
@@ -104,498 +104,498 @@ const embeddedMeals = [
     "category": "breakfast",
     "moods": ["breakfast", "fresh", "quick"],
     "ingredients": {
-      "core": ["Melon", "Grapes", "Nectarine or plum", "Mixed nuts"],
-      "pantry": []
+      "core": ["Assorted fruits", "Mixed nuts"],
+      "pantry": ["Honey (optional)"]
     },
-    "searchTerms": ["fruit", "nuts", "healthy", "light", "raw", "no cook", "simple"]
+    "searchTerms": ["fruit", "nuts", "healthy", "light", "fresh", "simple", "raw"]
   },
   {
     "name": "Egg & Cheese Bagel",
     "category": "breakfast",
-    "moods": ["breakfast", "hearty", "quick"],
+    "moods": ["breakfast", "quick", "hearty"],
     "ingredients": {
-      "core": ["Bagel", "Eggs", "Provolone or mozzarella"],
+      "core": ["Bagel", "Eggs", "American cheese"],
       "pantry": ["Butter", "Salt", "Pepper"]
     },
-    "searchTerms": ["bagel", "egg and cheese", "breakfast", "classic", "quick", "sandwich", "bread"]
+    "searchTerms": ["bagel", "egg", "cheese", "sandwich", "deli", "classic", "bodega"]
   },
   {
     "name": "Turkey Sausage, Egg & Cheese on Rye",
     "category": "breakfast",
     "moods": ["breakfast", "hearty"],
     "ingredients": {
-      "core": ["Rye bread", "Turkey sausage", "Eggs", "Provolone"],
-      "pantry": ["Butter", "Salt", "Pepper"]
+      "core": ["Turkey sausage", "Eggs", "Cheese", "Rye bread"],
+      "pantry": ["Butter"]
     },
-    "searchTerms": ["breakfast sandwich", "sausage egg cheese", "rye", "deli", "classic", "toast", "bread"]
+    "searchTerms": ["breakfast sandwich", "sausage", "egg", "cheese", "rye", "hearty", "protein"]
   },
   {
     "name": "Lox, Eggs & Onions Scramble",
     "category": "breakfast",
-    "moods": ["breakfast", "cozy", "quick"],
+    "moods": ["breakfast", "cozy"],
     "ingredients": {
-      "core": ["Eggs", "Smoked salmon", "Onion"],
-      "pantry": ["Butter", "Salt", "Pepper", "Dill (optional)"]
+      "core": ["Eggs", "Lox", "Onions"],
+      "pantry": ["Butter", "Black pepper", "Dill (optional)"]
     },
-    "searchTerms": ["lox and eggs", "scramble", "deli", "classic", "smoked salmon"]
+    "searchTerms": ["lox", "eggs", "onions", "scramble", "jewish", "classic", "savory"]
   },
   {
     "name": "Spaghetti with Turkey Bolognese",
     "category": "italian",
-    "moods": ["italian", "hearty", "cozy"],
+    "moods": ["italian", "cozy", "hearty"],
     "ingredients": {
-      "core": ["Spaghetti", "Ground turkey", "Zucchini (small, grated)", "Parmesan"],
-      "pantry": ["Passata", "Onion", "Garlic", "Olive oil"]
+      "core": ["Spaghetti", "Ground turkey", "Passata"],
+      "pantry": ["Garlic", "Onions", "Olive oil", "Parmesan", "Salt", "Pepper"]
     },
-    "searchTerms": ["spaghetti", "bolognese", "pasta", "turkey", "meat sauce", "italian", "classic"]
+    "searchTerms": ["spaghetti", "bolognese", "turkey", "meat sauce", "italian", "pasta", "red sauce"]
   },
   {
     "name": "Turkey Meatballs in Marinara",
     "category": "italian",
-    "moods": ["italian", "hearty", "cozy"],
+    "moods": ["italian", "cozy", "hearty"],
     "ingredients": {
-      "core": ["Ground turkey", "Spaghetti or sub roll", "Parmesan"],
-      "pantry": ["Passata", "Breadcrumbs", "Egg", "Garlic", "Italian seasoning"]
+      "core": ["Ground turkey", "Breadcrumbs", "Egg", "Passata"],
+      "pantry": ["Garlic", "Parmesan", "Olive oil", "Salt", "Pepper"]
     },
-    "searchTerms": ["meatballs", "turkey", "marinara", "italian", "sub", "spaghetti", "comfort"]
+    "searchTerms": ["meatballs", "turkey", "marinara", "italian", "comfort", "classic"]
   },
   {
     "name": "Shrimp Garlic-Butter Pasta",
     "category": "italian",
     "moods": ["italian", "seafood", "quick"],
     "ingredients": {
-      "core": ["Pasta", "Shrimp", "Parsley"],
-      "pantry": ["Butter", "Garlic", "Chicken stock", "Olive oil"]
+      "core": ["Shrimp", "Pasta", "Butter"],
+      "pantry": ["Garlic", "Lemon zest", "Parmesan", "Red pepper flakes (optional)"]
     },
-    "searchTerms": ["shrimp", "garlic", "butter", "pasta", "seafood", "scampi", "quick"]
+    "searchTerms": ["shrimp", "scampi", "garlic", "butter", "pasta", "seafood", "quick"]
   },
   {
     "name": "Tuna, Olive & Capers Rigatoni",
     "category": "italian",
     "moods": ["italian", "seafood", "quick"],
     "ingredients": {
-      "core": ["Rigatoni", "Canned tuna", "Olives", "Capers (rinsed)"],
-      "pantry": ["Passata", "Garlic", "Olive oil"]
+      "core": ["Canned tuna", "Rigatoni", "Olives", "Capers"],
+      "pantry": ["Garlic", "Olive oil", "Lemon zest"]
     },
-    "searchTerms": ["tuna", "pasta", "olives", "capers", "pantry", "mediterranean", "briny"]
+    "searchTerms": ["tuna", "pasta", "olives", "capers", "mediterranean", "pantry", "quick"]
   },
   {
     "name": "Sausage & Peppers with Orzo",
     "category": "italian",
-    "moods": ["italian", "hearty"],
+    "moods": ["italian", "hearty", "cozy"],
     "ingredients": {
-      "core": ["Turkey sausage", "Bell peppers", "Onions", "Orzo", "Provolone"],
-      "pantry": ["Olive oil", "Garlic", "Italian seasoning"]
+      "core": ["Italian sausage", "Bell peppers", "Orzo"],
+      "pantry": ["Garlic", "Olive oil", "Chicken stock", "Parmesan"]
     },
-    "searchTerms": ["sausage", "peppers", "orzo", "italian", "sheet pan", "easy", "melty"]
+    "searchTerms": ["sausage", "peppers", "orzo", "italian american", "classic", "hearty"]
   },
   {
     "name": "Pea & Parmesan Orzotto",
     "category": "italian",
-    "moods": ["italian", "cozy", "quick"],
+    "moods": ["italian", "fresh"],
     "ingredients": {
       "core": ["Orzo", "Peas", "Parmesan"],
-      "pantry": ["Chicken stock", "Butter", "Garlic"]
+      "pantry": ["Chicken stock", "Butter", "Garlic", "Salt", "Pepper"]
     },
-    "searchTerms": ["orzo", "risotto", "peas", "parmesan", "creamy", "vegetarian", "comfort"]
+    "searchTerms": ["orzo", "peas", "risotto", "creamy", "vegetarian", "light"]
   },
   {
     "name": "Chicken Parmesan (Baked)",
     "category": "italian",
     "moods": ["italian", "hearty"],
     "ingredients": {
-      "core": ["Chicken breast", "Mozzarella", "Parmesan", "Spaghetti"],
-      "pantry": ["Passata", "Breadcrumbs", "Flour", "Egg", "Olive oil", "Garlic", "Salt", "Pepper"]
+      "core": ["Breaded chicken", "Mozzarella", "Passata"],
+      "pantry": ["Parmesan", "Olive oil", "Garlic"]
     },
-    "searchTerms": ["chicken parm", "parmesan", "baked", "italian american", "melty", "low acid sauce"]
+    "searchTerms": ["chicken parm", "italian american", "melty", "classic", "breaded"]
   },
   {
     "name": "Cacio e Pepe (Parmesan)",
     "category": "italian",
-    "moods": ["italian", "quick", "cozy"],
+    "moods": ["italian", "quick"],
     "ingredients": {
-      "core": ["Spaghetti", "Parmesan"],
+      "core": ["Pasta", "Parmesan"],
       "pantry": ["Black pepper", "Butter", "Salt"]
     },
-    "searchTerms": ["cacio e pepe", "cheesy", "pepper", "pasta", "classic", "no cream"]
+    "searchTerms": ["cacio e pepe", "cheese", "pepper", "simple", "roman", "classic"]
   },
   {
     "name": "Pasta e Piselli (Pasta with Peas)",
     "category": "italian",
-    "moods": ["italian", "cozy", "quick"],
+    "moods": ["italian", "quick", "fresh"],
     "ingredients": {
-      "core": ["Small pasta (ditalini or shells)", "Peas", "Parmesan"],
-      "pantry": ["Olive oil", "Garlic", "Chicken stock", "Salt", "Pepper"]
+      "core": ["Small pasta", "Peas"],
+      "pantry": ["Garlic", "Olive oil", "Parmesan", "Salt", "Pepper"]
     },
-    "searchTerms": ["peas", "pasta", "weeknight", "italian", "comfort", "low acid"]
+    "searchTerms": ["pasta", "peas", "simple", "quick", "light", "green"]
   },
   {
     "name": "Chicken Teriyaki",
     "category": "japanese",
     "moods": ["asian", "quick"],
     "ingredients": {
-      "core": ["Chicken thighs", "Rice", "Broccoli or carrots or edamame"],
-      "pantry": ["Soy sauce", "Mirin", "Sugar", "Garlic", "Ginger"]
+      "core": ["Chicken thighs", "Rice"],
+      "pantry": ["Soy sauce", "Sugar", "Mirin or honey", "Garlic", "Ginger"]
     },
-    "searchTerms": ["chicken", "teriyaki", "japanese", "asian", "rice", "sweet", "glazed"]
+    "searchTerms": ["teriyaki", "chicken", "japanese", "sweet", "savory", "rice", "glazed"]
   },
   {
     "name": "Salmon Teriyaki",
     "category": "japanese",
     "moods": ["asian", "seafood", "quick"],
     "ingredients": {
-      "core": ["Salmon", "Rice", "Asparagus or green beans"],
-      "pantry": ["Soy sauce", "Mirin", "Sugar", "Sesame seeds"]
+      "core": ["Salmon", "Rice"],
+      "pantry": ["Soy sauce", "Sugar", "Mirin or honey", "Garlic", "Ginger"]
     },
-    "searchTerms": ["salmon", "teriyaki", "japanese", "fish", "healthy", "glazed", "sesame"]
+    "searchTerms": ["teriyaki", "salmon", "japanese", "glazed", "seafood", "rice"]
   },
   {
     "name": "Chicken Katsu Curry",
     "category": "japanese",
     "moods": ["asian", "hearty", "cozy"],
     "ingredients": {
-      "core": ["Chicken breast", "Potatoes", "Carrots", "Japanese curry roux (mild)"],
-      "pantry": ["Panko", "Flour", "Egg", "Oil for frying"]
+      "core": ["Breaded chicken", "Rice", "Curry roux or powder"],
+      "pantry": ["Onions", "Carrots", "Potatoes", "Oil"]
     },
-    "searchTerms": ["katsu", "curry", "japanese", "fried", "chicken", "comfort", "crispy"]
+    "searchTerms": ["katsu", "curry", "japanese", "breaded", "comfort", "rice"]
   },
   {
     "name": "Oyakodon (Chicken & Egg Rice Bowl)",
     "category": "japanese",
     "moods": ["asian", "cozy", "quick"],
     "ingredients": {
-      "core": ["Chicken thighs", "Eggs", "Rice", "Scallions"],
-      "pantry": ["Soy sauce", "Mirin", "Dashi or chicken stock", "Sugar"]
+      "core": ["Chicken", "Eggs", "Rice", "Onions"],
+      "pantry": ["Soy sauce", "Sugar", "Dashi or chicken stock"]
     },
-    "searchTerms": ["oyakodon", "rice bowl", "chicken", "egg", "japanese", "comfort", "donburi"]
+    "searchTerms": ["oyakodon", "rice bowl", "chicken", "egg", "comfort", "donburi"]
   },
   {
     "name": "Yaki Udon",
     "category": "japanese",
     "moods": ["asian", "quick"],
     "ingredients": {
-      "core": ["Udon noodles", "Chicken or shrimp", "Bell peppers", "Snap peas"],
-      "pantry": ["Soy sauce", "Garlic", "Ginger", "Sesame oil"]
+      "core": ["Udon noodles", "Protein (chicken/shrimp)", "Cabbage"],
+      "pantry": ["Soy sauce", "Oyster sauce", "Garlic", "Oil"]
     },
-    "searchTerms": ["udon", "noodles", "stir fry", "japanese", "yakisoba", "quick", "veggie"]
+    "searchTerms": ["yaki udon", "stir fry", "noodles", "japanese", "quick", "cabbage"]
   },
   {
     "name": "Gyudon (Beef & Onion Bowl)",
     "category": "japanese",
-    "moods": ["asian", "cozy", "quick"],
+    "moods": ["asian", "hearty", "quick"],
     "ingredients": {
-      "core": ["Beef (thin-sliced or ground)", "Onion", "Rice", "Scallions"],
-      "pantry": ["Soy sauce", "Mirin", "Sugar", "Stock"]
+      "core": ["Sliced beef", "Onions", "Rice"],
+      "pantry": ["Soy sauce", "Sugar", "Dashi or beef stock", "Ginger"]
     },
-    "searchTerms": ["gyudon", "beef bowl", "japanese", "donburi", "comfort", "low acid"]
+    "searchTerms": ["gyudon", "beef bowl", "rice", "onions", "japanese", "comfort"]
   },
   {
     "name": "Miso-Glazed Salmon",
     "category": "japanese",
-    "moods": ["asian", "seafood", "quick"],
+    "moods": ["asian", "seafood"],
     "ingredients": {
-      "core": ["Salmon", "Rice", "Asparagus or green beans"],
-      "pantry": ["White miso", "Soy sauce", "Sugar", "Sesame seeds"]
+      "core": ["Salmon", "Miso paste", "Rice"],
+      "pantry": ["Sugar", "Sake or mirin", "Sesame oil"]
     },
-    "searchTerms": ["salmon", "miso", "glaze", "japanese", "seafood", "mild"]
+    "searchTerms": ["miso", "salmon", "glazed", "japanese", "umami", "seafood"]
   },
   {
     "name": "Yakitori-Style Chicken (Broiler)",
     "category": "japanese",
     "moods": ["asian", "quick"],
     "ingredients": {
-      "core": ["Chicken thighs", "Scallions", "Rice"],
-      "pantry": ["Soy sauce", "Mirin", "Sugar"]
+      "core": ["Chicken thighs", "Rice"],
+      "pantry": ["Soy sauce", "Sugar", "Sake or mirin", "Garlic", "Ginger"]
     },
-    "searchTerms": ["yakitori", "skewers", "broiler", "japanese", "glaze", "weeknight"]
+    "searchTerms": ["yakitori", "grilled", "chicken", "japanese", "skewers", "broiled"]
   },
   {
     "name": "Nikujaga (Soy-Potato Beef Stew)",
     "category": "japanese",
     "moods": ["asian", "cozy", "hearty"],
     "ingredients": {
-      "core": ["Beef", "Potatoes", "Onion", "Carrot"],
-      "pantry": ["Soy sauce", "Sugar", "Stock"]
+      "core": ["Beef", "Potatoes", "Onions"],
+      "pantry": ["Soy sauce", "Sugar", "Dashi or beef stock", "Sake or mirin"]
     },
-    "searchTerms": ["nikujaga", "japanese stew", "potato", "beef", "comfort", "low acid"]
+    "searchTerms": ["nikujaga", "stew", "beef", "potato", "japanese", "comfort", "home cooking"]
   },
   {
     "name": "Chicken & Broccoli Stir-Fry",
     "category": "chinese",
     "moods": ["asian", "quick", "fresh"],
     "ingredients": {
-      "core": ["Chicken breast", "Broccoli", "Rice"],
-      "pantry": ["Soy sauce", "Garlic", "Ginger", "Cornstarch", "Sesame oil"]
+      "core": ["Chicken", "Broccoli", "Rice"],
+      "pantry": ["Soy sauce", "Garlic", "Ginger", "Oyster sauce", "Oil"]
     },
-    "searchTerms": ["chicken", "broccoli", "stir fry", "chinese", "takeout", "healthy", "quick"]
+    "searchTerms": ["stir fry", "chicken", "broccoli", "chinese", "quick", "healthy", "wok"]
   },
   {
     "name": "Shrimp Fried Rice",
     "category": "chinese",
     "moods": ["asian", "seafood", "quick"],
     "ingredients": {
-      "core": ["Shrimp", "Rice (day-old best)", "Peas", "Eggs", "Scallions"],
-      "pantry": ["Soy sauce", "Sesame oil", "Garlic"]
+      "core": ["Shrimp", "Rice (day-old)", "Eggs", "Peas"],
+      "pantry": ["Soy sauce", "Garlic", "Oil", "Sesame oil"]
     },
-    "searchTerms": ["fried rice", "shrimp", "chinese", "leftover rice", "quick", "wok", "eggs"]
+    "searchTerms": ["fried rice", "shrimp", "chinese", "leftover rice", "quick", "wok"]
   },
   {
     "name": "Chicken Lo Mein",
     "category": "chinese",
     "moods": ["asian", "quick"],
     "ingredients": {
-      "core": ["Lo mein noodles", "Chicken breast", "Bell peppers", "Snap peas"],
-      "pantry": ["Soy sauce", "Garlic", "Ginger", "Sesame oil"]
+      "core": ["Lo mein noodles", "Chicken", "Vegetables"],
+      "pantry": ["Soy sauce", "Oyster sauce", "Garlic", "Ginger", "Oil"]
     },
-    "searchTerms": ["lo mein", "noodles", "chicken", "chinese", "takeout", "stir fry", "veggie"]
+    "searchTerms": ["lo mein", "noodles", "chicken", "chinese", "takeout", "stir fry"]
   },
   {
     "name": "Egg Drop Soup",
     "category": "chinese",
     "moods": ["asian", "cozy", "quick"],
     "ingredients": {
-      "core": ["Eggs", "Scallions"],
-      "pantry": ["Chicken stock", "Cornstarch", "Soy sauce", "Sesame oil"]
+      "core": ["Eggs", "Chicken stock"],
+      "pantry": ["Cornstarch", "Soy sauce", "White pepper", "Sesame oil"]
     },
-    "searchTerms": ["egg drop", "soup", "chinese", "broth", "light", "comfort", "easy"]
+    "searchTerms": ["egg drop", "soup", "chinese", "comfort", "quick", "light"]
   },
   {
     "name": "Beef & Broccoli",
     "category": "chinese",
-    "moods": ["asian", "hearty", "quick"],
+    "moods": ["asian", "hearty"],
     "ingredients": {
       "core": ["Beef", "Broccoli", "Rice"],
-      "pantry": ["Soy sauce", "Garlic", "Ginger", "Cornstarch", "Sesame oil"]
+      "pantry": ["Soy sauce", "Oyster sauce", "Garlic", "Ginger", "Cornstarch"]
     },
-    "searchTerms": ["beef", "broccoli", "stir fry", "takeout", "classic", "no vinegar"]
+    "searchTerms": ["beef", "broccoli", "chinese", "stir fry", "takeout", "classic"]
   },
   {
     "name": "Mongolian Beef",
     "category": "chinese",
-    "moods": ["asian", "hearty", "quick"],
+    "moods": ["asian", "hearty"],
     "ingredients": {
-      "core": ["Beef", "Scallions", "Rice"],
-      "pantry": ["Soy sauce", "Brown sugar", "Garlic", "Cornstarch", "Sesame oil"]
+      "core": ["Beef", "Green onions", "Rice"],
+      "pantry": ["Soy sauce", "Brown sugar", "Garlic", "Ginger", "Oil"]
     },
-    "searchTerms": ["mongolian beef", "takeout", "sweet savory", "green onion", "classic"]
+    "searchTerms": ["mongolian", "beef", "sweet", "savory", "chinese american", "takeout"]
   },
   {
     "name": "Sesame Chicken (Mild, No Vinegar)",
     "category": "chinese",
     "moods": ["asian", "hearty"],
     "ingredients": {
-      "core": ["Chicken", "Rice"],
-      "pantry": ["Soy sauce", "Sugar", "Garlic", "Ginger", "Cornstarch", "Sesame seeds", "Oil"]
+      "core": ["Breaded chicken", "Rice"],
+      "pantry": ["Soy sauce", "Honey", "Garlic", "Sesame seeds", "Oil"]
     },
-    "searchTerms": ["sesame chicken", "takeout", "classic", "no vinegar", "sweet", "crisp"]
+    "searchTerms": ["sesame", "chicken", "sweet", "chinese american", "takeout", "crispy"]
   },
   {
     "name": "Chicken & Snow Peas Stir-Fry",
     "category": "chinese",
-    "moods": ["asian", "quick", "fresh"],
+    "moods": ["asian", "fresh", "quick"],
     "ingredients": {
-      "core": ["Chicken breast", "Snow peas", "Rice"],
-      "pantry": ["Soy sauce", "Garlic", "Ginger", "Cornstarch", "Sesame oil"]
+      "core": ["Chicken", "Snow peas", "Rice"],
+      "pantry": ["Soy sauce", "Garlic", "Ginger", "Oyster sauce", "Oil"]
     },
-    "searchTerms": ["stir fry", "snow peas", "chicken", "chinese", "takeout", "quick"]
+    "searchTerms": ["stir fry", "chicken", "snow peas", "vegetables", "light", "quick"]
   },
   {
     "name": "Turkey Taco Rice Bowl",
-    "category": "texmex",
+    "category": "tex-mex",
     "moods": ["hearty", "quick"],
     "ingredients": {
-      "core": ["Ground turkey", "Rice", "Black or pinto beans", "Bell peppers", "Onions"],
-      "pantry": ["Mild salsa", "Cumin", "Chili powder", "Garlic", "Guacamole (optional)"]
+      "core": ["Ground turkey", "Rice", "Black beans", "Cheese"],
+      "pantry": ["Taco seasoning (no cilantro)", "Salsa (mild)", "Sour cream"]
     },
-    "searchTerms": ["taco", "bowl", "turkey", "rice", "mexican", "beans", "tex mex"]
+    "searchTerms": ["taco", "bowl", "turkey", "rice", "mexican", "tex mex", "beans"]
   },
   {
     "name": "Chicken Quesadillas",
-    "category": "texmex",
+    "category": "tex-mex",
     "moods": ["quick", "hearty"],
     "ingredients": {
-      "core": ["Chicken", "Gouda or provolone", "Onions", "Tortillas"],
-      "pantry": ["Mild salsa", "Oil for cooking"]
+      "core": ["Chicken", "Cheese", "Tortillas"],
+      "pantry": ["Oil", "Salsa (mild)", "Sour cream"]
     },
-    "searchTerms": ["quesadilla", "chicken", "cheese", "mexican", "melty", "tortilla", "quick"]
+    "searchTerms": ["quesadilla", "chicken", "cheese", "melty", "mexican", "quick"]
   },
   {
     "name": "Chicken Fajitas",
-    "category": "texmex",
-    "moods": ["hearty", "fresh"],
+    "category": "tex-mex",
+    "moods": ["fresh", "quick"],
     "ingredients": {
-      "core": ["Chicken thighs", "Bell peppers", "Onions", "Tortillas"],
-      "pantry": ["Garlic", "Cumin", "Chili powder", "Oil"]
+      "core": ["Chicken", "Bell peppers", "Onions", "Tortillas"],
+      "pantry": ["Fajita seasoning (no cilantro)", "Oil", "Sour cream"]
     },
-    "searchTerms": ["fajitas", "chicken", "peppers", "mexican", "sizzling", "tortilla", "skillet"]
+    "searchTerms": ["fajitas", "chicken", "peppers", "mexican", "sizzling", "wrap"]
   },
   {
     "name": "Turkey Chili with Beans",
-    "category": "texmex",
-    "moods": ["hearty", "cozy"],
+    "category": "tex-mex",
+    "moods": ["cozy", "hearty"],
     "ingredients": {
-      "core": ["Ground turkey", "Beans (kidney, black, pinto)", "Tomatoes", "Onions"],
-      "pantry": ["Chili powder", "Cumin", "Garlic", "Chicken stock"]
+      "core": ["Ground turkey", "Beans", "Tomatoes"],
+      "pantry": ["Chili powder", "Cumin", "Garlic", "Onions", "Stock"]
     },
-    "searchTerms": ["chili", "turkey", "beans", "stew", "comfort", "warm", "spicy mild"]
+    "searchTerms": ["chili", "turkey", "beans", "stew", "comfort", "hearty", "bowl"]
   },
   {
     "name": "Chicken Soft Tacos (Skillet, Mild)",
-    "category": "texmex",
-    "moods": ["hearty", "quick", "fresh"],
+    "category": "tex-mex",
+    "moods": ["quick", "fresh"],
     "ingredients": {
-      "core": ["Chicken thighs", "Tortillas", "Onions", "Bell peppers"],
-      "pantry": ["Cumin", "Chili powder", "Garlic", "Oil", "Salt"]
+      "core": ["Chicken", "Soft tortillas", "Lettuce", "Cheese"],
+      "pantry": ["Taco seasoning (mild)", "Salsa (mild)", "Sour cream"]
     },
-    "searchTerms": ["tacos", "chicken", "skillet", "tex mex", "cilantro-free", "no lime"]
+    "searchTerms": ["tacos", "chicken", "soft", "mexican", "quick", "easy"]
   },
   {
     "name": "Refried Bean & Cheese Quesadillas",
-    "category": "texmex",
-    "moods": ["quick", "hearty"],
+    "category": "tex-mex",
+    "moods": ["quick", "cozy"],
     "ingredients": {
-      "core": ["Refried beans", "Provolone or mozzarella", "Tortillas"],
-      "pantry": ["Onion", "Oil", "Mild salsa"]
+      "core": ["Refried beans", "Cheese", "Tortillas"],
+      "pantry": ["Oil", "Salsa (mild)", "Sour cream"]
     },
-    "searchTerms": ["quesadilla", "beans", "cheese", "tex mex", "vegetarian", "quick"]
+    "searchTerms": ["quesadilla", "beans", "vegetarian", "cheese", "quick", "simple"]
   },
   {
     "name": "Turkey Enchilada Skillet",
-    "category": "texmex",
+    "category": "tex-mex",
     "moods": ["hearty", "cozy"],
     "ingredients": {
-      "core": ["Ground turkey", "Tortillas", "Black beans", "Cheese"],
-      "pantry": ["Passata or low-acid enchilada sauce", "Cumin", "Chili powder", "Garlic"]
+      "core": ["Ground turkey", "Tortillas", "Cheese", "Enchilada sauce (mild)"],
+      "pantry": ["Onions", "Garlic", "Oil"]
     },
-    "searchTerms": ["enchilada", "skillet", "tex mex", "easy", "weeknight", "no vinegar"]
+    "searchTerms": ["enchilada", "turkey", "skillet", "mexican", "cheesy", "baked"]
   },
   {
     "name": "Pan-Seared Whitefish with Asparagus",
     "category": "seafood",
     "moods": ["seafood", "fresh", "quick"],
     "ingredients": {
-      "core": ["White fish (cod, halibut)", "Asparagus", "Rice"],
-      "pantry": ["Soy sauce", "Butter", "Lemon zest", "Olive oil"]
+      "core": ["White fish", "Asparagus"],
+      "pantry": ["Butter", "Lemon", "Garlic", "Salt", "Pepper"]
     },
-    "searchTerms": ["fish", "whitefish", "cod", "halibut", "asparagus", "healthy", "light"]
+    "searchTerms": ["fish", "whitefish", "asparagus", "pan seared", "light", "healthy"]
   },
   {
     "name": "Salmon with Smashed Potatoes",
     "category": "seafood",
     "moods": ["seafood", "hearty"],
     "ingredients": {
-      "core": ["Salmon", "Small potatoes", "Green beans or asparagus"],
-      "pantry": ["Soy sauce", "Butter", "Olive oil", "Garlic"]
+      "core": ["Salmon", "Small potatoes"],
+      "pantry": ["Olive oil", "Garlic", "Dill", "Salt", "Pepper"]
     },
-    "searchTerms": ["salmon", "potatoes", "fish", "hearty", "crispy", "smashed", "dinner"]
+    "searchTerms": ["salmon", "potatoes", "smashed", "crispy", "dill", "hearty"]
   },
   {
     "name": "Linguine with Clams",
     "category": "seafood",
-    "moods": ["seafood", "italian", "fresh"],
+    "moods": ["seafood", "italian"],
     "ingredients": {
-      "core": ["Linguine", "Clams", "Parsley"],
-      "pantry": ["Chicken stock", "Garlic", "Olive oil", "Chili flakes (light)"]
+      "core": ["Linguine", "Clams"],
+      "pantry": ["Garlic", "White wine (optional)", "Olive oil", "Parsley", "Red pepper flakes"]
     },
-    "searchTerms": ["clams", "linguine", "pasta", "seafood", "italian", "white sauce", "briny"]
+    "searchTerms": ["linguine", "clams", "pasta", "seafood", "italian", "white sauce"]
   },
   {
     "name": "Mussels in Tomato-Garlic Broth",
     "category": "seafood",
     "moods": ["seafood", "cozy"],
     "ingredients": {
-      "core": ["Mussels", "Crusty bread (rye or sourdough)"],
-      "pantry": ["Passata", "Chicken stock", "Garlic", "Butter"]
+      "core": ["Mussels", "Tomatoes", "Bread for dipping"],
+      "pantry": ["Garlic", "White wine (optional)", "Olive oil", "Parsley"]
     },
-    "searchTerms": ["mussels", "seafood", "tomato", "broth", "bread", "dipping", "shellfish"]
+    "searchTerms": ["mussels", "tomato", "broth", "seafood", "garlic", "bread"]
   },
   {
     "name": "Crab Cakes",
     "category": "seafood",
-    "moods": ["seafood", "hearty"],
+    "moods": ["seafood", "fresh"],
     "ingredients": {
-      "core": ["Crab meat", "Dill"],
-      "pantry": ["Mayo", "Egg", "Breadcrumbs", "Mustard", "Oil for pan-frying"]
+      "core": ["Crab meat", "Breadcrumbs", "Egg"],
+      "pantry": ["Mayo", "Mustard", "Old Bay seasoning", "Lemon"]
     },
-    "searchTerms": ["crab", "cakes", "seafood", "fried", "dill", "appetizer", "maryland"]
+    "searchTerms": ["crab", "cakes", "seafood", "appetizer", "maryland", "crispy"]
   },
   {
     "name": "Baked Cod Oreganata",
     "category": "seafood",
-    "moods": ["seafood", "italian", "fresh"],
+    "moods": ["seafood", "quick"],
     "ingredients": {
-      "core": ["Cod", "Breadcrumbs", "Parsley"],
-      "pantry": ["Olive oil", "Garlic", "Lemon zest", "Salt", "Pepper"]
+      "core": ["Cod", "Breadcrumbs"],
+      "pantry": ["Olive oil", "Oregano", "Garlic", "Lemon", "Parmesan"]
     },
-    "searchTerms": ["cod", "oreganata", "italian", "baked", "classic", "zest only"]
+    "searchTerms": ["cod", "baked", "oreganata", "italian", "breadcrumbs", "light"]
   },
   {
     "name": "Salmon with Dill Mayo",
     "category": "seafood",
-    "moods": ["seafood", "fresh", "quick"],
+    "moods": ["seafood", "quick"],
     "ingredients": {
       "core": ["Salmon", "Dill"],
-      "pantry": ["Mayonnaise", "Salt", "Pepper", "Lemon zest"]
+      "pantry": ["Mayo", "Lemon", "Garlic", "Salt", "Pepper"]
     },
-    "searchTerms": ["salmon", "dill", "mayo", "baked", "quick", "no citrus"]
+    "searchTerms": ["salmon", "dill", "mayo", "creamy", "quick", "easy"]
   },
   {
     "name": "Crab Linguine (Zest, Not Juicy)",
     "category": "seafood",
-    "moods": ["seafood", "italian", "quick"],
+    "moods": ["seafood", "italian"],
     "ingredients": {
-      "core": ["Linguine", "Crab meat", "Parsley"],
-      "pantry": ["Olive oil", "Garlic", "Butter", "Lemon zest"]
+      "core": ["Linguine", "Crab meat"],
+      "pantry": ["Butter", "Garlic", "Lemon zest", "Parsley", "Red pepper flakes"]
     },
-    "searchTerms": ["crab pasta", "linguine", "seafood", "italian", "classic", "zest only"]
+    "searchTerms": ["crab", "linguine", "pasta", "seafood", "butter", "lemon"]
   },
   {
     "name": "Chicken Noodle Soup",
     "category": "soup",
     "moods": ["cozy", "quick"],
     "ingredients": {
-      "core": ["Chicken", "Egg noodles", "Carrots", "Celery", "Onions"],
-      "pantry": ["Chicken stock", "Dill or parsley"]
+      "core": ["Chicken", "Egg noodles", "Carrots", "Celery"],
+      "pantry": ["Chicken stock", "Onions", "Garlic", "Parsley"]
     },
-    "searchTerms": ["soup", "chicken", "noodle", "comfort", "sick", "classic", "warm"]
+    "searchTerms": ["soup", "chicken", "noodle", "comfort", "classic", "sick", "warm"]
   },
   {
     "name": "Chicken Tortilla Soup",
     "category": "soup",
     "moods": ["cozy", "hearty"],
     "ingredients": {
-      "core": ["Chicken", "Tortilla strips", "Tomatoes"],
-      "pantry": ["Chicken stock", "Cumin", "Chili powder", "Garlic"]
+      "core": ["Chicken", "Black beans", "Corn", "Tortilla strips"],
+      "pantry": ["Chicken stock", "Tomatoes", "Cumin", "Chili powder"]
     },
-    "searchTerms": ["soup", "tortilla", "chicken", "mexican", "crispy", "warm", "tex mex"]
+    "searchTerms": ["tortilla soup", "chicken", "mexican", "beans", "corn", "spicy"]
   },
   {
     "name": "Split Pea Soup with Turkey",
     "category": "soup",
     "moods": ["cozy", "hearty"],
     "ingredients": {
-      "core": ["Split peas", "Turkey (leftover or ground)", "Carrots", "Onions"],
-      "pantry": ["Turkey or chicken stock", "Bay leaf"]
+      "core": ["Split peas", "Turkey ham or bacon", "Carrots"],
+      "pantry": ["Stock", "Onions", "Garlic", "Bay leaf"]
     },
-    "searchTerms": ["split pea", "soup", "turkey", "hearty", "thick", "comfort", "winter"]
+    "searchTerms": ["split pea", "soup", "ham", "turkey", "hearty", "thick"]
   },
   {
     "name": "Bean & Kale Minestrone",
     "category": "soup",
     "moods": ["cozy", "fresh"],
     "ingredients": {
-      "core": ["Cannellini beans", "Kale", "Barley", "Parmesan rind"],
-      "pantry": ["Vegetable or chicken stock", "Tomatoes", "Olive oil", "Garlic"]
+      "core": ["White beans", "Kale", "Small pasta"],
+      "pantry": ["Vegetable stock", "Tomatoes", "Garlic", "Olive oil"]
     },
-    "searchTerms": ["minestrone", "soup", "beans", "kale", "italian", "vegetable", "healthy"]
+    "searchTerms": ["minestrone", "beans", "kale", "italian", "vegetable", "healthy"]
   },
   {
     "name": "Chicken Congee",
     "category": "soup",
     "moods": ["asian", "cozy"],
     "ingredients": {
-      "core": ["Rice", "Chicken", "Scallions"],
-      "pantry": ["Chicken stock", "Ginger", "Soy sauce", "Sesame oil"]
+      "core": ["Rice", "Chicken", "Ginger"],
+      "pantry": ["Chicken stock", "Soy sauce", "Sesame oil", "Green onions"]
     },
     "searchTerms": ["congee", "porridge", "rice", "chicken", "asian", "comfort", "sick"]
   },
@@ -755,7 +755,7 @@ const embeddedMeals = [
 
 
     // ===== NUTRITION DATA =====
-    
+
 
 
 const nutritionEstimates = {
@@ -859,14 +859,15 @@ const nutritionEstimates = {
 
 
     // ===== MAIN APPLICATION =====
-    
+
 
 
 
 
 let meals = [];
 let fuse;
-let currentMood = null;
+let currentMood = 'all';
+let selectedMeal = null;
 
 
 function loadMeals() {
@@ -881,6 +882,7 @@ function loadMeals() {
 
     initFuzzySearch();
     setupEventListeners();
+    displayAllMeals();
 }
 
 
@@ -897,105 +899,191 @@ function initFuzzySearch() {
 function setupEventListeners() {
     // Mood buttons
     document.querySelectorAll('.mood-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Clear search when clicking mood
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.value = '';
+        btn.addEventListener('click', function() {
+            const mood = this.dataset.mood;
 
-            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
-            btn.classList.add('btn-primary');
+            // Update active state
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
 
-            currentMood = btn.dataset.mood;
-            showMealSuggestions(currentMood);
+            currentMood = mood;
+
+            if (mood === 'all') {
+                displayAllMeals();
+            } else {
+                showMealSuggestions(mood);
+            }
         });
     });
 
-    // Search input - always visible at top
+    // Search input with debounce
+    let searchTimeout;
     const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
-            if (query) {
-                // Clear mood selection when typing
-                document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('btn-primary'));
-                currentMood = null;
-                searchMeals(query);
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+
+        if (query.length === 0) {
+            // If search is cleared, show current mood or all
+            if (currentMood === 'all') {
+                displayAllMeals();
             } else {
-                // Hide suggestions if no query and no mood selected
-                if (!currentMood) {
-                    document.getElementById('suggestionsArea').classList.add('hidden');
-                }
+                showMealSuggestions(currentMood);
             }
-        });
-    }
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            searchMeals(query);
+        }, 300);
+    });
+
+    // Modal close on backdrop click
+    document.getElementById('mealModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+}
+
+
+function displayAllMeals() {
+    displayMeals(meals);
 }
 
 
 function showMealSuggestions(mood) {
     const moodMeals = meals.filter(m => m.moods.includes(mood));
-    displayMeals(moodMeals, `${mood.charAt(0).toUpperCase() + mood.slice(1)} meals`);
-    document.getElementById('suggestionsArea').classList.remove('hidden');
+    displayMeals(moodMeals);
 }
 
 
 function searchMeals(query) {
     const results = fuse.search(query).map(r => r.item);
-    displayMeals(results, `Results for "${query}"`);
-    document.getElementById('suggestionsArea').classList.remove('hidden');
+    displayMeals(results);
 }
 
 
-function displayMeals(mealList, title = 'Suggestions') {
+function displayMeals(mealList) {
     const container = document.getElementById('mealSuggestions');
-    const titleElement = document.getElementById('suggestionsTitle');
-
-    if (titleElement) {
-        titleElement.textContent = title;
-    }
-
     container.innerHTML = '';
 
     if (mealList.length === 0) {
-        container.innerHTML = '<p class="text-base-content/60">No meals found. Try a different search term or browse by mood.</p>';
+        container.innerHTML = '<div class="no-results">No meals found. Try a different search or mood.</div>';
         return;
     }
 
     mealList.forEach(meal => {
-        const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, fat: 15, calories: 435 };
-        const mealCard = document.createElement('div');
-        mealCard.className = 'card bg-base-100 p-4 hover:bg-base-200 transition-colors';
-
-        // Build ingredients list
-        const coreIngredients = meal.ingredients.core.join(', ');
-
-        mealCard.innerHTML = `
-            <h4 class="font-semibold text-lg">${meal.name}</h4>
-            <p class="text-xs text-base-content/60 mt-1">
-                ${nutrition.protein}g protein • ${nutrition.carbs}g carbs • ${nutrition.fat}g fat • ${nutrition.calories} cal
-            </p>
-            <p class="text-sm text-base-content/80 mt-2">
-                <span class="font-medium">Main ingredients:</span> ${coreIngredients}
-            </p>
-            <div class="mt-2">
-                ${meal.moods.map(mood => {
-                    const moodEmoji = {
-                        'cozy': '🔥',
-                        'fresh': '🥗',
-                        'hearty': '💪',
-                        'quick': '⚡',
-                        'asian': '🥢',
-                        'italian': '🍝',
-                        'seafood': '🐟',
-                        'breakfast': '🌅'
-                    };
-                    return `<span class="badge badge-sm mr-1">${moodEmoji[mood] || ''} ${mood}</span>`;
-                }).join('')}
-            </div>
-        `;
-
+        const mealCard = createCompactMealCard(meal);
         container.appendChild(mealCard);
     });
 }
+
+
+function createCompactMealCard(meal) {
+    const card = document.createElement('div');
+    card.className = 'meal-card';
+
+    // Build ingredients list (max 3 items)
+    const coreIngredients = meal.ingredients.core.slice(0, 3).join(', ');
+    const hasMore = meal.ingredients.core.length > 3 ? '...' : '';
+
+    // Build mood tags (compact)
+    const moodTags = meal.moods.slice(0, 3).map(mood => {
+        const moodEmoji = {
+            'cozy': '🔥',
+            'fresh': '🥗',
+            'hearty': '💪',
+            'quick': '⚡',
+            'asian': '🥢',
+            'italian': '🍝',
+            'seafood': '🐟',
+            'breakfast': '🌅'
+        };
+        return `<span class="meal-tag">${moodEmoji[mood] || ''} ${mood}</span>`;
+    }).join('');
+
+    card.innerHTML = `
+        <div class="meal-title">${meal.name}</div>
+        <div class="meal-ingredients">${coreIngredients}${hasMore}</div>
+        <div class="meal-tags">${moodTags}</div>
+    `;
+
+    card.addEventListener('click', () => showMealDetails(meal));
+
+    return card;
+}
+
+
+function showMealDetails(meal) {
+    selectedMeal = meal;
+
+    // Update modal content
+    document.getElementById('modalTitle').textContent = meal.name;
+
+    // Ingredients
+    document.getElementById('modalIngredients').textContent = meal.ingredients.core.join(', ');
+
+    // Pantry items
+    document.getElementById('modalPantry').textContent = meal.ingredients.pantry.join(', ');
+
+    // Nutrition
+    const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, fat: 15, calories: 435 };
+    const nutritionHTML = `
+        <div class="nutrition-item">
+            <span class="nutrition-label">Protein</span>
+            <span class="nutrition-value">${nutrition.protein}g</span>
+        </div>
+        <div class="nutrition-item">
+            <span class="nutrition-label">Carbs</span>
+            <span class="nutrition-value">${nutrition.carbs}g</span>
+        </div>
+        <div class="nutrition-item">
+            <span class="nutrition-label">Fat</span>
+            <span class="nutrition-value">${nutrition.fat}g</span>
+        </div>
+        <div class="nutrition-item">
+            <span class="nutrition-label">Calories</span>
+            <span class="nutrition-value">${nutrition.calories}</span>
+        </div>
+    `;
+    document.getElementById('modalNutrition').innerHTML = nutritionHTML;
+
+    // Tags
+    const allTags = meal.moods.map(mood => {
+        const moodEmoji = {
+            'cozy': '🔥',
+            'fresh': '🥗',
+            'hearty': '💪',
+            'quick': '⚡',
+            'asian': '🥢',
+            'italian': '🍝',
+            'seafood': '🐟',
+            'breakfast': '🌅'
+        };
+        return `<span class="meal-tag" style="margin-right: 8px;">${moodEmoji[mood] || ''} ${mood}</span>`;
+    }).join('');
+    document.getElementById('modalTags').innerHTML = allTags;
+
+    // Show modal
+    document.getElementById('mealModal').classList.add('open');
+}
+
+
+function closeModal() {
+    document.getElementById('mealModal').classList.remove('open');
+}
+
+// Make closeModal available globally for onclick handler
+window.closeModal = closeModal;
 
 
 function initializeApp() {
@@ -1012,13 +1100,13 @@ window.loadMeals = loadMeals;
     // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing MoodEats Browse...');
+            console.log('Initializing MoodEats Compact Grid...');
             if (typeof initializeApp === 'function') {
                 initializeApp();
             }
         });
     } else {
-        console.log('Initializing MoodEats Browse (DOM ready)...');
+        console.log('Initializing MoodEats Compact Grid (DOM ready)...');
         if (typeof initializeApp === 'function') {
             initializeApp();
         }
