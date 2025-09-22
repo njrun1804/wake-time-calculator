@@ -1,33 +1,35 @@
-# MoodEats Maintenance Guide - v2.0
+# MoodEats - Browse-Only Version
 
-## Project Structure (Refactored)
+## Overview
+MoodEats is a simplified meal suggestion app that helps users find meals based on their mood. Users can click on mood buttons to see relevant meal suggestions with nutrition information and ingredients.
+
+## Features
+- 🎯 Browse meals by mood (Cozy, Fresh, Hearty, Quick, Asian, Italian, Seafood, Breakfast)
+- 🔍 Search functionality to find specific meals
+- 📊 Nutrition information display (protein, carbs, fat, calories)
+- 🥘 Main ingredients list for each meal
+- 🏷️ Mood tags on each meal card
+
+## Project Structure
 
 ```
 moodeats/
-├── index.html              # Production HTML (uses bundled JS)
-├── index-modular.html      # Development HTML (uses ES modules)
+├── index.html              # Main HTML file (simplified browse-only)
 ├── dist/
-│   └── moodeats-bundle.js  # Bundled JavaScript for production
+│   └── moodeats-simple.js  # Bundled JavaScript for production
 ├── src/
 │   ├── css/
 │   │   └── styles.css      # Custom styles
-│   ├── js/
-│   │   ├── app.js          # Main application logic
-│   │   ├── meals-data.js   # Meals array (76+ meals)
-│   │   ├── nutrition-data.js # Nutrition estimates
-│   │   ├── storage.js      # LocalStorage functions
-│   │   └── ui.js           # UI update functions
-│   └── data/
-│       └── (future: meals.json processed)
+│   └── js/
+│       ├── app-simple.js   # Main application logic (browse-only)
+│       ├── meals-data.js   # Meals array (74 meals)
+│       └── nutrition-data.js # Nutrition estimates for each meal
 ├── scripts/
-│   └── build.js            # Build bundled version
+│   └── build-browse-only.js # Build script for bundled version
 ├── tests/
-│   ├── unit/               # Unit tests
-│   ├── e2e/                # End-to-end tests
-│   └── fixtures/           # Test data
-├── archive/                # Old versions for reference
-└── docs/                   # Documentation
-
+│   └── e2e/
+│       └── browse-only.spec.js # End-to-end tests for browse functionality
+└── package.json
 ```
 
 ## Quick Commands
@@ -36,21 +38,19 @@ moodeats/
 ```bash
 # Serve locally
 python3 -m http.server 8000
-open http://localhost:8000/index.html
+open http://localhost:8000
 
 # Run tests
 npm test
 
-# Lint code
-npm run lint
+# Build for production
+npm run build
 ```
 
-### Build & Deploy
+### Deploy
 ```bash
-# Build bundled version
-node scripts/build.js
-
-# Deploy to GitHub Pages
+# Build and deploy to GitHub Pages
+npm run build
 git add -A
 git commit -m "Your message"
 git push moodeats main
@@ -58,189 +58,70 @@ git push moodeats main
 # Site live at: https://njrun1804.github.io/moodeats/
 ```
 
-## Architecture Overview
+## How It Works
 
-### Modular Design
-The app is now split into logical modules:
+1. **User clicks a mood button** → Shows all meals tagged with that mood
+2. **User searches for a meal** → Fuzzy search through meal names, ingredients, and tags
+3. **Each meal card displays**:
+   - Meal name
+   - Nutrition info (protein, carbs, fat, calories)
+   - Main ingredients
+   - Mood tags
 
-1. **meals-data.js** - Contains the array of 76+ meals
-2. **nutrition-data.js** - Nutrition estimates for each meal
-3. **storage.js** - All localStorage operations
-4. **ui.js** - DOM manipulation and display updates
-5. **app.js** - Main application logic and initialization
+## Adding New Meals
 
-### Data Flow
-```
-app.js (coordinator)
-  ├── loads meals-data.js
-  ├── uses nutrition-data.js for calculations
-  ├── calls storage.js for persistence
-  └── updates DOM via ui.js
-```
+Edit `src/js/meals-data.js` and add to the `embeddedMeals` array:
 
-## Adding New Features
-
-### Add a New Meal
-1. Edit `src/js/meals-data.js`
-2. Add meal object to the `embeddedMeals` array:
 ```javascript
 {
   "name": "Meal Name",
   "category": "breakfast|italian|japanese|chinese|texmex|seafood|soup|sandwich|side",
-  "moods": ["cozy", "fresh", "hearty", "quick"],
+  "moods": ["cozy", "fresh", "hearty", "quick", "asian", "italian", "seafood", "breakfast"],
   "ingredients": {
-    "core": ["Main ingredients"],
-    "pantry": ["Pantry staples"]
+    "core": ["Main ingredient 1", "Main ingredient 2"],
+    "pantry": ["Pantry item 1", "Pantry item 2"]
   },
-  "searchTerms": ["keywords"]
+  "searchTerms": ["keyword1", "keyword2"]
 }
 ```
 
-3. Add nutrition data in `src/js/nutrition-data.js`:
+Then add nutrition data in `src/js/nutrition-data.js`:
+
 ```javascript
 "Meal Name": { protein: 30, carbs: 45, fat: 20, calories: 480 }
 ```
 
-4. Run build: `node scripts/build.js`
-
-### Add a New Mood
-1. Update HTML buttons in `index.html`
-2. Add filtering logic in `app.js` → `selectMealForSlot()`
-3. Update meal data with new mood tags
-
-### Modify Nutrition Calculations
-- Edit `ui.js` → `calculateRunnerScore()` for scoring logic
-- Edit `ui.js` → `updateDailyTotals()` for totals display
-
-## Key Functions Reference
-
-### app.js
-- `initializeApp()` - Entry point
-- `selectMealForSlot(slot)` - Opens modal for meal selection
-- `selectMeal(meal)` - Adds meal to daily plan
-- `addManualMeal()` - Adds custom typed meal
-
-### storage.js
-- `savePlanToStorage()` - Saves current plan
-- `loadDailyPlan()` - Loads saved plan
-- `saveDailyPlan()` - Archives daily plan
-
-### ui.js
-- `updateSlotDisplay(slot, meal)` - Updates meal slot UI
-- `updateDailyTotals()` - Calculates and displays totals
-- `displayModalMeals()` - Shows meals in selection modal
+Run `npm run build` to rebuild the bundle.
 
 ## Testing
 
-### Unit Tests
 ```bash
-npm run test:unit        # Run all unit tests
-npm run test:coverage    # With coverage report
+# Run browse-only tests
+npm test
+
+# Run with visible browser
+npm run test:headed
+
+# Run specific test
+npx playwright test tests/e2e/browse-only.spec.js
 ```
-
-### E2E Tests
-```bash
-npm run test:e2e         # Run all E2E tests
-npm run test:headed      # Run with browser visible
-npm run test:ui          # Open Playwright UI
-```
-
-## Maintenance Tasks
-
-### Update All Nutrition Values
-```bash
-# Future: Create script to calculate calories
-# calories = (protein * 4) + (carbs * 4) + (fat * 9)
-```
-
-### Clean Up Old Plans
-```javascript
-// In storage.js, adjust retention period (currently 30 days)
-cutoff.setDate(cutoff.getDate() - 30); // Change 30 to desired days
-```
-
-### Performance Optimization
-- Bundle is currently ~100KB
-- Consider lazy loading meal data if grows > 200KB
-- Use service worker for offline support
 
 ## User Preferences
 
-Current dietary restrictions handled:
-- No cilantro (excluded from ingredients)
+Current dietary preferences handled:
+- No cilantro
 - Minimal citrus (zest only, no juice)
 - Low acid (passata instead of tomato sauce)
 - Mild spice only
-- Melty cheese preferred (provolone, mozzarella)
+- Melty cheese preferred
 
-## Troubleshooting
+## Performance
 
-### Meals Not Loading
-1. Check browser console for errors
-2. Verify `embeddedMeals` exists in meals-data.js
-3. Check Fuse.js CDN is loading
-4. Run build script: `node scripts/build.js`
-
-### LocalStorage Issues
-- Check localStorage quota (usually 5-10MB)
-- Clear old data: `localStorage.clear()`
-- Check for 'moodeats:' prefix on all keys
-
-### Build Issues
-- Ensure Node.js installed
-- Check file paths in build.js
-- Verify src files exist before building
-
-## Future Enhancements
-
-### Phase 1 ✅ (Completed)
-- Modular architecture
-- Nutrition tracking
-- Manual meal entry
-- Snacks section
-
-### Phase 2 (Next)
-- [ ] Favorites system
-- [ ] Meal history export
-- [ ] Weekly planning
-- [ ] Shopping list generation
-
-### Phase 3 (Future)
-- [ ] Recipe integration
-- [ ] Nutrition API integration
-- [ ] Multi-user support
-- [ ] Mobile app version
-
-## Git Workflow
-
-```bash
-# Feature branch
-git checkout -b feature-name
-# Make changes
-git add -A
-git commit -m "feat: description"
-git push origin feature-name
-
-# Merge to main
-git checkout main
-git merge feature-name
-git push moodeats main
-```
-
-## Performance Metrics
-
-Target metrics:
-- Initial load: < 2s
-- Time to interactive: < 3s
-- Lighthouse score: > 90
-- Bundle size: < 200KB
-
-Current (after refactor):
-- HTML: 11KB (was 65KB)
-- JavaScript: ~100KB bundled
-- CSS: 1KB
-- Total: ~112KB (was 65KB monolithic)
+- Bundle size: ~90KB
+- No external dependencies except CDN (Tailwind, DaisyUI, Fuse.js)
+- Fast load time
+- Mobile responsive
 
 ---
 
-*Last updated: Sep 22, 2025 - Major refactoring to modular architecture*
+*Last updated: Sep 22, 2025 - Simplified to browse-only version*

@@ -38,8 +38,8 @@ test.describe('Live Site Functionality', () => {
         const suggestionsArea = page.locator('#suggestionsArea');
         await expect(suggestionsArea).toBeVisible();
 
-        // Should have meal suggestions
-        const suggestions = page.locator('#mealSuggestions .meal-suggestion');
+        // Should have meal suggestions (they are .card elements)
+        const suggestions = page.locator('#mealSuggestions .card');
         const count = await suggestions.count();
         expect(count).toBeGreaterThan(0);
     });
@@ -52,8 +52,8 @@ test.describe('Live Site Functionality', () => {
         const modal = page.locator('#mealModal');
         await expect(modal).toBeVisible();
 
-        // Modal should have meals
-        const meals = page.locator('#modalMeals .meal-option');
+        // Modal should have meals (they are .card elements)
+        const meals = page.locator('#modalMeals .card');
         const count = await meals.count();
         expect(count).toBeGreaterThan(0);
     });
@@ -62,11 +62,11 @@ test.describe('Live Site Functionality', () => {
         // Click Select button for breakfast
         await page.click('button:has-text("Select"):near(:text("Breakfast"))');
 
-        // Wait for modal
-        await page.waitForSelector('#modalMeals .meal-option');
+        // Wait for modal with meals
+        await page.waitForSelector('#modalMeals .card');
 
-        // Click first meal option
-        await page.click('#modalMeals .meal-option:first-child');
+        // Click first meal card
+        await page.click('#modalMeals .card:first-child');
 
         // Check if meal was added to breakfast slot
         const breakfastSlot = page.locator('#breakfast-slot');
@@ -84,8 +84,8 @@ test.describe('Live Site Functionality', () => {
     test('Daily totals update', async ({ page }) => {
         // Select a meal for breakfast
         await page.click('button:has-text("Select"):near(:text("Breakfast"))');
-        await page.waitForSelector('#modalMeals .meal-option');
-        await page.click('#modalMeals .meal-option:first-child');
+        await page.waitForSelector('#modalMeals .card');
+        await page.click('#modalMeals .card:first-child');
 
         // Check that totals are not zero
         const totalProtein = page.locator('#totalProtein');
