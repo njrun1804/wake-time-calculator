@@ -15,7 +15,7 @@ jobs:
         run: |
           python3 -m http.server 8000 & PID=$!
           sleep 1
-          if curl -sSfI http://localhost:8000/index.html >/dev/null; then
+          if curl -sSfI http://localhost:8000/wake.html >/dev/null; then
             echo "OK"
             kill $PID
           else

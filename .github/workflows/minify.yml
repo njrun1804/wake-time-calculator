@@ -16,8 +16,8 @@ jobs:
           node-version: '18'
       - name: Install html-minifier
         run: npm ci --no-audit --no-fund || true
-      - name: Minify index.html
-        run: npx html-minifier-terser index.html -o index.min.html --collapse-whitespace --remove-comments --minify-css --minify-js
+      - name: Minify wake.html
+        run: npx html-minifier-terser wake.html -o wake.min.html --collapse-whitespace --remove-comments --minify-css --minify-js
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:

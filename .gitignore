@@ -13,3 +13,5 @@ test-visual.js
 wake-updated.png
 test-results/
 wake-tests.js
+playwright-report/
+playwright/.cache/
