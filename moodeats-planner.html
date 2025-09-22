@@ -1258,43 +1258,6 @@
             }
         }
 
-// DUPLICATE -         // Modal search
-// DUPLICATE -         document.getElementById('modalSearch').addEventListener('input', (e) => {
-// DUPLICATE -             const query = e.target.value.trim();
-// DUPLICATE -             if (query) {
-// DUPLICATE -                 const results = fuse.search(query).map(r => r.item);
-// DUPLICATE -                 displayModalMeals(results, []);
-// DUPLICATE -             } else {
-// DUPLICATE -                 selectMealForSlot(currentSlot);
-// DUPLICATE -             }
-// DUPLICATE -         });
-// DUPLICATE - 
-// DUPLICATE -         // Modal filter buttons
-// DUPLICATE -         document.querySelectorAll('.modal-filter').forEach(btn => {
-// DUPLICATE -             btn.addEventListener('click', () => {
-// DUPLICATE -                 const filter = btn.dataset.filter;
-// DUPLICATE -                 document.querySelectorAll('.modal-filter').forEach(b => b.classList.remove('btn-primary'));
-// DUPLICATE -                 btn.classList.add('btn-primary');
-// DUPLICATE - 
-// DUPLICATE -                 let filteredMeals = meals;
-// DUPLICATE -                 if (currentSlot === 'breakfast') {
-// DUPLICATE -                     filteredMeals = meals.filter(m => m.moods.includes('breakfast'));
-// DUPLICATE -                 } else {
-// DUPLICATE -                     filteredMeals = meals.filter(m => !m.moods.includes('breakfast'));
-// DUPLICATE -                 }
-// DUPLICATE - 
-// DUPLICATE -                 if (filter !== 'all') {
-// DUPLICATE -                     filteredMeals = filteredMeals.filter(m => m.moods.includes(filter));
-// DUPLICATE -                 }
-// DUPLICATE - 
-// DUPLICATE -                 const otherMeals = Object.entries(dailyPlan)
-// DUPLICATE -                     .filter(([s, m]) => s !== currentSlot && m)
-// DUPLICATE -                     .map(([s, m]) => m);
-// DUPLICATE - 
-// DUPLICATE -                 displayModalMeals(filteredMeals, otherMeals);
-            });
-        });
-
         // Setup browse view event listeners (called after meals are loaded)
         function setupBrowseViewEventListeners() {
             // Browse view mood buttons
@@ -1330,33 +1293,6 @@
                 });
             });
         }
-
-// DUPLICATE -         // Browse view search (this can stay here since it doesn't depend on meals being loaded)
-// DUPLICATE -         document.getElementById('searchInput').addEventListener('input', (e) => {
-// DUPLICATE -             const query = e.target.value.trim();
-// DUPLICATE -             if (query && fuse) {
-// DUPLICATE -                 const results = fuse.search(query).slice(0, 6).map(r => r.item);
-// DUPLICATE -                 const container = document.getElementById('mealSuggestions');
-// DUPLICATE -                 container.innerHTML = '';
-// DUPLICATE - 
-// DUPLICATE -                 results.forEach(meal => {
-// DUPLICATE -                     const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
-// DUPLICATE -                     const mealCard = document.createElement('div');
-// DUPLICATE -                     mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
-// DUPLICATE -                     mealCard.innerHTML = `
-// DUPLICATE -                         <h4 class="font-semibold">${meal.name}</h4>
-// DUPLICATE -                         <p class="text-xs text-base-content/60 mt-1">
-// DUPLICATE -                             ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
-// DUPLICATE -                         </p>
-// DUPLICATE -                     `;
-// DUPLICATE -                     container.appendChild(mealCard);
-// DUPLICATE -                 });
-// DUPLICATE - 
-// DUPLICATE -                 if (results.length > 0) {
-// DUPLICATE -                     document.getElementById('suggestionsArea').classList.remove('hidden');
-// DUPLICATE -                 }
-// DUPLICATE -             }
-        });
 
         // Set current date
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
