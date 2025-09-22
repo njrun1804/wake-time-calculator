@@ -68,6 +68,9 @@
                     <div class="card-body">
                         <h3 class="card-title text-lg">Suggestions</h3>
                         <div id="mealSuggestions" class="space-y-3"></div>
+                        <button id="showMore" class="btn btn-ghost btn-sm mt-4">
+                            Show 3 more →
+                        </button>
                     </div>
                 </div>
             </div>
@@ -88,9 +91,9 @@
                 <!-- Breakfast -->
                 <div class="card bg-base-200">
                     <div class="card-body">
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex justify-between items-start mb-2">
                             <h3 class="text-lg font-semibold">🌅 Breakfast</h3>
-                            <button class="btn btn-xs btn-outline" onclick="selectMealForSlot('breakfast')">
+                            <button class="btn btn-sm btn-primary" onclick="selectMealForSlot('breakfast')">
                                 <span id="breakfast-btn-text">Select</span>
                             </button>
                         </div>
@@ -103,9 +106,9 @@
                 <!-- Lunch -->
                 <div class="card bg-base-200">
                     <div class="card-body">
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex justify-between items-start mb-2">
                             <h3 class="text-lg font-semibold">☀️ Lunch</h3>
-                            <button class="btn btn-xs btn-outline" onclick="selectMealForSlot('lunch')">
+                            <button class="btn btn-sm btn-primary" onclick="selectMealForSlot('lunch')">
                                 <span id="lunch-btn-text">Select</span>
                             </button>
                         </div>
@@ -118,29 +121,14 @@
                 <!-- Dinner -->
                 <div class="card bg-base-200">
                     <div class="card-body">
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex justify-between items-start mb-2">
                             <h3 class="text-lg font-semibold">🌙 Dinner</h3>
-                            <button class="btn btn-xs btn-outline" onclick="selectMealForSlot('dinner')">
+                            <button class="btn btn-sm btn-primary" onclick="selectMealForSlot('dinner')">
                                 <span id="dinner-btn-text">Select</span>
                             </button>
                         </div>
                         <div id="dinner-slot" class="min-h-[60px] p-3 bg-base-100 rounded-lg">
                             <p class="text-base-content/40">Tap select to choose dinner</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Snacks -->
-                <div class="card bg-base-200">
-                    <div class="card-body">
-                        <div class="flex items-center gap-3 mb-2">
-                            <h3 class="text-lg font-semibold">🍿 Snacks</h3>
-                            <button class="btn btn-xs btn-outline" onclick="selectMealForSlot('snacks')">
-                                <span id="snacks-btn-text">Select</span>
-                            </button>
-                        </div>
-                        <div id="snacks-slot" class="min-h-[60px] p-3 bg-base-100 rounded-lg">
-                            <p class="text-base-content/40">Tap select to choose snacks</p>
                         </div>
                     </div>
                 </div>
@@ -194,25 +182,6 @@
                     placeholder="Search meals..."
                     class="input input-bordered w-full mb-4"
                 >
-
-                <!-- Manual Entry Section -->
-                <div class="collapse collapse-arrow bg-base-200 mb-4">
-                    <input type="checkbox" />
-                    <div class="collapse-title text-sm font-medium">
-                        Or type your own meal
-                    </div>
-                    <div class="collapse-content">
-                        <input
-                            type="text"
-                            id="manualMealName"
-                            class="input input-bordered input-sm w-full mb-2"
-                            placeholder="Enter meal name (e.g., Leftover pizza, Protein shake)"
-                        />
-                        <button class="btn btn-sm btn-primary" onclick="addManualMeal()">
-                            Add Custom Meal
-                        </button>
-                    </div>
-                </div>
 
                 <div id="modalMeals" class="space-y-2 max-h-96 overflow-y-auto">
                     <!-- Meals will be loaded here -->
@@ -998,107 +967,19 @@
         let dailyPlan = {
             breakfast: null,
             lunch: null,
-            dinner: null,
-            snacks: null
+            dinner: null
         };
         let currentSlot = null;
         let fuse;
 
-        // Real nutrition data from meals.json + estimates for other meals
+        // Sample nutrition data (would be in meals.json)
         const nutritionEstimates = {
-            // Breakfast meals with real data from meals.json
-            "Greek Yogurt Parfait with Berries & Muesli": { protein: 25, carbs: 68, fat: 10, calories: 462 },
-            "Oatmeal with Banana & PB": { protein: 10, carbs: 58, fat: 11, calories: 371 },
-            "Scrambled Eggs on Buttered Rye": { protein: 24, carbs: 30, fat: 28, calories: 472 },
-            "Spinach & Mozzarella Omelet": { protein: 25, carbs: 1, fat: 32, calories: 392 },
-            "Bagel with Lox & Cream Cheese": { protein: 29, carbs: 56, fat: 20, calories: 520 },
-            "Breakfast Burrito": { protein: 29, carbs: 66, fat: 21, calories: 577 },
-            "Avocado Toast with Egg": { protein: 14, carbs: 36, fat: 33, calories: 497 },
-            "Savory Oats with Egg": { protein: 13, carbs: 27, fat: 9, calories: 241 },
-            "Rye Toast with Burrata & Warm Tomatoes": { protein: 14, carbs: 37, fat: 25, calories: 429 },
-            "Fruit & Nuts Plate": { protein: 7, carbs: 54, fat: 15, calories: 379 },
-            "Egg & Cheese Bagel": { protein: 29, carbs: 55, fat: 29, calories: 601 },
-            "Turkey Sausage, Egg & Cheese on Rye": { protein: 33, carbs: 33, fat: 34, calories: 578 },
-            "Lox, Eggs & Onions Scramble": { protein: 35, carbs: 0, fat: 34, calories: 450 },
-
-            // Italian meals (estimated based on category)
-            "Spaghetti with Turkey Bolognese": { protein: 28, carbs: 72, fat: 14, calories: 526 },
-            "Turkey Meatballs in Marinara": { protein: 32, carbs: 45, fat: 18, calories: 470 },
-            "Shrimp Garlic-Butter Pasta": { protein: 28, carbs: 65, fat: 22, calories: 578 },
-            "Tuna, Olive & Capers Rigatoni": { protein: 30, carbs: 68, fat: 16, calories: 536 },
-            "Sausage & Peppers with Orzo": { protein: 26, carbs: 58, fat: 24, calories: 552 },
-            "Pea & Parmesan Orzotto": { protein: 18, carbs: 62, fat: 18, calories: 482 },
-            "Chicken Parmesan (Baked)": { protein: 42, carbs: 55, fat: 22, calories: 590 },
-            "Cacio e Pepe (Parmesan)": { protein: 20, carbs: 70, fat: 20, calories: 540 },
-            "Pasta e Piselli (Pasta with Peas)": { protein: 15, carbs: 58, fat: 12, calories: 400 },
-
-            // Japanese meals (estimated)
+            "Scrambled Eggs on Buttered Rye": { protein: 20, carbs: 35, fat: 15, calories: 355 },
             "Chicken Teriyaki": { protein: 35, carbs: 65, fat: 12, calories: 508 },
-            "Salmon Teriyaki": { protein: 38, carbs: 55, fat: 18, calories: 534 },
-            "Chicken Katsu Curry": { protein: 32, carbs: 68, fat: 20, calories: 580 },
-            "Oyakodon (Chicken & Egg Rice Bowl)": { protein: 30, carbs: 60, fat: 14, calories: 486 },
-            "Yaki Udon": { protein: 28, carbs: 55, fat: 16, calories: 476 },
-            "Gyudon (Beef & Onion Bowl)": { protein: 32, carbs: 58, fat: 18, calories: 522 },
-            "Miso-Glazed Salmon": { protein: 36, carbs: 50, fat: 16, calories: 488 },
-            "Yakitori-Style Chicken (Broiler)": { protein: 30, carbs: 52, fat: 12, calories: 436 },
-            "Nikujaga (Soy-Potato Beef Stew)": { protein: 28, carbs: 45, fat: 20, calories: 472 },
-
-            // Chinese meals (estimated)
-            "Chicken & Broccoli Stir-Fry": { protein: 32, carbs: 58, fat: 14, calories: 486 },
-            "Shrimp Fried Rice": { protein: 28, carbs: 62, fat: 18, calories: 522 },
-            "Chicken Lo Mein": { protein: 30, carbs: 65, fat: 16, calories: 524 },
-            "Egg Drop Soup": { protein: 12, carbs: 18, fat: 8, calories: 192 },
-            "Beef & Broccoli": { protein: 35, carbs: 55, fat: 20, calories: 540 },
-            "Mongolian Beef": { protein: 32, carbs: 60, fat: 22, calories: 574 },
-            "Sesame Chicken (Mild, No Vinegar)": { protein: 30, carbs: 68, fat: 24, calories: 608 },
-            "Chicken & Snow Peas Stir-Fry": { protein: 30, carbs: 56, fat: 12, calories: 456 },
-
-            // Tex-Mex meals (estimated)
-            "Turkey Taco Rice Bowl": { protein: 32, carbs: 52, fat: 18, calories: 502 },
-            "Chicken Quesadillas": { protein: 32, carbs: 42, fat: 26, calories: 534 },
-            "Chicken Fajitas": { protein: 30, carbs: 38, fat: 20, calories: 452 },
-            "Turkey Chili with Beans": { protein: 28, carbs: 45, fat: 12, calories: 408 },
-            "Chicken Soft Tacos (Skillet, Mild)": { protein: 28, carbs: 40, fat: 22, calories: 478 },
-            "Refried Bean & Cheese Quesadillas": { protein: 20, carbs: 48, fat: 24, calories: 488 },
-            "Turkey Enchilada Skillet": { protein: 30, carbs: 50, fat: 20, calories: 500 },
-
-            // Seafood meals (estimated)
-            "Pan-Seared Whitefish with Asparagus": { protein: 35, carbs: 45, fat: 12, calories: 428 },
-            "Salmon with Smashed Potatoes": { protein: 38, carbs: 42, fat: 20, calories: 500 },
-            "Linguine with Clams": { protein: 25, carbs: 68, fat: 14, calories: 498 },
-            "Mussels in Tomato-Garlic Broth": { protein: 28, carbs: 35, fat: 12, calories: 368 },
-            "Crab Cakes": { protein: 22, carbs: 20, fat: 18, calories: 338 },
-            "Baked Cod Oreganata": { protein: 32, carbs: 25, fat: 10, calories: 318 },
-            "Salmon with Dill Mayo": { protein: 36, carbs: 8, fat: 24, calories: 400 },
-            "Crab Linguine (Zest, Not Juicy)": { protein: 24, carbs: 65, fat: 16, calories: 500 },
-
-            // Soups (estimated)
-            "Chicken Noodle Soup": { protein: 20, carbs: 32, fat: 8, calories: 280 },
-            "Chicken Tortilla Soup": { protein: 22, carbs: 35, fat: 12, calories: 336 },
-            "Split Pea Soup with Turkey": { protein: 24, carbs: 42, fat: 6, calories: 322 },
-            "Bean & Kale Minestrone": { protein: 12, carbs: 48, fat: 8, calories: 312 },
-            "Chicken Congee": { protein: 18, carbs: 45, fat: 6, calories: 306 },
-            "Italian Wedding Soup": { protein: 20, carbs: 30, fat: 10, calories: 290 },
-            "White Bean & Turkey Sausage Soup": { protein: 22, carbs: 35, fat: 12, calories: 336 },
-            "Chicken & Rice Soup": { protein: 18, carbs: 38, fat: 8, calories: 296 },
-
-            // Sandwiches (estimated)
-            "Tuna Melt on Rye": { protein: 28, carbs: 42, fat: 22, calories: 482 },
-            "Turkey Avocado Club": { protein: 24, carbs: 38, fat: 20, calories: 432 },
-            "Cheesesteak-Style Skillet": { protein: 30, carbs: 45, fat: 24, calories: 516 },
-            "Chicken Parm Sandwich (Baked)": { protein: 35, carbs: 48, fat: 20, calories: 512 },
-            "Turkey & Provolone Panini": { protein: 22, carbs: 40, fat: 18, calories: 414 },
-            "Salmon Salad on Rye": { protein: 20, carbs: 35, fat: 16, calories: 368 },
-
-            // Sides (estimated)
-            "Seared Zucchini with Butter-Soy": { protein: 2, carbs: 8, fat: 6, calories: 94 },
-            "Garlicky Green Beans": { protein: 4, carbs: 12, fat: 8, calories: 136 },
-            "Roasted Carrots & Onions": { protein: 2, carbs: 20, fat: 7, calories: 151 },
-            "Burst Cherry Tomatoes": { protein: 2, carbs: 10, fat: 7, calories: 111 },
-            "Corn on the Cob with Butter & Salt": { protein: 3, carbs: 27, fat: 8, calories: 192 },
-            "Olive Oil–Stock Mashed Potatoes": { protein: 4, carbs: 35, fat: 10, calories: 246 },
-            "Edamame with Sea Salt": { protein: 12, carbs: 14, fat: 5, calories: 149 },
-            "Garlic Bread (Rye or Sourdough)": { protein: 6, carbs: 32, fat: 12, calories: 260 }
+            "Salmon with Smashed Potatoes": { protein: 40, carbs: 45, fat: 18, calories: 502 },
+            "Oatmeal with Banana & PB": { protein: 12, carbs: 58, fat: 16, calories: 420 },
+            "Chicken Quesadillas": { protein: 32, carbs: 42, fat: 22, calories: 490 },
+            "Spaghetti with Turkey Bolognese": { protein: 28, carbs: 72, fat: 14, calories: 526 }
         };
 
         // Load meals
@@ -1129,35 +1010,6 @@
         // Tab switching - handled in setupAllEventListeners()
 
         // Meal selection for slot
-        function addManualMeal() {
-            const manualMealName = document.getElementById('manualMealName').value.trim();
-            if (!manualMealName) {
-                alert('Please enter a meal name');
-                return;
-            }
-
-            // Create a custom meal object
-            const customMeal = {
-                name: manualMealName,
-                category: 'custom',
-                moods: [],
-                ingredients: { core: [], pantry: [] },
-                searchTerms: []
-            };
-
-            // Add to daily plan
-            dailyPlan[currentSlot] = customMeal;
-            updateSlotDisplay(currentSlot, customMeal);
-            updateDailyTotals();
-            savePlanToStorage();
-
-            // Clear input and close modal
-            document.getElementById('manualMealName').value = '';
-            document.getElementById('mealModal').close();
-        }
-
-        window.addManualMeal = addManualMeal; // Expose for onclick
-
         function selectMealForSlot(slot) {
             currentSlot = slot;
             const modal = document.getElementById('mealModal');
@@ -1167,9 +1019,6 @@
             let filteredMeals = meals;
             if (slot === 'breakfast') {
                 filteredMeals = meals.filter(m => m.moods.includes('breakfast'));
-            } else if (slot === 'snacks') {
-                // For snacks, show sides and quick items
-                filteredMeals = meals.filter(m => m.category === 'side' || m.moods.includes('quick'));
             } else {
                 filteredMeals = meals.filter(m => !m.moods.includes('breakfast'));
             }
@@ -1247,7 +1096,7 @@
                     <div>
                         <h4 class="font-semibold">${meal.name}</h4>
                         <div class="text-sm text-base-content/60 mt-1">
-                            ${nutrition.protein}g protein • ${nutrition.carbs}g carbs • ${nutrition.fat}g fat • ${nutrition.calories} cal
+                            ${nutrition.protein}g protein • ${nutrition.carbs}g carbs • ${nutrition.calories} cal
                         </div>
                     </div>
                 `;
@@ -1329,8 +1178,8 @@
 
         function clearDailyPlan() {
             if (confirm('Clear all selected meals?')) {
-                dailyPlan = { breakfast: null, lunch: null, dinner: null, snacks: null };
-                ['breakfast', 'lunch', 'dinner', 'snacks'].forEach(slot => updateSlotDisplay(slot, null));
+                dailyPlan = { breakfast: null, lunch: null, dinner: null };
+                ['breakfast', 'lunch', 'dinner'].forEach(slot => updateSlotDisplay(slot, null));
                 updateDailyTotals();
                 savePlanToStorage();
             }
@@ -1409,6 +1258,43 @@
             }
         }
 
+// DUPLICATE -         // Modal search
+// DUPLICATE -         document.getElementById('modalSearch').addEventListener('input', (e) => {
+// DUPLICATE -             const query = e.target.value.trim();
+// DUPLICATE -             if (query) {
+// DUPLICATE -                 const results = fuse.search(query).map(r => r.item);
+// DUPLICATE -                 displayModalMeals(results, []);
+// DUPLICATE -             } else {
+// DUPLICATE -                 selectMealForSlot(currentSlot);
+// DUPLICATE -             }
+// DUPLICATE -         });
+// DUPLICATE - 
+// DUPLICATE -         // Modal filter buttons
+// DUPLICATE -         document.querySelectorAll('.modal-filter').forEach(btn => {
+// DUPLICATE -             btn.addEventListener('click', () => {
+// DUPLICATE -                 const filter = btn.dataset.filter;
+// DUPLICATE -                 document.querySelectorAll('.modal-filter').forEach(b => b.classList.remove('btn-primary'));
+// DUPLICATE -                 btn.classList.add('btn-primary');
+// DUPLICATE - 
+// DUPLICATE -                 let filteredMeals = meals;
+// DUPLICATE -                 if (currentSlot === 'breakfast') {
+// DUPLICATE -                     filteredMeals = meals.filter(m => m.moods.includes('breakfast'));
+// DUPLICATE -                 } else {
+// DUPLICATE -                     filteredMeals = meals.filter(m => !m.moods.includes('breakfast'));
+// DUPLICATE -                 }
+// DUPLICATE - 
+// DUPLICATE -                 if (filter !== 'all') {
+// DUPLICATE -                     filteredMeals = filteredMeals.filter(m => m.moods.includes(filter));
+// DUPLICATE -                 }
+// DUPLICATE - 
+// DUPLICATE -                 const otherMeals = Object.entries(dailyPlan)
+// DUPLICATE -                     .filter(([s, m]) => s !== currentSlot && m)
+// DUPLICATE -                     .map(([s, m]) => m);
+// DUPLICATE - 
+// DUPLICATE -                 displayModalMeals(filteredMeals, otherMeals);
+            });
+        });
+
         // Setup browse view event listeners (called after meals are loaded)
         function setupBrowseViewEventListeners() {
             // Browse view mood buttons
@@ -1426,15 +1312,14 @@
                     if (moodMeals.length === 0) {
                         container.innerHTML = '<p class="text-base-content/60">No meals found for this mood.</p>';
                     } else {
-                        // Show all meals for the selected mood (no "Show 3 more" button)
                         moodMeals.forEach(meal => {
-                            const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, fat: 15, calories: 435 };
+                            const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
                             const mealCard = document.createElement('div');
                             mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
                             mealCard.innerHTML = `
                                 <h4 class="font-semibold">${meal.name}</h4>
                                 <p class="text-xs text-base-content/60 mt-1">
-                                    ${nutrition.protein}g protein • ${nutrition.carbs}g carbs • ${nutrition.fat}g fat
+                                    ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
                                 </p>
                             `;
                             container.appendChild(mealCard);
@@ -1445,6 +1330,33 @@
                 });
             });
         }
+
+// DUPLICATE -         // Browse view search (this can stay here since it doesn't depend on meals being loaded)
+// DUPLICATE -         document.getElementById('searchInput').addEventListener('input', (e) => {
+// DUPLICATE -             const query = e.target.value.trim();
+// DUPLICATE -             if (query && fuse) {
+// DUPLICATE -                 const results = fuse.search(query).slice(0, 6).map(r => r.item);
+// DUPLICATE -                 const container = document.getElementById('mealSuggestions');
+// DUPLICATE -                 container.innerHTML = '';
+// DUPLICATE - 
+// DUPLICATE -                 results.forEach(meal => {
+// DUPLICATE -                     const nutrition = nutritionEstimates[meal.name] || { protein: 25, carbs: 50, calories: 435 };
+// DUPLICATE -                     const mealCard = document.createElement('div');
+// DUPLICATE -                     mealCard.className = 'card bg-base-100 p-3 hover:bg-base-200 cursor-pointer';
+// DUPLICATE -                     mealCard.innerHTML = `
+// DUPLICATE -                         <h4 class="font-semibold">${meal.name}</h4>
+// DUPLICATE -                         <p class="text-xs text-base-content/60 mt-1">
+// DUPLICATE -                             ${nutrition.protein}g protein • ${nutrition.carbs}g carbs
+// DUPLICATE -                         </p>
+// DUPLICATE -                     `;
+// DUPLICATE -                     container.appendChild(mealCard);
+// DUPLICATE -                 });
+// DUPLICATE - 
+// DUPLICATE -                 if (results.length > 0) {
+// DUPLICATE -                     document.getElementById('suggestionsArea').classList.remove('hidden');
+// DUPLICATE -                 }
+// DUPLICATE -             }
+        });
 
         // Set current date
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
@@ -1534,7 +1446,6 @@
 
         // Expose functions for testing
         window.initializeApp = initializeApp;
-        window.selectMealForSlot = selectMealForSlot;
         window.loadMeals = loadMeals;
         window.setupAllEventListeners = setupAllEventListeners;
 

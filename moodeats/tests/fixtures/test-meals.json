@@ -1,0 +1,252 @@
+{
+  "minimal": [
+    {
+      "name": "Test Scrambled Eggs",
+      "category": "breakfast",
+      "moods": ["breakfast", "quick", "hearty"],
+      "ingredients": {
+        "core": ["Eggs", "Butter"],
+        "pantry": ["Salt", "Pepper"]
+      },
+      "searchTerms": ["eggs", "breakfast", "scrambled"],
+      "nutrition": {
+        "calories": 250,
+        "protein": 18,
+        "carbs": 3,
+        "fat": 19
+      }
+    },
+    {
+      "name": "Test Chicken Salad",
+      "category": "sandwich",
+      "moods": ["fresh", "quick"],
+      "ingredients": {
+        "core": ["Chicken", "Lettuce"],
+        "pantry": ["Mayo", "Salt"]
+      },
+      "searchTerms": ["chicken", "salad", "lunch"],
+      "nutrition": {
+        "calories": 380,
+        "protein": 35,
+        "carbs": 15,
+        "fat": 20
+      }
+    },
+    {
+      "name": "Test Pasta Dinner",
+      "category": "italian",
+      "moods": ["hearty", "cozy", "italian"],
+      "ingredients": {
+        "core": ["Pasta", "Tomato sauce"],
+        "pantry": ["Garlic", "Olive oil"]
+      },
+      "searchTerms": ["pasta", "italian", "dinner"],
+      "nutrition": {
+        "calories": 520,
+        "protein": 15,
+        "carbs": 75,
+        "fat": 18
+      }
+    }
+  ],
+  "standard": [
+    {
+      "name": "Oatmeal with Berries",
+      "category": "breakfast",
+      "moods": ["breakfast", "fresh", "quick"],
+      "ingredients": {
+        "core": ["Oats", "Blueberries", "Milk"],
+        "pantry": ["Honey", "Cinnamon"]
+      },
+      "searchTerms": ["oatmeal", "breakfast", "healthy", "berries"],
+      "nutrition": {
+        "calories": 320,
+        "protein": 10,
+        "carbs": 55,
+        "fat": 7
+      }
+    },
+    {
+      "name": "Grilled Cheese Sandwich",
+      "category": "sandwich",
+      "moods": ["cozy", "quick"],
+      "ingredients": {
+        "core": ["Bread", "Cheese", "Butter"],
+        "pantry": []
+      },
+      "searchTerms": ["grilled cheese", "sandwich", "comfort", "lunch"],
+      "nutrition": {
+        "calories": 450,
+        "protein": 18,
+        "carbs": 35,
+        "fat": 28
+      }
+    },
+    {
+      "name": "Caesar Salad",
+      "category": "italian",
+      "moods": ["fresh", "italian"],
+      "ingredients": {
+        "core": ["Romaine lettuce", "Parmesan", "Croutons"],
+        "pantry": ["Caesar dressing", "Lemon"]
+      },
+      "searchTerms": ["caesar", "salad", "fresh", "italian"],
+      "nutrition": {
+        "calories": 280,
+        "protein": 8,
+        "carbs": 20,
+        "fat": 19
+      }
+    },
+    {
+      "name": "Chicken Teriyaki Bowl",
+      "category": "japanese",
+      "moods": ["hearty", "asian", "quick"],
+      "ingredients": {
+        "core": ["Chicken thighs", "Rice", "Broccoli"],
+        "pantry": ["Teriyaki sauce", "Sesame seeds"]
+      },
+      "searchTerms": ["chicken", "teriyaki", "japanese", "bowl"],
+      "nutrition": {
+        "calories": 580,
+        "protein": 45,
+        "carbs": 62,
+        "fat": 12
+      }
+    },
+    {
+      "name": "Fish Tacos",
+      "category": "texmex",
+      "moods": ["fresh", "seafood", "quick"],
+      "ingredients": {
+        "core": ["Tilapia", "Corn tortillas", "Cabbage slaw"],
+        "pantry": ["Lime", "Cilantro", "Hot sauce"]
+      },
+      "searchTerms": ["fish", "tacos", "mexican", "seafood"],
+      "nutrition": {
+        "calories": 420,
+        "protein": 32,
+        "carbs": 45,
+        "fat": 12
+      }
+    },
+    {
+      "name": "Tomato Soup",
+      "category": "soup",
+      "moods": ["cozy", "quick"],
+      "ingredients": {
+        "core": ["Tomatoes", "Cream", "Onion"],
+        "pantry": ["Basil", "Garlic", "Olive oil"]
+      },
+      "searchTerms": ["tomato", "soup", "comfort", "warm"],
+      "nutrition": {
+        "calories": 220,
+        "protein": 5,
+        "carbs": 28,
+        "fat": 10
+      }
+    },
+    {
+      "name": "Beef Stir Fry",
+      "category": "chinese",
+      "moods": ["hearty", "asian", "quick"],
+      "ingredients": {
+        "core": ["Beef strips", "Bell peppers", "Rice"],
+        "pantry": ["Soy sauce", "Ginger", "Garlic"]
+      },
+      "searchTerms": ["beef", "stir fry", "chinese", "asian"],
+      "nutrition": {
+        "calories": 520,
+        "protein": 38,
+        "carbs": 48,
+        "fat": 18
+      }
+    },
+    {
+      "name": "Greek Salad",
+      "category": "side",
+      "moods": ["fresh"],
+      "ingredients": {
+        "core": ["Cucumber", "Tomatoes", "Feta"],
+        "pantry": ["Olive oil", "Oregano", "Lemon"]
+      },
+      "searchTerms": ["greek", "salad", "fresh", "vegetarian"],
+      "nutrition": {
+        "calories": 180,
+        "protein": 6,
+        "carbs": 12,
+        "fat": 13
+      }
+    },
+    {
+      "name": "Salmon Teriyaki",
+      "category": "seafood",
+      "moods": ["hearty", "seafood", "asian"],
+      "ingredients": {
+        "core": ["Salmon fillet", "Rice", "Asparagus"],
+        "pantry": ["Teriyaki glaze", "Sesame oil"]
+      },
+      "searchTerms": ["salmon", "teriyaki", "seafood", "japanese"],
+      "nutrition": {
+        "calories": 480,
+        "protein": 42,
+        "carbs": 38,
+        "fat": 16
+      }
+    },
+    {
+      "name": "Pancakes",
+      "category": "breakfast",
+      "moods": ["breakfast", "cozy"],
+      "ingredients": {
+        "core": ["Flour", "Eggs", "Milk", "Butter"],
+        "pantry": ["Maple syrup", "Baking powder"]
+      },
+      "searchTerms": ["pancakes", "breakfast", "sweet", "brunch"],
+      "nutrition": {
+        "calories": 420,
+        "protein": 12,
+        "carbs": 68,
+        "fat": 12
+      }
+    }
+  ],
+  "edge": [
+    {
+      "name": "Incomplete Meal",
+      "category": "breakfast",
+      "moods": ["breakfast"],
+      "ingredients": {
+        "core": ["Test ingredient"],
+        "pantry": []
+      },
+      "searchTerms": ["test"]
+    },
+    {
+      "name": "Missing Nutrition",
+      "category": "lunch",
+      "moods": ["quick"],
+      "ingredients": {
+        "core": ["Something"],
+        "pantry": ["Other"]
+      },
+      "searchTerms": ["missing", "data"],
+      "nutrition": {}
+    },
+    {
+      "name": "Partial Nutrition",
+      "category": "dinner",
+      "moods": ["hearty"],
+      "ingredients": {
+        "core": ["Main"],
+        "pantry": ["Side"]
+      },
+      "searchTerms": ["partial"],
+      "nutrition": {
+        "calories": 500,
+        "protein": 30
+      }
+    }
+  ],
+  "stress": []
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Production Functions</title>
+</head>
+<body>
+    <h1>Testing MoodEats Production Site</h1>
+    <button onclick="testProd()">Test Production Site</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function testProd() {
+            const output = document.getElementById('output');
+
+            // Fetch the production page
+            const response = await fetch('https://njrun1804.github.io/moodeats/moodeats-planner.html');
+            const html = await response.text();
+
+            // Create an iframe to test
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+
+            // Write the HTML to iframe
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(html);
+            iframe.contentDocument.close();
+
+            // Wait for it to load
+            setTimeout(() => {
+                const win = iframe.contentWindow;
+
+                output.textContent = JSON.stringify({
+                    'window.meals': win.meals ? win.meals.length + ' meals' : 'undefined',
+                    'window.embeddedMeals': win.embeddedMeals ? win.embeddedMeals.length + ' meals' : 'undefined',
+                    'window.initializeApp': typeof win.initializeApp,
+                    'window.setupAllEventListeners': typeof win.setupAllEventListeners,
+                    'document.getElementById("browseTab")': win.document.getElementById('browseTab') ? 'found' : 'not found'
+                }, null, 2);
+
+                // Try to initialize
+                if (typeof win.initializeApp === 'function') {
+                    output.textContent += '\n\nCalling initializeApp()...\n';
+                    win.initializeApp();
+
+                    setTimeout(() => {
+                        output.textContent += 'After init - meals: ' + (win.meals ? win.meals.length : 'undefined');
+                    }, 1000);
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
