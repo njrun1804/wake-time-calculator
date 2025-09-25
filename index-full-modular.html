@@ -24,7 +24,7 @@
       <section class="awareness-section bg-white rounded-2xl p-4 shadow-lg border border-gray-100 mb-6">
         <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
           <span>🌤️ Weather Awareness</span>
-          <button id="awCity" class="btn btn-xs btn-outline verification-needed">
+          <button type="button" id="awCity" class="btn btn-xs btn-outline verification-needed">
             Verify location
           </button>
         </h2>
@@ -78,7 +78,7 @@
 
         <p class="text-xs text-gray-500 mt-2">
           Give location to load tomorrow's daylight & conditions.
-          Uses <a href="https://open-meteo.com" target="_blank" class="link">Open-Meteo</a> &
+          Uses <a href="https://open-meteo.com" target="_blank" class="link">Open-Meteo</a> &amp;
           <a href="https://sunrisesunset.io" target="_blank" class="link">SunriseSunset.io</a>
         </p>
       </section>
@@ -143,6 +143,8 @@
           </div>
         </div>
         <input id="travelMinutes" name="travelMinutes" type="hidden" value="0" />
+        <!-- Hidden submit button for HTML validation -->
+        <button type="submit" class="hidden" tabindex="-1">Submit</button>
       </form>
 
       <!-- Wake Time Display Section -->
