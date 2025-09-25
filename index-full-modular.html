@@ -26,70 +26,79 @@
     <div class="hero-bg" aria-hidden="true"></div>
     <main>
       <h1>Wake Time Calculator</h1>
-      <p class="text-center text-sm text-gray-600 mt-neg-half">
-        🏗️ Full Modular Architecture Demo
-      </p>
 
       <!-- Weather Awareness Section -->
-      <section class="awareness-section bg-white rounded-2xl p-4 shadow-lg border border-gray-100 mb-6">
-        <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <span>🌤️ Weather Awareness</span>
-          <button type="button" id="awCity" class="btn btn-xs btn-outline verification-needed">
-            Verify location
-          </button>
-        </h2>
+      <section
+        class="awareness bg-base-200 rounded-2xl shadow-md"
+        id="awareness"
+        aria-live="polite"
+      >
+        <div class="aw-top flex items-center justify-start gap-2 flex-wrap">
+          <div class="aw-where">
+            <span
+              id="awCity"
+              class="badge badge-warning badge-outline text-xs md:text-sm verification-needed"
+              >Verify location</span
+            >
+          </div>
+          <div
+            class="aw-actions rounded-xl bg-base-100/70 border border-base-300 px-2 py-1 flex gap-2 flex-wrap"
+          >
+            <button
+              type="button"
+              id="useMyLocation"
+              class="btn btn-primary btn-sm"
+            >
+              Use my location
+            </button>
+            <input
+              id="placeQuery"
+              type="text"
+              placeholder="City or ZIP"
+              aria-label="City or ZIP"
+              class="input input-bordered input-sm w-40"
+            />
+            <button type="button" id="setPlace" class="btn btn-ghost btn-sm">
+              Set
+            </button>
+          </div>
+        </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
-          <div class="awareness-item">
+        <div class="aw-grid grid grid-cols-5 gap-2">
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Dawn</div>
             <time class="value" id="awDawn" datetime="">—</time>
           </div>
-          <div class="awareness-item">
-            <div class="label">Temp</div>
-            <span class="value" id="awTemp">—</span>
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+            <div class="label">Wind chill</div>
+            <div class="value" id="awWindChill">—</div>
           </div>
-          <div class="awareness-item">
-            <div class="label">Feels like</div>
-            <span class="value" id="awFeel">—</span>
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+            <div class="label">Precip %</div>
+            <div class="value" id="awPoP">—</div>
           </div>
-          <div class="awareness-item">
-            <div class="label">Wind</div>
-            <span class="value" id="awWind">—</span>
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+            <div class="label">Wet bulb</div>
+            <div class="value" id="awWetBulb">—</div>
           </div>
-          <div class="awareness-item">
-            <div class="label">Rain chance</div>
-            <span class="value" id="awPoP" title="Probability of precipitation">—</span>
-          </div>
-          <div class="awareness-item">
-            <div class="label">Surface</div>
-            <span class="value" id="awWet">—</span>
-          </div>
-          <div class="awareness-item">
-            <div class="label">Snow</div>
-            <span class="value" id="awSnow">—</span>
-          </div>
-          <div class="awareness-item">
-            <div class="label">Status</div>
-            <span class="value text-xs" id="awMsg">—</span>
+          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+            <div class="label">Trail Wetness</div>
+            <div class="value" id="awWetness">—</div>
           </div>
         </div>
 
-        <div class="flex gap-2 text-xs">
-          <button type="button" id="useMyLocation" class="btn btn-primary btn-sm">
-            Use my location
-          </button>
-          <input
-            type="text"
-            id="locationSearch"
-            placeholder="Search location..."
-            class="input input-bordered input-sm flex-1"
-          />
-        </div>
-
-        <p class="text-xs text-gray-500 mt-2">
+        <div class="aw-note" id="awMsg">
           Give location to load tomorrow's daylight &amp; conditions.
-          Uses <a href="https://open-meteo.com" target="_blank" class="link">Open-Meteo</a> &amp;
-          <a href="https://sunrisesunset.io" target="_blank" class="link">SunriseSunset.io</a>
+        </div>
+        <p class="aw-credits">
+          Powered by
+          <a href="https://sunrisesunset.io" target="_blank" rel="noopener"
+            >SunriseSunset.io</a
+          >
+          &amp;
+          <a href="https://open-meteo.com" target="_blank" rel="noopener"
+            >Open‑Meteo</a
+          >
         </p>
       </section>
 
@@ -241,22 +250,6 @@
         </div>
       </section>
 
-      <!-- Module Info -->
-      <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h3 class="text-sm font-semibold text-blue-900 mb-2">🏗️ Full Modular Architecture</h3>
-        <ul class="text-xs text-blue-800 space-y-1">
-          <li>✅ CSS extracted to <code>css/main.css</code></li>
-          <li>✅ Core logic in <code>js/core/calculator.js</code></li>
-          <li>✅ Storage in <code>js/core/storage.js</code></li>
-          <li>✅ Weather in <code>js/modules/weather.js</code></li>
-          <li>✅ Location in <code>js/modules/location.js</code></li>
-          <li>✅ Dawn/daylight in <code>js/modules/dawn.js</code></li>
-          <li>✅ Awareness UI in <code>js/modules/awareness.js</code></li>
-          <li>✅ UI utilities in <code>js/modules/ui.js</code></li>
-          <li>✅ Main orchestration in <code>js/main-full.js</code></li>
-          <li>✅ ES6 modules with no build step</li>
-        </ul>
-      </div>
     </main>
 
     <!-- Load modular JavaScript -->

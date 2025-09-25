@@ -11,7 +11,6 @@ import {
   fetchWetnessInputs,
   categorizeWetness,
   formatTemp,
-  formatWind,
   formatPoP,
 } from './weather.js';
 import { fetchDawn } from './dawn.js';
@@ -41,14 +40,13 @@ const cacheAwarenessElements = () => {
       awCity: document.getElementById('awCity'),
       awDawn: document.getElementById('awDawn'),
       awMsg: document.getElementById('awMsg'),
-      awTemp: document.getElementById('awTemp'),
-      awFeel: document.getElementById('awFeel'),
-      awWind: document.getElementById('awWind'),
+      awWindChill: document.getElementById('awWindChill'),
       awPoP: document.getElementById('awPoP'),
-      awWet: document.getElementById('awWet'),
-      awSnow: document.getElementById('awSnow'),
+      awWetBulb: document.getElementById('awWetBulb'),
+      awWetness: document.getElementById('awWetness'),
       useLoc: document.getElementById('useMyLocation'),
-      locSearch: document.getElementById('locationSearch'),
+      placeInput: document.getElementById('placeQuery'),
+      setPlace: document.getElementById('setPlace'),
     };
   }
   return awarenessElements;
@@ -62,26 +60,17 @@ const updateAwarenessDisplay = (data) => {
   const els = cacheAwarenessElements();
   if (!els) return;
 
-  const {
-    city,
-    dawn,
-    tempF,
-    windChillF,
-    windMph,
-    pop,
-    isSnow,
-    wetnessData,
-    tz,
-  } = data;
+  const { city, dawn, windChillF, pop, wetBulbF, wetnessData, tz } = data;
 
   // Update city display
   if (els.awCity) {
-    els.awCity.textContent = city || 'Verify location';
-  }
-
-  // Update verification button state
-  if (els.awCity && city && city !== 'Verify location') {
-    els.awCity.classList.remove('verification-needed');
+    if (city) {
+      els.awCity.textContent = city;
+      els.awCity.classList.remove('verification-needed');
+    } else {
+      els.awCity.textContent = 'Verify location';
+      els.awCity.classList.add('verification-needed');
+    }
   }
 
   // Update dawn time
@@ -98,27 +87,21 @@ const updateAwarenessDisplay = (data) => {
   }
 
   // Update weather data
-  if (els.awTemp) els.awTemp.textContent = formatTemp(tempF);
-  if (els.awFeel) els.awFeel.textContent = formatTemp(windChillF);
-  if (els.awWind) els.awWind.textContent = formatWind(windMph);
+  if (els.awWindChill) els.awWindChill.textContent = formatTemp(windChillF);
+  if (els.awWetBulb) els.awWetBulb.textContent = formatTemp(wetBulbF);
   if (els.awPoP) {
     els.awPoP.textContent = formatPoP(pop);
     els.awPoP.title = 'Probability of precip for the hour around dawn';
   }
 
   // Update surface conditions
-  if (els.awWet) {
-    els.awWet.textContent = categorizeWetness(wetnessData);
+  if (els.awWetness) {
+    els.awWetness.textContent = categorizeWetness(wetnessData);
     if (wetnessData?.summary) {
-      els.awWet.title = wetnessData.summary;
+      els.awWetness.title = wetnessData.summary;
     } else {
-      els.awWet.removeAttribute('title');
+      els.awWetness.removeAttribute('title');
     }
-  }
-
-  if (els.awSnow) {
-    els.awSnow.textContent = isSnow ? 'Yes' : 'No';
-    els.awSnow.className = isSnow ? 'value snow-yes' : 'value snow-no';
   }
 
   // Clear any error messages
@@ -278,6 +261,11 @@ export const handleLocationSearch = async (query) => {
     location.city,
     location.tz
   );
+
+  const els = cacheAwarenessElements();
+  if (els?.placeInput) {
+    els.placeInput.value = '';
+  }
 };
 
 /**
@@ -355,12 +343,18 @@ export const setupAwarenessListeners = () => {
   }
 
   // Location search
-  if (els.locSearch) {
-    els.locSearch.addEventListener('keydown', (e) => {
+  if (els.placeInput) {
+    els.placeInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        handleLocationSearch(els.locSearch.value);
+        handleLocationSearch(els.placeInput.value);
       }
+    });
+  }
+
+  if (els.setPlace) {
+    els.setPlace.addEventListener('click', () => {
+      handleLocationSearch(els.placeInput?.value);
     });
   }
 };
