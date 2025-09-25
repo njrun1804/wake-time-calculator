@@ -18,7 +18,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run serve',
-    url: 'http://localhost:8000/index-full-modular.html',
+    url: 'http://localhost:8000/index.html',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Modular wake time calculator @modular', () => {
+test.describe('Wake time calculator – core planner @core', () => {
   test('adjusts outputs when itinerary changes', async ({ page }) => {
-    await page.goto('/index-modular.html');
+    await page.goto('/index.html');
 
     await expect(page.locator('#chosenWake')).toHaveText('7:45 AM');
 
@@ -17,7 +17,7 @@ test.describe('Modular wake time calculator @modular', () => {
   });
 
   test('highlights previous-day wake times for long plans', async ({ page }) => {
-    await page.goto('/index-modular.html');
+    await page.goto('/index.html');
 
     await page.selectOption('#firstMeeting', '06:00');
     await page.fill('#runMinutes', '240');

@@ -43,7 +43,7 @@ jobs:
       - name: Install Playwright WebKit
         run: npx playwright install --with-deps webkit
       - name: Run Safari integration tests
-        run: npm run test:e2e
+        run: npm test
 
   performance:
     runs-on: macos-latest

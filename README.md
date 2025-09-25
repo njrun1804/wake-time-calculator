@@ -28,52 +28,51 @@ A comprehensive wake time calculator for runners with weather awareness and modu
 ## Usage
 
 ### Default Experience
-Load `index.html` (or visit the published site) to land on `index-full-modular.html`, the weather-aware modular build that replaces the monolith.
-
-### Other Entry Points
-- **Simple Modular**: Open `index-modular.html` for the streamlined calculator without awareness UI.
+Load `index.html` (or visit the published site) for the full weather-aware modular build.
 
 ### Setup for Development
 ```bash
 # For ES6 module testing
 python3 -m http.server 8000
-# Then visit http://localhost:8000/index-full-modular.html
+# Then visit http://localhost:8000/
 ```
 
 ## Architecture
 
 ### File Structure
 ```
-├── index-modular.html        # Basic modular version
-├── index-full-modular.html   # Complete modular version
+├── index.html               # Single entry point
 ├── css/
 │   └── main.css             # Extracted styles
 ├── js/
-│   ├── core/                # Core functionality
+│   ├── app/                 # UI orchestrators & helpers
+│   │   ├── main.js          # App orchestration & awareness wiring
+│   │   ├── ui.js            # UI utilities & daylight badge helpers
+│   │   ├── awareness.js     # Weather awareness coordinator
+│   │   ├── dawn.js          # Dawn time & daylight checks
+│   │   ├── location.js      # Geocoding & GPS
+│   │   └── weather.js       # Weather data & processing
+│   ├── lib/                 # Pure logic, constants, shared utilities
 │   │   ├── calculator.js    # Time calculations
 │   │   ├── storage.js       # Data persistence
-│   │   └── constants.js     # Shared constants
-│   ├── modules/             # Feature modules
-│   │   ├── weather.js       # Weather data & processing
-│   │   ├── location.js      # Geocoding & GPS
-│   │   ├── dawn.js          # Dawn time & daylight checks
-│   │   ├── awareness.js     # Weather awareness UI
-│   │   └── ui.js           # UI utilities
-│   ├── utils/              # Utility functions
-│   │   └── time.js         # Time formatting
-│   ├── main.js             # Basic app orchestration
-│   └── main-full.js        # Full app orchestration
-└── tests/                  # Playwright test suite
+│   │   ├── constants.js     # Shared constants & defaults
+│   │   ├── schedulers.js    # Idle helpers
+│   │   └── time.js          # Time formatting utilities
+└── tests/                  # Playwright & unit suites
     ├── integration/
+    ├── performance/
     └── unit/
 ```
 
 ### Module Dependencies
 ```
-main-full.js
-├── core/ (calculator, storage, constants)
-├── modules/ (weather, location, dawn, awareness, ui)
-└── utils/ (time)
+app/main.js
+├── lib/ (calculator, storage, constants, schedulers)
+├── app/awareness.js (weather + dawn orchestration)
+├── app/weather.js (forecasts, wetness scoring)
+├── app/dawn.js (dawn lookup & daylight checks)
+├── app/location.js (geocoding & browser location helpers)
+└── app/ui.js (dynamic daylight checks)
 ```
 
 ## APIs Used
@@ -91,9 +90,9 @@ Quick setup (clones or Codex web workspaces):
 ```
 
 ```bash
-npm run test            # Safari end-to-end suite (index-full-modular by default)
-npm run test:modular    # Safari regression for the modular shell
-npm run test:full-modular
+npm run test            # Safari end-to-end suite (all flows)
+npm run test:core       # Core planner regression
+npm run test:awareness  # Weather awareness regression
 npm run test:unit       # Node-based unit tests
 npm run test:performance
 npm run validate:all
@@ -112,6 +111,12 @@ The application is built with modern ES6 modules requiring no build step. For de
 2. Edit modules in the `js/` directory
 3. Test changes in browser
 4. Run test suite to verify functionality
+
+## Documentation
+
+- `docs/trail-wetness.md` – Details the heuristics behind the trail condition labels and the roadmap for further calibration.
+- `docs/page-test-coverage.md` – Maps entry points to the automation suites that exercise them.
+- `docs/quality-signals.md` – Lists the quality gates (linting, tests, performance budgets).
 
 ## Live Demo
 

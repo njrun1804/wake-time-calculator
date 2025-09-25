@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Full modular wake time calculator @full-modular', () => {
+test.describe('Wake time calculator – full awareness @full', () => {
   test('calculates a wake up plan when the schedule changes @regression', async ({ page }) => {
-    await page.goto('/index-full-modular.html');
+    await page.goto('/index.html');
 
     await expect(page.locator('h1')).toHaveText('Wake Time Calculator');
     await expect(page.locator('#chosenWake')).toHaveText('7:45 AM');
@@ -21,7 +21,7 @@ test.describe('Full modular wake time calculator @full-modular', () => {
   });
 
   test('shows the previous day badge for long itineraries @edge', async ({ page }) => {
-    await page.goto('/index-full-modular.html');
+    await page.goto('/index.html');
 
     await page.selectOption('#firstMeeting', '06:00');
     await page.fill('#runMinutes', '240');

@@ -3,7 +3,7 @@
  * Handles geocoding, location detection, and coordinate management
  */
 
-import { defaultTz } from '../core/constants.js';
+import { defaultTz } from '../lib/constants.js';
 
 /**
  * Format a place name from geocoding data

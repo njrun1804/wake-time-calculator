@@ -3,7 +3,7 @@
  * Handles weather data fetching and processing
  */
 
-import { CACHE_DURATION } from '../core/constants.js';
+import { CACHE_DURATION } from '../lib/constants.js';
 
 const MS_PER_DAY = 86400000;
 
@@ -448,34 +448,176 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
  */
 const HEAVY_EVENT_THRESHOLD = 1.2;
 
-export const categorizeWetness = (wetnessData) => {
-  if (!wetnessData) return 'Dry';
+const sumWindowLiquid = (events, maxAgeDays) =>
+  events.reduce((total, evt) => {
+    if (!evt) return total;
+    const age = typeof evt.ageDays === 'number' ? evt.ageDays : Infinity;
+    if (age > maxAgeDays) return total;
+    const liquid = Math.max(0, numberOrNull(evt.liquid) ?? 0);
+    return total + liquid;
+  }, 0);
 
-  const score = numberOrNull(wetnessData.score) ?? 0;
-  const snowpack = numberOrNull(wetnessData.snowpackRemaining) ?? 0;
+const formatInches = (value) =>
+  value >= 0.995 ? `${value.toFixed(1)}"` : `${value.toFixed(2)}"`;
+
+const confidenceForWindow = (analysisDays = 0) => {
+  if (analysisDays >= 6) return 'high';
+  if (analysisDays >= 4) return 'medium';
+  return 'low';
+};
+
+export const interpretWetness = (wetnessData = null) => {
+  if (!wetnessData) {
+    return {
+      label: 'Dry',
+      detail: 'No precipitation history available',
+      caution: '',
+      rating: 1,
+      confidence: 'low',
+      stats: {},
+    };
+  }
+
   const events = Array.isArray(wetnessData.events) ? wetnessData.events : [];
-  const heavyEvent = events.some((evt) =>
-    typeof evt?.balance === 'number'
-      ? evt.balance >= HEAVY_EVENT_THRESHOLD
-      : false
+  const snowpack = Math.max(
+    0,
+    numberOrNull(wetnessData.snowpackRemaining) ?? 0
+  );
+  const recentWetDays = Math.max(
+    0,
+    numberOrNull(wetnessData.recentWetDays) ?? 0
   );
 
-  const adjustedScore = Math.max(score, snowpack * 0.9);
+  const totals = wetnessData.totals ?? {};
+  const totalLiquid =
+    Math.max(0, numberOrNull(totals.precipitation) ?? 0) +
+    Math.max(0, numberOrNull(totals.melt) ?? 0);
+  const dryingTotal = Math.max(0, numberOrNull(totals.drying) ?? 0);
+  const netLiquid = Math.max(0, totalLiquid - dryingTotal * 0.4);
 
-  if (adjustedScore < 0.12) {
-    return snowpack > 0.15 ? 'Moist' : 'Dry';
+  const last24 = sumWindowLiquid(events, 1.1);
+  const last48 = sumWindowLiquid(events, 2.1);
+  const last72 = sumWindowLiquid(events, 3.1);
+
+  const heavyEvent = events.some(
+    (evt) =>
+      typeof evt?.balance === 'number' && evt.balance >= HEAVY_EVENT_THRESHOLD
+  );
+
+  const freezeThawCycles = events.reduce((count, evt) => {
+    if (
+      typeof evt?.minTempF === 'number' &&
+      typeof evt?.maxTempF === 'number' &&
+      evt.minTempF <= 30 &&
+      evt.maxTempF >= 34
+    ) {
+      return count + 1;
+    }
+    return count;
+  }, 0);
+
+  const detailParts = [];
+  if (last24 > 0.01) {
+    detailParts.push(`${formatInches(last24)} last 24h`);
+  } else if (last48 > 0.01) {
+    detailParts.push(`${formatInches(last48)} over 48h`);
+  } else if (last72 > 0.01) {
+    detailParts.push(`${formatInches(last72)} over 72h`);
   }
-  if (adjustedScore < 0.4) {
-    return snowpack > 0.35 ? 'Slick' : 'Moist';
+
+  if (dryingTotal > 0.05) {
+    detailParts.push(`-${formatInches(dryingTotal)} drying`);
   }
-  if (adjustedScore < 0.9) {
-    return 'Slick';
+
+  if (recentWetDays > 0) {
+    detailParts.push(
+      `${recentWetDays} wet day${recentWetDays === 1 ? '' : 's'}`
+    );
   }
-  if (adjustedScore < 1.6) {
-    return heavyEvent || snowpack > 0.5 ? 'Muddy' : 'Slick';
+
+  const stats = {
+    last24,
+    last48,
+    last72,
+    weeklyLiquid: totalLiquid,
+    dryingTotal,
+    netLiquid,
+    snowpack,
+    recentWetDays,
+    heavyEvent,
+    freezeThawCycles,
+  };
+
+  const confidence = confidenceForWindow(wetnessData.analysisDays);
+  if (confidence !== 'high') {
+    detailParts.push(`${confidence} confidence`);
   }
-  return heavyEvent ? 'Soaked' : 'Muddy';
+
+  let label = 'Dry';
+  let caution = '';
+  let rating = 1;
+
+  if (snowpack >= 1) {
+    label = 'Snowbound';
+    caution = 'Deep snow coverage—expect winter footing throughout.';
+    rating = 5;
+  } else if (snowpack >= 0.25) {
+    label = 'Packed Snow';
+    caution = 'Lingering snow/ice—microspikes recommended.';
+    rating = 4;
+  } else {
+    if (last24 >= 0.6 || netLiquid >= 1.3 || (last48 >= 0.9 && heavyEvent)) {
+      label = 'Soaked';
+      caution = 'Standing water and boot-sucking mud—plan for slow miles.';
+      rating = 5;
+    } else if (
+      last48 >= 0.45 ||
+      (last72 >= 0.6 && netLiquid >= 0.6) ||
+      heavyEvent ||
+      freezeThawCycles >= 2
+    ) {
+      label = 'Muddy';
+      caution = 'Trail bed is saturated—gaiters/poles will help stability.';
+      rating = 4;
+    } else if (
+      last72 >= 0.25 ||
+      recentWetDays >= 3 ||
+      netLiquid >= 0.35 ||
+      freezeThawCycles >= 1
+    ) {
+      label = freezeThawCycles ? 'Slick/Icy' : 'Slick';
+      caution = freezeThawCycles
+        ? 'Freeze-thaw has glazed shady sections—watch for ice.'
+        : 'Soft tacky ground—expect slower corners and climbs.';
+      rating = 3;
+    } else if (last72 >= 0.1 || netLiquid >= 0.15) {
+      label = 'Moist';
+      caution =
+        'Mostly runnable with the odd soft pocket—good for long efforts.';
+      rating = 2;
+    }
+  }
+
+  if (!caution && freezeThawCycles && rating < 3) {
+    label = 'Slick/Icy';
+    caution = 'Freeze-thaw overnight—icy patches likely before sunrise.';
+    rating = Math.max(rating, 3);
+  }
+
+  const detail = detailParts.join(' · ') || wetnessData.summary || '';
+
+  return {
+    label,
+    detail,
+    caution,
+    rating,
+    confidence,
+    stats,
+  };
 };
+
+export const categorizeWetness = (wetnessData) =>
+  interpretWetness(wetnessData).label;
 
 /**
  * Format temperature with fallback

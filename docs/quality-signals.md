@@ -8,9 +8,8 @@ This document outlines the quality checks and automation available in the wake-t
 |---------|------|---------|
 | `npm run lint` | Prettier | Code formatting consistency |
 | `npm run test:unit` | Node.js test runner | Unit tests for calculator logic |
-| `npm run test:e2e` | Playwright | Safari-only end-to-end regression |
-| `npm run test:modular` | Playwright | Core modular calculator checks (Safari) |
-| `npm run test:full-modular` | Playwright | Weather-aware modular regression (Safari) |
+| `npm run test:core` | Playwright | Core planner regression (Safari) |
+| `npm run test:awareness` | Playwright | Weather-aware regression (Safari) |
 | `npm run test:performance` | Playwright | Performance budget checks (Safari) |
 | `npm run validate:html` | html-validate | HTML structure validation |
 | `npm run validate:all` | Multiple | Combined formatting, HTML, and unit tests |
@@ -26,8 +25,7 @@ The GitHub Actions CI workflow runs:
 
 ## Test Coverage by Entry Point
 
-- **index-full-modular.html** - Default entry covered by full-modular integration suite and performance probe.
-- **index-modular.html** - Core calculator flow exercised by the modular integration suite.
+- **index.html** - Single entry covered by core and awareness integration suites plus the performance probe.
 
 ## Running Tests Locally
 
@@ -41,8 +39,8 @@ npm test
 
 # Run specific test suites
 npm run test:unit
-npm run test:modular
-npm run test:full-modular
+npm run test:core
+npm run test:awareness
 npm run test:performance
 ```
 

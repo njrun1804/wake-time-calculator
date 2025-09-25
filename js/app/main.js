@@ -1,23 +1,23 @@
 /**
- * Wake Time Calculator - Full Modular Main Application
- * Orchestrates all modules including weather awareness
+ * Wake Time Calculator - Main Application
+ * Full modular experience with weather awareness.
  */
 
-import { calculateWakeTime, toMinutes } from './core/calculator.js';
-import { Storage } from './core/storage.js';
-import { defaults } from './core/constants.js';
+import { calculateWakeTime, toMinutes } from '../lib/calculator.js';
+import { Storage } from '../lib/storage.js';
+import { defaults } from '../lib/constants.js';
 import {
   initializeAwareness,
   setupAwarenessListeners,
   getCurrentDawn,
-} from './modules/awareness.js';
-import { updateLocationBadge, debounce } from './modules/ui.js';
-import { runWhenIdle } from './utils/schedulers.js';
+} from './awareness.js';
+import { updateLocationBadge, debounce } from './ui.js';
+import { runWhenIdle } from '../lib/schedulers.js';
 
 /**
- * Enhanced main application class with full modular functionality
+ * Main application orchestrator.
  */
-class FullWakeTimeApp {
+class WakeTimeApp {
   constructor() {
     this.elements = {};
     this.state = {
@@ -32,7 +32,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Initialize the application
+   * Initialize the application.
    */
   async init() {
     this.cacheElements();
@@ -41,7 +41,7 @@ class FullWakeTimeApp {
     this.setupAwarenessFeatures();
     this.recalculate();
 
-    // Initialize weather awareness lazily so first paint happens faster
+    // Initialize weather awareness lazily so first paint happens faster.
     runWhenIdle(async () => {
       try {
         await initializeAwareness();
@@ -54,7 +54,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Cache DOM elements
+   * Cache DOM elements that we manipulate frequently.
    */
   cacheElements() {
     this.elements = {
@@ -75,6 +75,7 @@ class FullWakeTimeApp {
       runBar: document.getElementById('runBar'),
       runBarText: document.getElementById('runBarText'),
       prepBar: document.getElementById('prepBar'),
+      prepBarText: document.getElementById('prepBarText'),
       travelBar: document.getElementById('travelBar'),
       travelBarText: document.getElementById('travelBarText'),
       breakfastBar: document.getElementById('breakfastBar'),
@@ -83,7 +84,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Load saved values from storage
+   * Load saved values from storage to seed the form.
    */
   loadSavedValues() {
     const saved = Storage.loadFormValues();
@@ -111,7 +112,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Attach event listeners
+   * Bind UI event listeners.
    */
   attachEventListeners() {
     // Prevent form submission
@@ -148,7 +149,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Setup weather awareness features
+   * Hook up weather awareness interactions.
    */
   setupAwarenessFeatures() {
     setupAwarenessListeners();
@@ -168,7 +169,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Update location headlamp warning based on dawn time
+   * Update the dirt trail warning based on dawn timing.
    */
   updateLocationHeadlamp() {
     if (!this.awarenessReady) return;
@@ -189,7 +190,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Sync travel time with selected location
+   * Sync hidden travel minutes with the selected location.
    */
   syncTravelWithLocation() {
     const option = this.elements.runLocation?.selectedOptions[0];
@@ -203,7 +204,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Save state and recalculate
+   * Persist state and trigger recalculation.
    */
   saveAndRecalculate() {
     this.saveValues();
@@ -211,7 +212,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Save values to storage
+   * Persist form state for the next visit.
    */
   saveValues() {
     Storage.saveFormValues({
@@ -224,7 +225,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Recalculate and update display
+   * Recalculate schedule and refresh UI.
    */
   recalculate() {
     const result = calculateWakeTime({
@@ -239,7 +240,7 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Update the display with calculation results
+   * Update the displayed schedule outputs.
    */
   updateDisplay(result) {
     // Update wake time display
@@ -270,17 +271,22 @@ class FullWakeTimeApp {
   }
 
   /**
-   * Update time allocation bars
+   * Render the proportional time allocation bar.
    */
   updateTimeBars(result) {
     const total = result.totalMinutes || 1;
-    const { run, travel, breakfast, prepBeforeRun } = result.durations;
+    const { run, travel, breakfast, prep } = result.durations;
+
+    const pct = (value) =>
+      Number.isFinite(value) ? Number(((value / total) * 100).toFixed(2)) : 0;
 
     // Calculate percentages
-    const runPct = (run / total) * 100;
-    const travelPct = (travel / total) * 100;
-    const breakfastPct = (breakfast / total) * 100;
-    const prepPct = (prepBeforeRun / total) * 100;
+    const runPct = pct(run);
+    const travelPct = pct(travel);
+    const breakfastPct = pct(breakfast);
+    const prepPct = Number(
+      Math.max(0, 100 - (runPct + travelPct + breakfastPct)).toFixed(2)
+    );
 
     // Update run bar
     if (this.elements.runBar) {
@@ -312,12 +318,16 @@ class FullWakeTimeApp {
 
     // Update prep bar
     if (this.elements.prepBar) {
+      this.elements.prepBar.style.display = 'flex';
       this.elements.prepBar.style.flexBasis = `${prepPct}%`;
+      if (this.elements.prepBarText) {
+        this.elements.prepBarText.textContent = `Prep ${prep}m`;
+      }
     }
   }
 
   /**
-   * Surface awareness initialization errors gracefully
+   * Surface awareness initialization errors gracefully.
    */
   handleAwarenessError(error) {
     console.error('Failed to initialize awareness module', error);
@@ -338,13 +348,13 @@ class FullWakeTimeApp {
 // Initialize app when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', async () => {
-    const app = new FullWakeTimeApp();
+    const app = new WakeTimeApp();
     await app.init();
   });
 } else {
-  const app = new FullWakeTimeApp();
+  const app = new WakeTimeApp();
   app.init();
 }
 
 // Export for testing
-export { FullWakeTimeApp };
+export { WakeTimeApp };

@@ -3,20 +3,16 @@
 ## Overview
 The project delivers a wake-time planner for runners with optional weather and daylight awareness. The codebase now favors modular ES modules and reusable styles over the original single-file implementation. All experiences are static, CDN-powered pages that run without a build step.
 
-## Application Variants
-- **`index-modular.html`** – Core modular page that pulls shared CSS/JS from the `css/` and `js/` directories.
-- **`index-full-modular.html`** – Feature-complete experience with weather, daylight, geolocation, and awareness panel. This is the primary target for new work.
-- **`index.html`** – Redirect for GitHub Pages hosting.
+## Entry Point
+- **`index.html`** – Feature-complete modular experience (calculator + weather awareness) served directly for GitHub Pages and local development.
 
 ## Repository Layout
 ```
+index.html          → single-page app (calculator + awareness)
 css/                → shared styling extracted from the monolith
 js/
-  core/            → business logic, constants, and persistence helpers
-  modules/         → feature modules (weather, dawn, location, UI orchestration)
-  utils/           → shared time utilities
-  main.js          → entry point for `index-modular.html`
-  main-full.js     → entry point for `index-full-modular.html`
+  app/             → UI orchestrators & helpers (`main.js`, `ui.js`, `awareness.js`, `dawn.js`, `location.js`, `weather.js`)
+  lib/             → pure logic, constants, storage, and shared utilities
 docs/               → product docs and design notes
 playwright.config.js
 package.json        → scripts for linting, validation, and Playwright suites
@@ -29,25 +25,20 @@ Key architectural references:
 - **`CLAUDE.md`** mirrors this guide for other autonomous agents and includes module dependency notes.
 
 ## Core Systems
-### Calculator (`js/core`)
+### Library (`js/lib`)
 - `constants.js` defines prep durations, cache windows, default times, and storage key names.
 - `calculator.js` provides pure helpers for time conversion, wake-time computation, and formatting.
 - `storage.js` wraps `localStorage` with JSON handling, cache timestamps, and a `clear()` helper.
-
-### Utilities (`js/utils`)
 - `time.js` centralizes time zone–aware formatting and ISO parsing.
-- Weather-related conversions now live directly in `js/modules/weather.js` after retiring the unused `conversions.js` helper.
+- `schedulers.js` offers idle callbacks used to defer awareness bootstrapping.
 
-### Feature Modules (`js/modules`)
-- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers. `computeWetness()` combines rainfall, FAO evapotranspiration (60% drying coefficient), exponential decay (0.85 per day), and temperature-driven snowmelt to produce the awareness panel score and summary text.
+### Application Layer (`js/app`)
+- `main.js` hydrates the page, restores persisted state, synchronizes travel times with location changes, and orchestrates awareness subsystems.
+- `ui.js` manages dirt-route detection, daylight warning badges, and provides a debounce utility for form interactions.
+- `awareness.js` orchestrates weather + dawn lookups, handles DOM updates for the awareness panel, manages cache lifetimes, and persists location metadata.
 - `dawn.js` caches sunrise/sunset API results and determines headlamp requirements based on run start.
 - `location.js` performs forward/reverse geocoding, browser geolocation, and validation of latitude/longitude ranges.
-- `awareness.js` orchestrates weather + dawn lookups, handles DOM updates for the awareness panel, manages cache lifetimes, and persists location metadata.
-- `ui.js` manages dirt-route detection, daylight warning badges, and provides a debounce utility for form interactions.
-
-### Entry Points
-- `js/main.js` hydrates the core modular page: caches DOM elements, restores persisted state, and wires basic calculator listeners.
-- `js/main-full.js` does the same plus initializes the awareness subsystem, synchronizes travel times with location changes, and manages daylight warnings.
+- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers. `computeWetness()` blends rainfall, FAO evapotranspiration (60% drying coefficient), exponential decay (0.85 per day), and temperature-driven snowmelt to produce the awareness panel score and summary text.
 
 ## Data & Caching Model
 - All persisted values live under `wake:*` keys in `localStorage`. Respect existing key names to avoid breaking saved user data.
@@ -66,8 +57,8 @@ Installs Playwright, Prettier, and HTML validator dependencies. Playwright may p
 | --- | --- |
 | Local static server | `npm run serve` (Python HTTP server on http://localhost:8000/) |
 | Run Safari Playwright suite | `npm test` |
-| Modular-only regression | `npm run test:modular` |
-| Full modular regression | `npm run test:full-modular` |
+| Core planner regression | `npm run test:core` |
+| Awareness regression | `npm run test:awareness` |
 | Unit tests only | `npm run test:unit` |
 | Performance comparison | `npm run test:performance` |
 | Prettier check/write (HTML) | `npm run lint` · `npm run format` |
@@ -78,17 +69,18 @@ Installs Playwright, Prettier, and HTML validator dependencies. Playwright may p
 Run the relevant Playwright suite(s) whenever you touch calculator logic, persistence, or UI wiring. Always run `npm run lint:js` (or `format:js`) plus `npm run validate:html` when you edit JavaScript or HTML respectively.
 
 ### Editing Guidelines
-1. Enhance the modular pages (`index-modular.html`, `index-full-modular.html`) and their modules; those are the supported entry points.
+1. Enhance `index.html` and its app/service modules—that single page is the supported surface.
 2. Keep modules focused: add new functionality by extending the relevant file (e.g., weather metrics stay in `weather.js`, display tweaks in `ui.js`).
-3. Reuse constants and helpers from `js/core` and `js/utils` rather than duplicating logic.
-4. Avoid introducing bundlers or additional build steps; the project intentionally stays framework-free.
-5. Follow existing naming and formatting conventions. Use Prettier via the provided scripts to enforce consistency.
+3. Reuse constants and helpers from `js/lib` rather than duplicating logic.
+4. When adding new weather/daylight behaviors, extend `js/app/awareness.js` (and its helpers) before introducing new top-level modules.
+5. Avoid introducing bundlers or additional build steps; the project intentionally stays framework-free.
+6. Follow existing naming and formatting conventions. Use Prettier via the provided scripts to enforce consistency.
 
 ## Common Tasks
-- **Add a new location option**: Update the `<select>` in `index-full-modular.html` and list the location in `DIRT_LOCATIONS` within `js/modules/ui.js` when it should trigger headlamp/dirt styling.
-- **Adjust trail wetness thresholds**: Modify `categorizeWetness` in `js/modules/weather.js` and ensure the awareness panel copy stays aligned.
-- **Change prep or cache durations**: Update the relevant constant in `js/core/constants.js` and audit tests that assert those values.
-- **Persist additional fields**: Extend `DEFAULT_STATE` and helper functions in `js/core/storage.js`, then integrate with entry-point hydration logic.
+- **Add a new location option**: Update the `<select>` in `index.html` and list the location in `DIRT_LOCATIONS` within `js/app/ui.js` when it should trigger headlamp/dirt styling.
+- **Adjust trail wetness thresholds**: Update `interpretWetness` in `js/app/weather.js` (and keep `docs/trail-wetness.md` in sync) to refine categorisation.
+- **Change prep or cache durations**: Update the relevant constant in `js/lib/constants.js` and audit tests that assert those values.
+- **Persist additional fields**: Extend `DEFAULT_STATE` and helper functions in `js/lib/storage.js`, then integrate with entry-point hydration logic.
 
 ## Testing Expectations
 Before committing changes:
@@ -105,5 +97,6 @@ Before committing changes:
 
 ## Additional Resources
 - **`docs/`** houses deeper dives into UX flows and weather heuristics.
+- **`docs/trail-wetness.md`** explains the wetness scoring model and calibration roadmap.
 - **`tests/`** examples demonstrate how the app should behave end-to-end; refer to them when scoping new features or bug fixes.
 - Use `rg`/`npm run lint:js -- --list-different` for targeted navigation and diff-friendly edits.

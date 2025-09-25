@@ -3,13 +3,13 @@
  * Handles weather awareness display and UI updates
  */
 
-import { Storage } from '../core/storage.js';
-import { defaultTz } from '../core/constants.js';
-import { fmtTime12InZone } from '../utils/time.js';
+import { Storage } from '../lib/storage.js';
+import { defaultTz } from '../lib/constants.js';
+import { fmtTime12InZone } from '../lib/time.js';
 import {
   fetchWeatherAround,
   fetchWetnessInputs,
-  categorizeWetness,
+  interpretWetness,
   formatTemp,
   formatPoP,
 } from './weather.js';
@@ -96,17 +96,22 @@ const updateAwarenessDisplay = (data) => {
 
   // Update surface conditions
   if (els.awWetness) {
-    els.awWetness.textContent = categorizeWetness(wetnessData);
-    if (wetnessData?.summary) {
-      els.awWetness.title = wetnessData.summary;
+    const wetnessInsight = interpretWetness(wetnessData);
+    els.awWetness.textContent = wetnessInsight.label;
+    const tooltip = wetnessInsight.detail || wetnessData?.summary;
+    if (tooltip) {
+      els.awWetness.title = tooltip;
     } else {
       els.awWetness.removeAttribute('title');
     }
-  }
 
-  // Clear any error messages
-  if (els.awMsg) {
-    els.awMsg.textContent = '';
+    if (wetnessInsight.caution) {
+      els.awMsg.textContent = wetnessInsight.caution;
+    }
+
+    // Surface latest insight for quick console inspection
+    window.__latestWetnessInsight = wetnessInsight;
+    window.__latestWetnessRaw = wetnessData;
   }
 
   // Store dawn for daylight check

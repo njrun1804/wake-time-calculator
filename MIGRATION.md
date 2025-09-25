@@ -18,7 +18,7 @@ The migration successfully extracted all functionality from a single HTML file i
 - **Separation of concerns**: HTML, CSS, and JavaScript in separate files
 - **Module boundaries**: Clear interfaces between components
 - **Testable**: Pure functions separated from DOM manipulation
-- **Multiple entry points**: Basic and full functionality versions
+- **Single entry point**: Feature-complete modular page served from `index.html`
 
 ## Key Extraction Phases
 
@@ -42,22 +42,21 @@ The migration successfully extracted all functionality from a single HTML file i
 - **time.js**: Time formatting and manipulation utilities
 
 ### Phase 5: Orchestration
-- **main.js**: Basic modular app (core functionality only)
-- **main-full.js**: Complete modular app (all features)
+- **app/main.js**: Single entry module that hydrates the UI, syncs storage, and initializes awareness features via app-level helpers
 
 ## Technical Achievements
 
 ### Module Design
 ```javascript
-// Pure functions (core/)
+// Pure functions (lib/)
 export const calculateWakeTime = (params) => { /* ... */ };
 
-// Feature modules (modules/)
+// Feature modules (app/)
 export const fetchWeatherAround = async (lat, lon, when, tz) => { /* ... */ };
 
-// UI integration (main-full.js)
-import { calculateWakeTime } from './core/calculator.js';
-import { initializeAwareness } from './modules/awareness.js';
+// UI integration (app/main.js)
+import { calculateWakeTime } from '../lib/calculator.js';
+import { initializeAwareness } from '../app/awareness.js';
 ```
 
 ### Testing Infrastructure
@@ -82,16 +81,12 @@ import { initializeAwareness } from './modules/awareness.js';
 
 ### After (current)
 ```
-├── index-modular.html        # Basic modular
-├── index-full-modular.html   # Complete modular
-├── css/main.css             # Extracted styles
+├── index.html             # Feature-complete modular page
+├── css/main.css           # Extracted styles
 ├── js/
-│   ├── core/               # Pure business logic
-│   ├── modules/            # Feature modules
-│   ├── utils/             # Helper functions
-│   ├── main.js            # Basic orchestration
-│   └── main-full.js       # Full orchestration
-└── tests/                 # Comprehensive test suite
+│   ├── app/              # UI orchestrators & helpers (main, ui, awareness, dawn, location, weather)
+│   └── lib/              # Pure business logic, storage, constants, utilities
+└── tests/                # Comprehensive test suite
 ```
 
 ## Benefits Achieved
@@ -105,7 +100,7 @@ import { initializeAwareness } from './modules/awareness.js';
 ### For Users
 - **Same functionality**: 100% feature parity maintained
 - **Better performance**: Optimized loading and caching
-- **Progressive enhancement**: Choose basic or full features
+- **Streamlined experience**: Weather awareness and planner available in one place
 
 ### For Maintenance
 - **Isolated changes**: Modify specific functionality without side effects
