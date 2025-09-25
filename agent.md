@@ -15,7 +15,7 @@ css/                → shared styling extracted from the monolith
 js/
   core/            → business logic, constants, and persistence helpers
   modules/         → feature modules (weather, dawn, location, UI orchestration)
-  utils/           → shared utilities (time formatting, unit conversions)
+  utils/           → shared time utilities
   main.js          → entry point for `index-modular.html`
   main-full.js     → entry point for `index-full-modular.html`
 docs/               → product docs and design notes
@@ -36,8 +36,8 @@ Key architectural references:
 - `storage.js` wraps `localStorage` with JSON handling, cache timestamps, and a `clear()` helper.
 
 ### Utilities (`js/utils`)
-- `time.js` centralizes time zone–aware formatting, ISO parsing, and minute math.
-- `conversions.js` covers unit conversions plus wind chill and wet-bulb calculations used by the awareness panel.
+- `time.js` centralizes time zone–aware formatting and ISO parsing.
+- Weather-related conversions now live directly in `js/modules/weather.js` after retiring the unused `conversions.js` helper.
 
 ### Feature Modules (`js/modules`)
 - `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers.
