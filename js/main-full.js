@@ -11,8 +11,8 @@ import {
   setupAwarenessListeners,
   getCurrentDawn,
 } from './modules/awareness.js';
-import { checkDaylightNeeded } from './modules/dawn.js';
 import { updateLocationBadge, debounce } from './modules/ui.js';
+import { runWhenIdle } from './utils/schedulers.js';
 
 /**
  * Enhanced main application class with full modular functionality
@@ -28,6 +28,7 @@ class FullWakeTimeApp {
       location: defaults.location,
     };
     this.debouncedRecalculate = debounce(() => this.recalculate(), 150);
+    this.awarenessReady = false;
   }
 
   /**
@@ -40,8 +41,16 @@ class FullWakeTimeApp {
     this.setupAwarenessFeatures();
     this.recalculate();
 
-    // Initialize weather awareness
-    await initializeAwareness();
+    // Initialize weather awareness lazily so first paint happens faster
+    runWhenIdle(async () => {
+      try {
+        await initializeAwareness();
+        this.awarenessReady = true;
+        this.updateLocationHeadlamp();
+      } catch (error) {
+        this.handleAwarenessError(error);
+      }
+    });
   }
 
   /**
@@ -162,6 +171,8 @@ class FullWakeTimeApp {
    * Update location headlamp warning based on dawn time
    */
   updateLocationHeadlamp() {
+    if (!this.awarenessReady) return;
+
     const currentDawn = getCurrentDawn();
     if (!currentDawn) return;
 
@@ -303,6 +314,24 @@ class FullWakeTimeApp {
     if (this.elements.prepBar) {
       this.elements.prepBar.style.flexBasis = `${prepPct}%`;
     }
+  }
+
+  /**
+   * Surface awareness initialization errors gracefully
+   */
+  handleAwarenessError(error) {
+    console.error('Failed to initialize awareness module', error);
+
+    this.awarenessReady = true;
+
+    const status = document.getElementById('awMsg');
+    if (status && status.textContent?.trim() === '—') {
+      status.textContent = 'Weather data unavailable';
+    }
+
+    const verifyButton = document.getElementById('awCity');
+    verifyButton?.classList.remove('verification-needed');
+    verifyButton?.classList.add('btn-disabled');
   }
 }
 
