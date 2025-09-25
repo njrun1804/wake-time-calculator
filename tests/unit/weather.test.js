@@ -1,281 +1,165 @@
-import { test, expect } from '@playwright/test';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-test.describe('Weather Module - Unit Tests', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/index-modular.html');
+import {
+  categorizeWetness,
+  formatTemp,
+  formatWind,
+  formatPoP,
+  fetchWeatherAround,
+  fetchWetnessInputs,
+} from '../../js/modules/weather.js';
+import {
+  expectRejectsWithMessage,
+  withPatchedGlobal,
+} from './helpers/environment.js';
+
+test('weather: categorizeWetness handles nullish inputs', () => {
+  assert.strictEqual(categorizeWetness(null), 'Dry');
+  assert.strictEqual(categorizeWetness(undefined), 'Dry');
+  assert.strictEqual(categorizeWetness({}), 'Dry');
+  assert.strictEqual(categorizeWetness({ isWet: false }), 'Dry');
+});
+
+test('weather: categorizeWetness maps wetness levels', () => {
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 5, avgPrecip: 0.3 }),
+    'Very Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 3, avgPrecip: 0.2 }),
+    'Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.6 }),
+    'Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.3 }),
+    'Slightly Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 2, avgPrecip: 0.5 }),
+    'Wet',
+  );
+});
+
+test('weather: categorizeWetness honours boundary conditions', () => {
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 4, avgPrecip: 0.1 }),
+    'Very Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 2, avgPrecip: 0.1 }),
+    'Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.5 }),
+    'Slightly Wet',
+  );
+  assert.strictEqual(
+    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.51 }),
+    'Wet',
+  );
+});
+
+test('weather: formatTemp handles temperature formatting', () => {
+  assert.strictEqual(formatTemp(75.6), '76°F');
+  assert.strictEqual(formatTemp(-10.2), '-10°F');
+  assert.strictEqual(formatTemp(0), '0°F');
+  assert.strictEqual(formatTemp(32), '32°F');
+  assert.strictEqual(formatTemp(98.6), '99°F');
+  assert.strictEqual(formatTemp(72.4), '72°F');
+  assert.strictEqual(formatTemp(null), '—');
+  assert.strictEqual(formatTemp(undefined), '—');
+  assert.strictEqual(formatTemp('75'), '—');
+  assert.strictEqual(formatTemp(Number.NaN), '—');
+});
+
+test('weather: formatWind handles wind formatting', () => {
+  assert.strictEqual(formatWind(0), '0 mph');
+  assert.strictEqual(formatWind(5.4), '5 mph');
+  assert.strictEqual(formatWind(15.8), '16 mph');
+  assert.strictEqual(formatWind(25.6), '26 mph');
+  assert.strictEqual(formatWind(12.3), '12 mph');
+  assert.strictEqual(formatWind(null), '—');
+  assert.strictEqual(formatWind(undefined), '—');
+  assert.strictEqual(formatWind('15'), '—');
+  assert.strictEqual(formatWind(Number.NaN), '—');
+});
+
+test('weather: formatPoP handles precipitation probability', () => {
+  assert.strictEqual(formatPoP(0), '0%');
+  assert.strictEqual(formatPoP(15.2), '15%');
+  assert.strictEqual(formatPoP(50), '50%');
+  assert.strictEqual(formatPoP(85.7), '86%');
+  assert.strictEqual(formatPoP(100), '100%');
+  assert.strictEqual(formatPoP(33.6), '34%');
+  assert.strictEqual(formatPoP(null), '—');
+  assert.strictEqual(formatPoP(undefined), '—');
+  assert.strictEqual(formatPoP('50'), '—');
+  assert.strictEqual(formatPoP(Number.NaN), '—');
+});
+
+test('weather: fetchWeatherAround propagates network failures', async () => {
+  const failingFetch = () => Promise.reject(new Error('Network error'));
+
+  await withPatchedGlobal('fetch', failingFetch, async () => {
+    await expectRejectsWithMessage(
+      () => fetchWeatherAround(40.7128, -74.006, new Date(), 'America/New_York'),
+      'Network error',
+    );
   });
+});
 
-  test.describe('categorizeWetness', () => {
-    test('returns "Dry" for null or undefined data', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { categorizeWetness } = await import('./js/modules/weather.js');
-
-        return {
-          nullData: categorizeWetness(null),
-          undefinedData: categorizeWetness(undefined),
-          emptyObject: categorizeWetness({}),
-          falseIsWet: categorizeWetness({ isWet: false })
-        };
-      });
-
-      expect(results.nullData).toBe('Dry');
-      expect(results.undefinedData).toBe('Dry');
-      expect(results.emptyObject).toBe('Dry');
-      expect(results.falseIsWet).toBe('Dry');
+test('weather: fetchWeatherAround throws on HTTP errors', async () => {
+  const fetchWithError = () =>
+    Promise.resolve({
+      ok: false,
+      status: 500,
     });
 
-    test('categorizes wetness levels correctly', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { categorizeWetness } = await import('./js/modules/weather.js');
-
-        return {
-          veryWet: categorizeWetness({ isWet: true, wetDays: 5, avgPrecip: 0.3 }),
-          wet1: categorizeWetness({ isWet: true, wetDays: 3, avgPrecip: 0.2 }),
-          wet2: categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.6 }),
-          slightlyWet: categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.3 }),
-          edgeCase: categorizeWetness({ isWet: true, wetDays: 2, avgPrecip: 0.5 })
-        };
-      });
-
-      expect(results.veryWet).toBe('Very Wet');
-      expect(results.wet1).toBe('Wet'); // wetDays >= 2
-      expect(results.wet2).toBe('Wet'); // avgPrecip > 0.5
-      expect(results.slightlyWet).toBe('Slightly Wet');
-      expect(results.edgeCase).toBe('Wet'); // wetDays >= 2
-    });
-
-    test('handles edge cases and boundary conditions', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { categorizeWetness } = await import('./js/modules/weather.js');
-
-        return {
-          exactlyFourDays: categorizeWetness({ isWet: true, wetDays: 4, avgPrecip: 0.1 }),
-          exactlyTwoDays: categorizeWetness({ isWet: true, wetDays: 2, avgPrecip: 0.1 }),
-          exactlyHalfPrecip: categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.5 }),
-          justOverHalfPrecip: categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.51 })
-        };
-      });
-
-      expect(results.exactlyFourDays).toBe('Very Wet');
-      expect(results.exactlyTwoDays).toBe('Wet');
-      expect(results.exactlyHalfPrecip).toBe('Slightly Wet'); // Not greater than 0.5
-      expect(results.justOverHalfPrecip).toBe('Wet'); // Greater than 0.5
-    });
+  await withPatchedGlobal('fetch', fetchWithError, async () => {
+    await expectRejectsWithMessage(
+      () => fetchWeatherAround(40.7128, -74.006, new Date(), 'America/New_York'),
+      'weather fetch failed',
+    );
   });
+});
 
-  test.describe('formatTemp', () => {
-    test('formats temperature correctly', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { formatTemp } = await import('./js/modules/weather.js');
+test('weather: fetchWetnessInputs propagates network failures', async () => {
+  const failingFetch = () => Promise.reject(new Error('Connection timeout'));
 
-        return {
-          positive: formatTemp(75.6),
-          negative: formatTemp(-10.2),
-          zero: formatTemp(0),
-          freezing: formatTemp(32),
-          hot: formatTemp(98.6),
-          decimal: formatTemp(72.4),
-          null: formatTemp(null),
-          undefined: formatTemp(undefined),
-          string: formatTemp('75'),
-          nan: formatTemp(NaN)
-        };
-      });
-
-      expect(results.positive).toBe('76°F');
-      expect(results.negative).toBe('-10°F');
-      expect(results.zero).toBe('0°F');
-      expect(results.freezing).toBe('32°F');
-      expect(results.hot).toBe('99°F');
-      expect(results.decimal).toBe('72°F');
-      expect(results.null).toBe('—');
-      expect(results.undefined).toBe('—');
-      expect(results.string).toBe('—');
-      expect(results.nan).toBe('—');
-    });
+  await withPatchedGlobal('fetch', failingFetch, async () => {
+    await expectRejectsWithMessage(
+      () => fetchWetnessInputs(40.7128, -74.006, new Date(), 'America/New_York'),
+      'Connection timeout',
+    );
   });
+});
 
-  test.describe('formatWind', () => {
-    test('formats wind speed correctly', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { formatWind } = await import('./js/modules/weather.js');
-
-        return {
-          calm: formatWind(0),
-          light: formatWind(5.4),
-          moderate: formatWind(15.8),
-          strong: formatWind(25.6),
-          decimal: formatWind(12.3),
-          null: formatWind(null),
-          undefined: formatWind(undefined),
-          string: formatWind('15'),
-          nan: formatWind(NaN)
-        };
-      });
-
-      expect(results.calm).toBe('0 mph');
-      expect(results.light).toBe('5 mph');
-      expect(results.moderate).toBe('16 mph');
-      expect(results.strong).toBe('26 mph');
-      expect(results.decimal).toBe('12 mph');
-      expect(results.null).toBe('—');
-      expect(results.undefined).toBe('—');
-      expect(results.string).toBe('—');
-      expect(results.nan).toBe('—');
+test('weather: fetchWetnessInputs returns safe defaults when data missing', async () => {
+  const fetchWithoutDaily = () =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ hourly: {} }),
     });
+
+  await withPatchedGlobal('fetch', fetchWithoutDaily, async () => {
+    const wetness = await fetchWetnessInputs(
+      40.7128,
+      -74.006,
+      new Date('2024-01-01T12:00:00Z'),
+      'America/New_York',
+    );
+
+    assert.strictEqual(wetness.isWet, false);
+    assert.strictEqual(wetness.wetDays, 0);
   });
+});
 
-  test.describe('formatPoP', () => {
-    test('formats probability of precipitation correctly', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { formatPoP } = await import('./js/modules/weather.js');
-
-        return {
-          zero: formatPoP(0),
-          low: formatPoP(15.2),
-          medium: formatPoP(50),
-          high: formatPoP(85.7),
-          hundred: formatPoP(100),
-          decimal: formatPoP(33.6),
-          null: formatPoP(null),
-          undefined: formatPoP(undefined),
-          string: formatPoP('50'),
-          nan: formatPoP(NaN)
-        };
-      });
-
-      expect(results.zero).toBe('0%');
-      expect(results.low).toBe('15%');
-      expect(results.medium).toBe('50%');
-      expect(results.high).toBe('86%');
-      expect(results.hundred).toBe('100%');
-      expect(results.decimal).toBe('34%');
-      expect(results.null).toBe('—');
-      expect(results.undefined).toBe('—');
-      expect(results.string).toBe('—');
-      expect(results.nan).toBe('—');
-    });
-  });
-
-  test.describe('fetchWeatherAround error handling', () => {
-    test('handles network errors gracefully', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { fetchWeatherAround } = await import('./js/modules/weather.js');
-
-        // Mock fetch to fail
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.reject(new Error('Network error'));
-
-        try {
-          await fetchWeatherAround(40.7128, -74.0060, new Date(), 'America/New_York');
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Network error');
-    });
-
-    test('handles API errors gracefully', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { fetchWeatherAround } = await import('./js/modules/weather.js');
-
-        // Mock fetch to return error response
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.resolve({
-          ok: false,
-          status: 500
-        });
-
-        try {
-          await fetchWeatherAround(40.7128, -74.0060, new Date(), 'America/New_York');
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('weather fetch failed');
-    });
-  });
-
-  test.describe('fetchWetnessInputs error handling', () => {
-    test('handles network errors gracefully', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { fetchWetnessInputs } = await import('./js/modules/weather.js');
-
-        // Mock fetch to fail
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.reject(new Error('Connection timeout'));
-
-        try {
-          await fetchWetnessInputs(40.7128, -74.0060, new Date(), 'America/New_York');
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Connection timeout');
-    });
-
-    test('returns default values when no data available', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { fetchWetnessInputs } = await import('./js/modules/weather.js');
-
-        // Mock fetch to return success but no daily data
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ hourly: {} }) // No daily data
-        });
-
-        try {
-          const wetness = await fetchWetnessInputs(40.7128, -74.0060, new Date(), 'America/New_York');
-          return { success: true, wetness, error: null };
-        } catch (error) {
-          return { success: false, wetness: null, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.wetness.isWet).toBe(false);
-      expect(result.wetness.wetDays).toBe(0);
-    });
-  });
-
-  test.describe('module integration', () => {
-    test('works with constants from core module', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        // Test that weather module can import from constants
-        const { formatTemp, formatWind, formatPoP } = await import('./js/modules/weather.js');
-
-        return {
-          tempFormatted: formatTemp(72),
-          windFormatted: formatWind(10),
-          popFormatted: formatPoP(30)
-        };
-      });
-
-      expect(result.tempFormatted).toBe('72°F');
-      expect(result.windFormatted).toBe('10 mph');
-      expect(result.popFormatted).toBe('30%');
-    });
-  });
+test('weather: format helpers integrate with core constants import', () => {
+  assert.strictEqual(formatTemp(72), '72°F');
+  assert.strictEqual(formatWind(10), '10 mph');
+  assert.strictEqual(formatPoP(30), '30%');
 });

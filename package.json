@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A wake time calculator with weather awareness for runners",
   "private": true,
+  "type": "module",
   "scripts": {
     "test": "playwright test",
     "test:ui": "playwright test --ui",
@@ -16,7 +17,7 @@
     "test:legacy": "playwright test tests/core.spec.js",
     "test:modular": "playwright test tests/integration/modular.test.js",
     "test:full-modular": "playwright test tests/integration/full-modular.test.js",
-    "test:unit": "playwright test tests/unit/",
+    "test:unit": "node --test tests/unit",
     "test:variants": "playwright test tests/core.spec.js tests/integration/modular.test.js tests/integration/full-modular.test.js",
     "test:performance": "playwright test tests/performance-comparison.spec.js",
     "test:smoke": "playwright test --grep='should load and display basic interface'",
