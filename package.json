@@ -6,11 +6,21 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8000",
-    "test": "npm run lint",
+    "test": "npm run test:e2e",
+    "test:e2e": "playwright test",
+    "test:unit": "node --test tests/unit",
+    "test:modular": "playwright test --grep @modular",
+    "test:performance": "playwright test tests/performance --project=chromium",
     "lint": "prettier --check '*.html' 'js/**/*.js'",
-    "format": "prettier --write '*.html' 'js/**/*.js'"
+    "lint:js": "prettier --check 'js/**/*.js'",
+    "format": "prettier --write '*.html' 'js/**/*.js'",
+    "format:js": "prettier --write 'js/**/*.js'",
+    "validate:html": "html-validate index*.html wake.html",
+    "validate:all": "npm run lint && npm run validate:html && npm run test:unit"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "html-validate": "^10.0.0",
     "prettier": "^3.3.3"
   },
   "repository": {

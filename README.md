@@ -86,24 +86,36 @@ main-full.js
 
 ## Testing
 
-Run the comprehensive test suite with Playwright:
+Install dependencies and browser binaries once per clone:
 
 ```bash
-# Install dependencies
 npm install
+npx playwright install --with-deps
+```
 
-# Run all tests
-npx playwright test
+Then run the available suites:
 
-# Run specific test suites
-npx playwright test tests/unit/
-npx playwright test tests/integration/
+```bash
+# Playwright regression matrix across Chromium/Firefox/WebKit
+npm run test
+
+# Focus on browser flows tagged with @modular
+npm run test:modular
+
+# Execute pure logic tests with Node's built-in runner
+npm run test:unit
+
+# Quick performance probe (single-browser budget check)
+npm run test:performance
+
+# Structural HTML validation + linting + unit tests
+npm run validate:all
 ```
 
 Tests cover:
-- Unit tests for calculator and storage modules
-- Integration tests for modular architecture
-- Cross-browser compatibility
+- Unit tests for calculator logic
+- Integration tests for the modular UI flow
+- Cross-browser compatibility via Playwright projects
 
 ## Development
 
