@@ -105,6 +105,9 @@ npm run test:modular
 # Execute pure logic tests with Node's built-in runner
 npm run test:unit
 
+# Quick performance probe (single-browser budget check)
+npm run test:performance
+
 # Structural HTML validation + linting + unit tests
 npm run validate:all
 ```
