@@ -2,6 +2,14 @@
 
 This guide maps each HTML entry point to the JavaScript modules it loads and documents both the **current automation status** and the **target coverage** we intend to rebuild.
 
+## Coverage Matrix
+
+| Entry Point | Test Suites | Browser Coverage |
+|------------|-------------|------------------|
+| `wake.html` | `tests/integration/wake-flow.spec.js` | Chromium, Firefox, WebKit |
+| `index-modular.html` | `tests/integration/modular.spec.js`, `tests/unit/calculator.test.js` | Chromium, Firefox, WebKit |
+| `index-full-modular.html` | Full integration pending | Chromium (performance only) |
+
 ## `wake.html` – Legacy Monolith
 - **Primary script:** Inline `<script>` block containing calculator, storage, weather awareness, and UI updates in a single IIFE.
 - **Current automation:** Covered by the Playwright legacy suites (`tests/core.spec.js`, `tests/ui.spec.js`, and `tests/weather.spec.js`).
