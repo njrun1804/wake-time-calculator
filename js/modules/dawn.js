@@ -3,7 +3,11 @@
  * Handles dawn/sunrise times and daylight calculations
  */
 
-import { CACHE_DURATION, defaultTz, MINUTES_PER_DAY } from '../core/constants.js';
+import {
+  CACHE_DURATION,
+  defaultTz,
+  MINUTES_PER_DAY,
+} from '../core/constants.js';
 import { fmtYMDInZone } from '../utils/time.js';
 
 /**
@@ -55,7 +59,8 @@ export const fetchDawn = async (lat, lon, tz = defaultTz, signal = null) => {
     if (!res.ok) throw new Error('dawn fetch failed');
 
     const data = await res.json();
-    if (!data.results || data.status !== 'OK') throw new Error('no dawn results');
+    if (!data.results || data.status !== 'OK')
+      throw new Error('no dawn results');
 
     const dawnEpoch = data.results.dawn;
     const dawnDate = new Date(dawnEpoch * 1000);
@@ -86,14 +91,16 @@ export const checkDaylightNeeded = (runStartMinutes, dawnDate) => {
   const dawnTotalMinutes = dawnHours * 60 + dawnMins;
 
   // Calculate minutes from dawn (positive = after dawn, negative = before dawn)
-  const minutesFromDawn = (runStartMinutes % MINUTES_PER_DAY) - dawnTotalMinutes;
+  const minutesFromDawn =
+    (runStartMinutes % MINUTES_PER_DAY) - dawnTotalMinutes;
 
   if (minutesFromDawn <= 0) {
     // Running at or before dawn (dark)
     const minBefore = Math.abs(minutesFromDawn);
-    const message = minBefore === 0
-      ? 'Check daylight (at dawn)'
-      : `Check daylight (${minBefore} min before dawn)`;
+    const message =
+      minBefore === 0
+        ? 'Check daylight (at dawn)'
+        : `Check daylight (${minBefore} min before dawn)`;
 
     return { needed: true, message, minutesBefore: minBefore };
   }

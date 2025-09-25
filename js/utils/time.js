@@ -25,7 +25,12 @@ export const fmtTime12InZone = (date, tz) =>
  */
 export const fmtYMDInZone = (date, tz) =>
   date
-    .toLocaleDateString('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .toLocaleDateString('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
     .replace(/\//g, '-');
 
 /**

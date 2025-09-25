@@ -3,7 +3,12 @@
  * Pure functions for time calculations
  */
 
-import { MINUTES_PER_DAY, MINUTES_PER_HOUR, PREP_MINUTES, PREP_BEFORE_RUN } from './constants.js';
+import {
+  MINUTES_PER_DAY,
+  MINUTES_PER_HOUR,
+  PREP_MINUTES,
+  PREP_BEFORE_RUN,
+} from './constants.js';
 
 /**
  * Convert time string to minutes since midnight
@@ -21,7 +26,8 @@ export const toMinutes = (time) => {
  * @returns {string} Time in HH:MM format
  */
 export const fromMinutes = (total) => {
-  const minutes = ((total % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const minutes =
+    ((total % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
   const h = Math.floor(minutes / MINUTES_PER_HOUR);
   const m = minutes % MINUTES_PER_HOUR;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -67,17 +73,20 @@ export const calculateWakeTime = ({
   meeting,
   runMinutes = 0,
   travelMinutes = 0,
-  breakfastMinutes = 0
+  breakfastMinutes = 0,
 }) => {
   const meetingMinutes = toMinutes(meeting);
 
   // Calculate total time needed
-  const totalMinutes = PREP_MINUTES + runMinutes + travelMinutes + breakfastMinutes;
+  const totalMinutes =
+    PREP_MINUTES + runMinutes + travelMinutes + breakfastMinutes;
 
   // Calculate wake time
   const wakeMinutes = meetingMinutes - totalMinutes;
   const previousDay = wakeMinutes < 0;
-  const adjustedWakeMinutes = previousDay ? wakeMinutes + MINUTES_PER_DAY : wakeMinutes;
+  const adjustedWakeMinutes = previousDay
+    ? wakeMinutes + MINUTES_PER_DAY
+    : wakeMinutes;
 
   // Calculate intermediate times
   const prepStartMinutes = meetingMinutes - PREP_MINUTES;
@@ -98,7 +107,7 @@ export const calculateWakeTime = ({
       prepBeforeRun: PREP_BEFORE_RUN,
       run: runMinutes,
       travel: travelMinutes,
-      breakfast: breakfastMinutes
-    }
+      breakfast: breakfastMinutes,
+    },
   };
 };

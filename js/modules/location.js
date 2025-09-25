@@ -33,7 +33,7 @@ export const geocodePlace = async (name) => {
     lat: place.latitude,
     lon: place.longitude,
     city: formatPlaceName(place),
-    tz: place.timezone || defaultTz
+    tz: place.timezone || defaultTz,
   };
 };
 
@@ -55,7 +55,7 @@ export const reverseGeocode = async (lat, lon) => {
           const place = data.results[0];
           return {
             city: formatPlaceName(place),
-            tz: place.timezone || defaultTz
+            tz: place.timezone || defaultTz,
           };
         }
       }
@@ -70,7 +70,7 @@ export const reverseGeocode = async (lat, lon) => {
       if (res.ok) {
         const data = await res.json();
         if (data.display_name) {
-          const parts = data.display_name.split(',').map(s => s.trim());
+          const parts = data.display_name.split(',').map((s) => s.trim());
           const city = parts[0] || parts[1] || 'Location';
           return { city, tz: defaultTz };
         }
@@ -120,7 +120,7 @@ export const getCurrentLocation = () => {
       {
         enableHighAccuracy: false,
         timeout: 10000,
-        maximumAge: 300000 // 5 minutes
+        maximumAge: 300000, // 5 minutes
       }
     );
   });
@@ -133,7 +133,12 @@ export const getCurrentLocation = () => {
  * @returns {boolean} True if coordinates are valid
  */
 export const validateCoordinates = (lat, lon) => {
-  return Number.isFinite(lat) && Number.isFinite(lon) &&
-         lat >= -90 && lat <= 90 &&
-         lon >= -180 && lon <= 180;
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
 };

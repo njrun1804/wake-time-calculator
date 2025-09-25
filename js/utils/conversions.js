@@ -26,9 +26,12 @@ export const cToF = (c) => (c * 9) / 5 + 32;
 export const stullWetBulbC = (tempC, rh) => {
   const atan = Math.atan;
   const sqrt = Math.sqrt;
-  const wetBulb = tempC * atan(0.151977 * sqrt(rh + 8.313659)) +
-    atan(tempC + rh) - atan(rh - 1.676331) +
-    0.00391838 * Math.pow(rh, 1.5) * atan(0.023101 * rh) - 4.686035;
+  const wetBulb =
+    tempC * atan(0.151977 * sqrt(rh + 8.313659)) +
+    atan(tempC + rh) -
+    atan(rh - 1.676331) +
+    0.00391838 * Math.pow(rh, 1.5) * atan(0.023101 * rh) -
+    4.686035;
   return wetBulb;
 };
 
@@ -40,7 +43,10 @@ export const stullWetBulbC = (tempC, rh) => {
  */
 export const windChillF = (tempF, windMph) => {
   if (tempF > 50 || windMph < 3) return null;
-  const chill = 35.74 + 0.6215 * tempF - 35.75 * Math.pow(windMph, 0.16) +
+  const chill =
+    35.74 +
+    0.6215 * tempF -
+    35.75 * Math.pow(windMph, 0.16) +
     0.4275 * tempF * Math.pow(windMph, 0.16);
   return Math.round(chill);
 };

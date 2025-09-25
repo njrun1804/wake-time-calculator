@@ -6,9 +6,21 @@
 import { Storage } from '../core/storage.js';
 import { defaultTz } from '../core/constants.js';
 import { fmtTime12InZone } from '../utils/time.js';
-import { fetchWeatherAround, fetchWetnessInputs, categorizeWetness, formatTemp, formatWind, formatPoP } from './weather.js';
+import {
+  fetchWeatherAround,
+  fetchWetnessInputs,
+  categorizeWetness,
+  formatTemp,
+  formatWind,
+  formatPoP,
+} from './weather.js';
 import { fetchDawn } from './dawn.js';
-import { getCurrentLocation, reverseGeocode, geocodePlace, validateCoordinates } from './location.js';
+import {
+  getCurrentLocation,
+  reverseGeocode,
+  geocodePlace,
+  validateCoordinates,
+} from './location.js';
 
 /**
  * Weather awareness UI elements cache
@@ -36,7 +48,7 @@ const cacheAwarenessElements = () => {
       awWet: document.getElementById('awWet'),
       awSnow: document.getElementById('awSnow'),
       useLoc: document.getElementById('useMyLocation'),
-      locSearch: document.getElementById('locationSearch')
+      locSearch: document.getElementById('locationSearch'),
     };
   }
   return awarenessElements;
@@ -59,7 +71,7 @@ const updateAwarenessDisplay = (data) => {
     pop,
     isSnow,
     wetnessData,
-    tz
+    tz,
   } = data;
 
   // Update city display
@@ -150,7 +162,7 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
     // Parallel fetch weather & wetness
     const [weather, wetnessInfo] = await Promise.all([
       fetchWeatherAround(lat, lon, dawnDate, tz),
-      fetchWetnessInputs(lat, lon, dawnDate, tz)
+      fetchWetnessInputs(lat, lon, dawnDate, tz),
     ]);
 
     // Update display with all data
@@ -166,9 +178,8 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
       snowfall: weather.snowfall,
       isSnow: weather.isSnow,
       wetnessData: wetnessInfo,
-      tz
+      tz,
     });
-
   } catch (error) {
     if (error.name === 'AbortError') {
       showAwarenessError('Request timed out');
@@ -199,17 +210,27 @@ export const handleUseMyLocation = async () => {
 
     try {
       const info = await reverseGeocode(coords.lat, coords.lon);
-      const label = info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+      const label =
+        info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
 
-      Storage.saveWeatherLocation({ lat: coords.lat, lon: coords.lon, city: label, tz });
+      Storage.saveWeatherLocation({
+        lat: coords.lat,
+        lon: coords.lon,
+        city: label,
+        tz,
+      });
       await refreshAwareness(coords.lat, coords.lon, label, tz);
     } catch (error) {
       console.warn('Reverse geocoding failed:', error);
       const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
-      Storage.saveWeatherLocation({ lat: coords.lat, lon: coords.lon, city: fallback, tz: defaultTz });
+      Storage.saveWeatherLocation({
+        lat: coords.lat,
+        lon: coords.lon,
+        city: fallback,
+        tz: defaultTz,
+      });
       await refreshAwareness(coords.lat, coords.lon, fallback, defaultTz);
     }
-
   } catch (error) {
     console.warn('Location access failed:', error);
     showAwarenessError('Location denied.');
@@ -221,17 +242,37 @@ export const handleUseMyLocation = async () => {
  * @param {string} query - Search query
  */
 export const handleLocationSearch = async (query) => {
-  if (!query?.trim()) return;
+  const trimmed = query?.trim();
+  if (!trimmed) return;
 
+  showAwarenessError('Searching…');
+
+  let location;
   try {
-    showAwarenessError('Searching…');
-    const loc = await geocodePlace(query);
-    Storage.saveWeatherLocation({ lat: loc.lat, lon: loc.lon, city: loc.city, tz: loc.tz });
-    await refreshAwareness(loc.lat, loc.lon, loc.city, loc.tz);
+    location = await geocodePlace(trimmed);
   } catch (error) {
     console.warn('Location search failed:', error);
-    showAwarenessError('Location not found');
+    const message =
+      error?.message === 'no results'
+        ? 'Location not found'
+        : 'Unable to search location';
+    showAwarenessError(message);
+    return;
   }
+
+  Storage.saveWeatherLocation({
+    lat: location.lat,
+    lon: location.lon,
+    city: location.city,
+    tz: location.tz,
+  });
+
+  await refreshAwareness(
+    location.lat,
+    location.lon,
+    location.city,
+    location.tz
+  );
 };
 
 /**
@@ -251,14 +292,25 @@ export const initializeAwareness = async () => {
 
       try {
         const info = await reverseGeocode(coords.lat, coords.lon);
-        const label = info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        const label =
+          info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
 
-        Storage.saveWeatherLocation({ lat: coords.lat, lon: coords.lon, city: label, tz });
+        Storage.saveWeatherLocation({
+          lat: coords.lat,
+          lon: coords.lon,
+          city: label,
+          tz,
+        });
         await refreshAwareness(coords.lat, coords.lon, label, tz);
       } catch (error) {
         console.warn('Silent reverse geocoding failed:', error);
         const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
-        Storage.saveWeatherLocation({ lat: coords.lat, lon: coords.lon, city: fallback, tz: defaultTz });
+        Storage.saveWeatherLocation({
+          lat: coords.lat,
+          lon: coords.lon,
+          city: fallback,
+          tz: defaultTz,
+        });
         await refreshAwareness(coords.lat, coords.lon, fallback, defaultTz);
       }
     } catch (error) {

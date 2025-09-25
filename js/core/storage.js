@@ -90,7 +90,10 @@ export const Storage = {
       lat,
       lon,
       city: this.load(weatherStorage.city, ''),
-      tz: this.load(weatherStorage.tz, Intl.DateTimeFormat().resolvedOptions().timeZone)
+      tz: this.load(
+        weatherStorage.tz,
+        Intl.DateTimeFormat().resolvedOptions().timeZone
+      ),
     };
   },
 
@@ -99,8 +102,10 @@ export const Storage = {
    */
   clear() {
     try {
-      Object.values(storageKeys).forEach(key => localStorage.removeItem(key));
-      Object.values(weatherStorage).forEach(key => localStorage.removeItem(key));
+      Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
+      Object.values(weatherStorage).forEach((key) =>
+        localStorage.removeItem(key)
+      );
     } catch (error) {
       console.error('Failed to clear localStorage:', error);
     }
@@ -138,5 +143,5 @@ export const Storage = {
       console.error('Failed to load cache:', error);
       return null;
     }
-  }
+  },
 };
