@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8000",
-    "test": "npm run lint && npm run test:unit && npm run test:integration",
+    "test": "npm run lint",
+    "test:all": "npm run lint && npm run test:unit && npm run test:integration",
     "lint": "npm run lint:html && npm run lint:js",
     "lint:html": "prettier --check '*.html'",
     "lint:js": "prettier --check 'js/**/*.js'",
@@ -14,7 +15,7 @@
     "format:html": "prettier --write '*.html'",
     "format:js": "prettier --write 'js/**/*.js'",
     "test:unit": "node --test tests/unit",
-    "test:integration": "playwright test",
+    "test:integration": "playwright test tests/integration",
     "test:modular": "playwright test tests/integration --project=chromium",
     "test:performance": "playwright test tests/performance --project=chromium"
   },

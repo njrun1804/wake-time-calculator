@@ -86,24 +86,27 @@ main-full.js
 
 ## Testing
 
-Run the comprehensive test suite with Playwright:
+Install dependencies and Playwright browser binaries:
 
 ```bash
-# Install dependencies
 npm install
+npx playwright install --with-deps
+```
 
-# Run all tests
-npx playwright test
+Common commands:
 
-# Run specific test suites
-npx playwright test tests/unit/
-npx playwright test tests/integration/
+```bash
+npm test                    # Prettier lint (default quick check)
+npm run test:unit           # Node-based unit tests for core logic
+npm run test:integration    # Playwright flows against index-modular.html
+npm run test:performance    # Lightweight performance budget probe
+npm run test:all            # Convenience aggregate used prior to CI runs
 ```
 
 Tests cover:
-- Unit tests for calculator and storage modules
-- Integration tests for modular architecture
-- Cross-browser compatibility
+- Unit tests for calculator logic
+- Integration tests for the modular architecture
+- A coarse performance budget check for the modular entry point
 
 ## Development
 

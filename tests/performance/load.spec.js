@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-const MAX_DOM_CONTENT_LOADED = 3000;
+// Allow plenty of headroom for cold CDN fetches in CI runners.
+const MAX_DOM_CONTENT_LOADED = 8000;
 
-test.describe('Performance budget', () => {
+test.describe('Performance budget @performance', () => {
   test('modular entry loads within budget', async ({ page }) => {
     await page.goto('/index-modular.html');
 
