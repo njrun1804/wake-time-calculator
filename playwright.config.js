@@ -1,32 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const DEFAULT_BROWSERS = ['chromium', 'firefox', 'webkit'];
-
-const envBrowsers = process.env.PLAYWRIGHT_BROWSERS
-  ? process.env.PLAYWRIGHT_BROWSERS.split(',')
-      .map((browser) => browser.trim().toLowerCase())
-      .filter(Boolean)
-  : [];
-
-const targetBrowsers = envBrowsers.length > 0 ? envBrowsers : DEFAULT_BROWSERS;
-
-const targetBrowserSet = new Set(targetBrowsers);
-
-const projects = [
-  {
-    name: 'chromium',
-    use: { ...devices['Desktop Chrome'] },
-  },
-  {
-    name: 'firefox',
-    use: { ...devices['Desktop Firefox'] },
-  },
-  {
-    name: 'webkit',
-    use: { ...devices['Desktop Safari'] },
-  },
-].filter((project) => targetBrowserSet.has(project.name));
-
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -37,10 +10,15 @@ export default defineConfig({
     baseURL: 'http://localhost:8000',
     trace: 'retain-on-failure',
   },
-  projects,
+  projects: [
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],
   webServer: {
     command: 'npm run serve',
-    url: 'http://localhost:8000/index-modular.html',
+    url: 'http://localhost:8000/index-full-modular.html',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

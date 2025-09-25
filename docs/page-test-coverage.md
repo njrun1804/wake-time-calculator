@@ -4,17 +4,10 @@ This guide maps each HTML entry point to the JavaScript modules it loads and doc
 
 ## Coverage Matrix
 
-| Entry Point | Test Suites | Browser Coverage |
-|------------|-------------|------------------|
-| `wake.html` | `tests/integration/wake-flow.spec.js` | Chromium, Firefox, WebKit |
-| `index-modular.html` | `tests/integration/modular.spec.js`, `tests/unit/calculator.test.js` | Chromium, Firefox, WebKit |
-| `index-full-modular.html` | Full integration pending | Chromium (performance only) |
-
-## `wake.html` – Legacy Monolith
-- **Primary script:** Inline `<script>` block containing calculator, storage, weather awareness, and UI updates in a single IIFE.
-- **Current automation:** Covered by the Playwright legacy suites (`tests/core.spec.js`, `tests/ui.spec.js`, and `tests/weather.spec.js`).
-- **Target coverage:** Keep the happy-path smoke run to ensure wake-time math, persistence, and weather banners still work while the page remains in maintenance mode.
-- **Why limited:** Migration notes direct full test ownership to the modular architecture. Legacy coverage should remain smoke-level to guarantee backwards compatibility only.
+| Entry Point | Automated Coverage | Notes |
+|-------------|--------------------|-------|
+| `index-full-modular.html` | Playwright end-to-end (`tests/integration/wake-flow.spec.js`) on Safari (WebKit); performance probe (`tests/performance/load.spec.js`). | Default entry served via `index.html`. Covers awareness UI, weather/dawn fetches, and time allocation interactions. |
+| `index-modular.html` | Playwright modular suite (`tests/integration/modular.spec.js`) and unit tests (`tests/unit/*.test.js`). | Calculator-only experience without awareness UI (Safari desktop). |
 
 ## `index-modular.html` – Core Modular Experience
 - **Module entry point:** `js/main.js`, which wires calculator logic, storage helpers, constants, and modular UI bindings (form inputs, outputs, and time-allocation bars).
@@ -26,7 +19,7 @@ This guide maps each HTML entry point to the JavaScript modules it loads and doc
 
 ## `index-full-modular.html` – Complete Modular Stack
 - **Module entry point:** `js/main-full.js`, orchestrating calculator/storage modules plus awareness modules (`js/modules/awareness/`), weather/dawn fetchers, and idle scheduling utilities.
-- **Current automation:** Full-modular Playwright suite (`tests/integration/full-modular.test.js`) and performance probe (`tests/performance/load.spec.js`).
+- **Current automation:** Full-modular Playwright suite (`tests/integration/wake-flow.spec.js`) and performance probe (`tests/performance/load.spec.js`).
 - **Target coverage:**
   - All tests listed for `index-modular.html` (core calculator + integration flows).
   - Additional integration/E2E scenarios covering:

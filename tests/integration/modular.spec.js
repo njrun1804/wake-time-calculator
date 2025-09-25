@@ -1,37 +1,30 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Modular Wake Time Calculator', () => {
-  test.beforeEach(async ({ page }) => {
+test.describe('Modular wake time calculator @modular', () => {
+  test('adjusts outputs when itinerary changes', async ({ page }) => {
     await page.goto('/index-modular.html');
+
+    await expect(page.locator('#chosenWake')).toHaveText('7:45 AM');
+
+    await page.fill('#runMinutes', '50');
+    await page.selectOption('#breakfastMinutes', '10');
+    await page.selectOption('#runLocation', 'figure8');
+
+    await expect(page.locator('#travelMinutes')).toHaveValue('14');
+    await expect(page.locator('#chosenWake')).toHaveText('6:31 AM');
+    await expect(page.locator('#latestWake')).toHaveText('6:55 AM');
+    await expect(page.locator('#runStart')).toHaveText('6:41 AM');
   });
 
-  test('calculates wake time based on sleep cycles @modular', async ({ page }) => {
-    // Set wake time to 6:00 AM
-    await page.fill('#wakeHour', '6');
-    await page.fill('#wakeMinute', '00');
+  test('highlights previous-day wake times for long plans', async ({ page }) => {
+    await page.goto('/index-modular.html');
 
-    // Calculate sleep times
-    await page.click('#calculate');
+    await page.selectOption('#firstMeeting', '06:00');
+    await page.fill('#runMinutes', '240');
+    await page.selectOption('#breakfastMinutes', '45');
+    await page.selectOption('#runLocation', 'holmdel');
 
-    // Verify sleep time recommendations are displayed
-    const sleepTimes = page.locator('.sleep-time');
-    await expect(sleepTimes).toHaveCount(6);
-
-    // Verify the latest sleep time (9 hours before wake)
-    const firstTime = await sleepTimes.first().textContent();
-    expect(firstTime).toContain('9:00 PM');
-  });
-
-  test('updates time allocation bars @modular', async ({ page }) => {
-    // Set wake time
-    await page.fill('#wakeHour', '7');
-    await page.fill('#wakeMinute', '30');
-
-    // Calculate
-    await page.click('#calculate');
-
-    // Check that allocation bars are visible
-    const allocationBars = page.locator('.time-allocation');
-    await expect(allocationBars.first()).toBeVisible();
+    await expect(page.locator('#prevDayBadge')).toBeVisible();
+    await expect(page.locator('#chosenWake')).toHaveText('11:40 PM');
   });
 });

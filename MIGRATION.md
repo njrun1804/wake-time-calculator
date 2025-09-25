@@ -80,9 +80,8 @@ import { initializeAwareness } from './modules/awareness.js';
 └── README.md
 ```
 
-### After
+### After (current)
 ```
-├── wake.html                 # Legacy version
 ├── index-modular.html        # Basic modular
 ├── index-full-modular.html   # Complete modular
 ├── css/main.css             # Extracted styles
@@ -155,4 +154,4 @@ The modular architecture enables:
 
 ## Conclusion
 
-This migration demonstrates how a complex single-file application can be successfully refactored into a maintainable modular architecture while preserving all functionality and improving developer experience. The result is a more maintainable, testable, and extensible codebase that serves as a foundation for future development.
+This migration demonstrates how a complex single-file application can be successfully refactored into a maintainable modular architecture while preserving all functionality and improving developer experience. The result is a more maintainable, testable, and extensible codebase that serves as a foundation for future development. With the modular builds now owning the entire experience, the legacy monolith has been removed.

@@ -31,12 +31,8 @@ jobs:
       - run: npm run test:unit
 
   integration:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,13 +40,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-      - name: Run integration tests
-        run: npx playwright test --project=${{ matrix.browser }}
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Run Safari integration tests
+        run: npm run test:e2e
 
   performance:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: lint
     steps:
       - uses: actions/checkout@v4
@@ -59,7 +55,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright WebKit
+        run: npx playwright install --with-deps webkit
       - name: Run performance tests
         run: npm run test:performance

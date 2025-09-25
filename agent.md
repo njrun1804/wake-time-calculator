@@ -4,7 +4,6 @@
 The project delivers a wake-time planner for runners with optional weather and daylight awareness. The codebase now favors modular ES modules and reusable styles over the original single-file implementation. All experiences are static, CDN-powered pages that run without a build step.
 
 ## Application Variants
-- **`wake.html`** – Legacy single-file page kept for regression protection. Avoid editing unless a change must ship to the legacy experience.
 - **`index-modular.html`** – Core modular page that pulls shared CSS/JS from the `css/` and `js/` directories.
 - **`index-full-modular.html`** – Feature-complete experience with weather, daylight, geolocation, and awareness panel. This is the primary target for new work.
 - **`index.html`** – Redirect for GitHub Pages hosting.
@@ -66,8 +65,9 @@ Installs Playwright, Prettier, and HTML validator dependencies. Playwright may p
 | Purpose | Command |
 | --- | --- |
 | Local static server | `npm run serve` (Python HTTP server on http://localhost:8000/) |
-| Run full Playwright suite | `npm test` |
-| Variant test runs | `npm run test:legacy` · `npm run test:modular` · `npm run test:full-modular` |
+| Run Safari Playwright suite | `npm test` |
+| Modular-only regression | `npm run test:modular` |
+| Full modular regression | `npm run test:full-modular` |
 | Unit tests only | `npm run test:unit` |
 | Performance comparison | `npm run test:performance` |
 | Prettier check/write (HTML) | `npm run lint` · `npm run format` |
@@ -78,14 +78,14 @@ Installs Playwright, Prettier, and HTML validator dependencies. Playwright may p
 Run the relevant Playwright suite(s) whenever you touch calculator logic, persistence, or UI wiring. Always run `npm run lint:js` (or `format:js`) plus `npm run validate:html` when you edit JavaScript or HTML respectively.
 
 ### Editing Guidelines
-1. Prefer enhancing the modular pages (`index-modular.html`, `index-full-modular.html`) and their modules. Touch `wake.html` only for parity-critical fixes.
+1. Enhance the modular pages (`index-modular.html`, `index-full-modular.html`) and their modules; those are the supported entry points.
 2. Keep modules focused: add new functionality by extending the relevant file (e.g., weather metrics stay in `weather.js`, display tweaks in `ui.js`).
 3. Reuse constants and helpers from `js/core` and `js/utils` rather than duplicating logic.
 4. Avoid introducing bundlers or additional build steps; the project intentionally stays framework-free.
 5. Follow existing naming and formatting conventions. Use Prettier via the provided scripts to enforce consistency.
 
 ## Common Tasks
-- **Add a new location option**: Update the `<select>` in `index-full-modular.html` (and legacy page if parity is required) and list the location in `DIRT_LOCATIONS` within `js/modules/ui.js` when it should trigger headlamp/dirt styling.
+- **Add a new location option**: Update the `<select>` in `index-full-modular.html` and list the location in `DIRT_LOCATIONS` within `js/modules/ui.js` when it should trigger headlamp/dirt styling.
 - **Adjust trail wetness thresholds**: Modify `categorizeWetness` in `js/modules/weather.js` and ensure the awareness panel copy stays aligned.
 - **Change prep or cache durations**: Update the relevant constant in `js/core/constants.js` and audit tests that assert those values.
 - **Persist additional fields**: Extend `DEFAULT_STATE` and helper functions in `js/core/storage.js`, then integrate with entry-point hydration logic.

@@ -27,25 +27,23 @@ A comprehensive wake time calculator for runners with weather awareness and modu
 
 ## Usage
 
-### Basic Version
-Open `wake.html` in your browser for the original single-file version.
+### Default Experience
+Load `index.html` (or visit the published site) to land on `index-full-modular.html`, the weather-aware modular build that replaces the monolith.
 
-### Modular Versions
-- **Simple Modular**: Open `index-modular.html` - core functionality with modular architecture
-- **Full Modular**: Open `index-full-modular.html` - complete functionality including weather awareness
+### Other Entry Points
+- **Simple Modular**: Open `index-modular.html` for the streamlined calculator without awareness UI.
 
 ### Setup for Development
 ```bash
-# For ES6 module testing (required for modular versions)
+# For ES6 module testing
 python3 -m http.server 8000
-# Then visit http://localhost:8000/index-modular.html
+# Then visit http://localhost:8000/index-full-modular.html
 ```
 
 ## Architecture
 
 ### File Structure
 ```
-├── wake.html                 # Original monolithic version
 ├── index-modular.html        # Basic modular version
 ├── index-full-modular.html   # Complete modular version
 ├── css/
@@ -86,48 +84,25 @@ main-full.js
 
 ## Testing
 
-Install dependencies and the WebKit binary once per clone when you only need Safari coverage:
+Quick setup (clones or Codex web workspaces):
 
 ```bash
-npm install
-npx playwright install webkit
+./scripts/setup.sh
 ```
 
-> **Need the full Chromium/Firefox/WebKit matrix?** Continue to run `npx playwright install --with-deps` to grab every browser plus the system dependencies Playwright expects for Linux CI images.
-
-Then run the available suites. The Playwright configuration respects a `PLAYWRIGHT_BROWSERS` environment variable so you can
-target a specific subset (for example `PLAYWRIGHT_BROWSERS=chromium npm run test:e2e`).
-
 ```bash
-# Playwright regression matrix across Chromium/Firefox/WebKit
-npm run test
-
-# WebKit-only regression matrix (lean install for Safari-centric debugging)
-npm run test:safari
-
-# Focus on browser flows tagged with @modular
-npm run test:modular
-
-# Restrict @modular flows to WebKit for Safari validation
-npm run test:modular:safari
-
-# Execute pure logic tests with Node's built-in runner
-npm run test:unit
-
-# Quick performance probe (single-browser budget check, defaults to WebKit)
+npm run test            # Safari end-to-end suite (index-full-modular by default)
+npm run test:modular    # Safari regression for the modular shell
+npm run test:full-modular
+npm run test:unit       # Node-based unit tests
 npm run test:performance
-
-# Run the performance suite in another browser as needed
-PLAYWRIGHT_BROWSERS=chromium npm run test:performance
-
-# Structural HTML validation + linting + unit tests
 npm run validate:all
 ```
 
 Tests cover:
 - Unit tests for calculator logic
-- Integration tests for the modular UI flow
-- Cross-browser compatibility via Playwright projects
+- Integration tests for the modular UI flow (Safari desktop)
+- Performance guardrails for the modular entry point
 
 ## Development
 
