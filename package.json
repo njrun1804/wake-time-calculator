@@ -6,11 +6,20 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8000",
-    "test": "npm run lint",
-    "lint": "prettier --check '*.html' 'js/**/*.js'",
-    "format": "prettier --write '*.html' 'js/**/*.js'"
+    "test": "npm run lint && npm run test:unit && npm run test:integration",
+    "lint": "npm run lint:html && npm run lint:js",
+    "lint:html": "prettier --check '*.html'",
+    "lint:js": "prettier --check 'js/**/*.js'",
+    "format": "npm run format:html && npm run format:js",
+    "format:html": "prettier --write '*.html'",
+    "format:js": "prettier --write 'js/**/*.js'",
+    "test:unit": "node --test tests/unit",
+    "test:integration": "playwright test",
+    "test:modular": "playwright test tests/integration --project=chromium",
+    "test:performance": "playwright test tests/performance --project=chromium"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "prettier": "^3.3.3"
   },
   "repository": {
