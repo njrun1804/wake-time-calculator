@@ -1,259 +1,161 @@
-import { test, expect } from '@playwright/test';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-test.describe('Location Module - Unit Tests', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/index-modular.html');
+import {
+  geocodePlace,
+  reverseGeocode,
+  getCurrentLocation,
+  validateCoordinates,
+} from '../../js/modules/location.js';
+import {
+  expectRejectsWithMessage,
+  withPatchedGlobal,
+} from './helpers/environment.js';
+
+test('location: validateCoordinates recognises valid and invalid pairs', () => {
+  assert.strictEqual(validateCoordinates(40.7128, -74.006), true);
+  assert.strictEqual(validateCoordinates(90, 180), true);
+  assert.strictEqual(validateCoordinates(0, 0), true);
+
+  assert.strictEqual(validateCoordinates(91, 0), false);
+  assert.strictEqual(validateCoordinates(-91, 0), false);
+  assert.strictEqual(validateCoordinates(0, 181), false);
+  assert.strictEqual(validateCoordinates(0, -181), false);
+  assert.strictEqual(validateCoordinates(Number.NaN, 0), false);
+  assert.strictEqual(validateCoordinates(Infinity, 0), false);
+  assert.strictEqual(validateCoordinates('40.7', '-74.0'), false);
+  assert.strictEqual(validateCoordinates(null, undefined), false);
+});
+
+test('location: getCurrentLocation rejects when geolocation is unavailable', async () => {
+  await withPatchedGlobal('navigator', {}, async () => {
+    await expectRejectsWithMessage(() => getCurrentLocation(), 'Geolocation not supported');
   });
+});
 
-  test.describe('validateCoordinates', () => {
-    test('validates coordinates correctly', async ({ page }) => {
-      const results = await page.evaluate(async () => {
-        const { validateCoordinates } = await import('./js/modules/location.js');
-
-        return {
-          // Valid coordinates
-          validNormal: validateCoordinates(40.7128, -74.0060), // NYC
-          validExtreme: validateCoordinates(90, 180), // Extreme valid
-          validZero: validateCoordinates(0, 0), // Null Island
-
-          // Invalid coordinates
-          invalidLatHigh: validateCoordinates(91, 0), // Lat too high
-          invalidLatLow: validateCoordinates(-91, 0), // Lat too low
-          invalidLonHigh: validateCoordinates(0, 181), // Lon too high
-          invalidLonLow: validateCoordinates(0, -181), // Lon too low
-          invalidNaN: validateCoordinates(NaN, 0), // NaN latitude
-          invalidInfinity: validateCoordinates(Infinity, 0), // Infinity latitude
-          invalidString: validateCoordinates('40.7', '-74.0'), // String coordinates
-          invalidNull: validateCoordinates(null, undefined) // Null/undefined
-        };
-      });
-
-      // Valid coordinates should return true
-      expect(results.validNormal).toBe(true);
-      expect(results.validExtreme).toBe(true);
-      expect(results.validZero).toBe(true);
-
-      // Invalid coordinates should return false
-      expect(results.invalidLatHigh).toBe(false);
-      expect(results.invalidLatLow).toBe(false);
-      expect(results.invalidLonHigh).toBe(false);
-      expect(results.invalidLonLow).toBe(false);
-      expect(results.invalidNaN).toBe(false);
-      expect(results.invalidInfinity).toBe(false);
-      expect(results.invalidString).toBe(false);
-      expect(results.invalidNull).toBe(false);
-    });
-  });
-
-  test.describe('getCurrentLocation', () => {
-    test('handles geolocation not supported', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { getCurrentLocation } = await import('./js/modules/location.js');
-
-        // Mock navigator.geolocation as undefined
-        const originalGeolocation = navigator.geolocation;
-        Object.defineProperty(navigator, 'geolocation', {
-          value: undefined,
-          configurable: true
-        });
-
-        try {
-          await getCurrentLocation();
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original geolocation
-          Object.defineProperty(navigator, 'geolocation', {
-            value: originalGeolocation,
-            configurable: true
+test('location: getCurrentLocation propagates permission errors', async () => {
+  const mockNavigator = {
+    geolocation: {
+      getCurrentPosition: (_success, error) => {
+        setTimeout(() => {
+          error({
+            code: 1,
+            message: 'User denied the request for Geolocation.',
           });
-        }
-      });
+        }, 10);
+      },
+    },
+  };
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Geolocation not supported');
-    });
+  await withPatchedGlobal('navigator', mockNavigator, async () => {
+    await expectRejectsWithMessage(() => getCurrentLocation(), 'Location access denied');
+  });
+});
 
-    test('handles geolocation errors correctly', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { getCurrentLocation } = await import('./js/modules/location.js');
-
-        // Mock navigator.geolocation with error simulation
-        const originalGeolocation = navigator.geolocation;
-        const mockGeolocation = {
-          getCurrentPosition: (success, error, options) => {
-            // Simulate PERMISSION_DENIED error
-            setTimeout(() => {
-              error({
-                code: 1, // PERMISSION_DENIED
-                message: 'User denied the request for Geolocation.'
-              });
-            }, 10);
-          }
-        };
-
-        Object.defineProperty(navigator, 'geolocation', {
-          value: mockGeolocation,
-          configurable: true
-        });
-
-        try {
-          await getCurrentLocation();
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original geolocation
-          Object.defineProperty(navigator, 'geolocation', {
-            value: originalGeolocation,
-            configurable: true
+test('location: getCurrentLocation resolves with coordinates', async () => {
+  const mockNavigator = {
+    geolocation: {
+      getCurrentPosition: (success) => {
+        setTimeout(() => {
+          success({
+            coords: { latitude: 40.7128, longitude: -74.006 },
           });
-        }
-      });
+        }, 10);
+      },
+    },
+  };
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Location access denied');
+  await withPatchedGlobal('navigator', mockNavigator, async () => {
+    const location = await getCurrentLocation();
+    assert.deepStrictEqual(location, { lat: 40.7128, lon: -74.006 });
+  });
+});
+
+test('location: reverseGeocode falls back when APIs fail', async () => {
+  const failingFetch = () => Promise.reject(new Error('Network error'));
+
+  await withPatchedGlobal('fetch', failingFetch, async () => {
+    const location = await reverseGeocode(40.7128, -74.006);
+    assert.strictEqual(location.city, '40.7128, -74.0060');
+  });
+});
+
+test('location: geocodePlace throws on HTTP error', async () => {
+  const fetchFailure = () =>
+    Promise.resolve({
+      ok: false,
+      status: 404,
     });
 
-    test('handles successful geolocation', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { getCurrentLocation } = await import('./js/modules/location.js');
+  await withPatchedGlobal('fetch', fetchFailure, async () => {
+    await expectRejectsWithMessage(() => geocodePlace('Nowhere'), 'geocoding failed');
+  });
+});
 
-        // Mock navigator.geolocation with success simulation
-        const originalGeolocation = navigator.geolocation;
-        const mockGeolocation = {
-          getCurrentPosition: (success, error, options) => {
-            // Simulate successful location
-            setTimeout(() => {
-              success({
-                coords: {
-                  latitude: 40.7128,
-                  longitude: -74.0060
-                }
-              });
-            }, 10);
-          }
-        };
+test('location: geocodePlace throws when no results returned', async () => {
+  const fetchNoResults = () =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({}),
+    });
 
-        Object.defineProperty(navigator, 'geolocation', {
-          value: mockGeolocation,
-          configurable: true
-        });
+  await withPatchedGlobal('fetch', fetchNoResults, async () => {
+    await expectRejectsWithMessage(() => geocodePlace('Empty'), 'no results');
+  });
+});
 
-        try {
-          const location = await getCurrentLocation();
-          return { success: true, location, error: null };
-        } catch (error) {
-          return { success: false, location: null, error: error.message };
-        } finally {
-          // Restore original geolocation
-          Object.defineProperty(navigator, 'geolocation', {
-            value: originalGeolocation,
-            configurable: true
-          });
-        }
-      });
+test('location: geocodePlace returns parsed data', async () => {
+  const fetchSuccess = () =>
+    Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          results: [
+            {
+              latitude: 40.7128,
+              longitude: -74.006,
+              timezone: 'America/New_York',
+              name: 'New York',
+            },
+          ],
+        }),
+    });
 
-      expect(result.success).toBe(true);
-      expect(result.location).toEqual({ lat: 40.7128, lon: -74.0060 });
+  await withPatchedGlobal('fetch', fetchSuccess, async () => {
+    const location = await geocodePlace('New York');
+    assert.deepStrictEqual(location, {
+      lat: 40.7128,
+      lon: -74.006,
+      city: 'New York',
+      tz: 'America/New_York',
     });
   });
+});
 
-  test.describe('reverseGeocode fallback', () => {
-    test('returns coordinate fallback when all methods fail', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { reverseGeocode } = await import('./js/modules/location.js');
+test('location: reverseGeocode returns Open-Meteo result when available', async () => {
+  const fetchSequence = async (url) => {
+    if (url.startsWith('https://geocoding-api.open-meteo.com')) {
+      return {
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            results: [
+              {
+                name: 'Hoboken',
+                timezone: 'America/New_York',
+              },
+            ],
+          }),
+      };
+    }
+    throw new Error('Unexpected URL');
+  };
 
-        // Mock fetch to always fail
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.reject(new Error('Network error'));
-
-        try {
-          const location = await reverseGeocode(40.7128, -74.0060);
-          return { success: true, location };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.location.city).toBe('40.7128, -74.0060');
-    });
-  });
-
-  test.describe('geocodePlace error handling', () => {
-    test('throws error when geocoding fails', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { geocodePlace } = await import('./js/modules/location.js');
-
-        // Mock fetch to return error response
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.resolve({
-          ok: false,
-          status: 404
-        });
-
-        try {
-          await geocodePlace('Nonexistent Place');
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('geocoding failed');
-    });
-
-    test('throws error when no results returned', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        const { geocodePlace } = await import('./js/modules/location.js');
-
-        // Mock fetch to return empty results
-        const originalFetch = window.fetch;
-        window.fetch = () => Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ results: [] })
-        });
-
-        try {
-          await geocodePlace('Empty Results Place');
-          return { success: true, error: null };
-        } catch (error) {
-          return { success: false, error: error.message };
-        } finally {
-          // Restore original fetch
-          window.fetch = originalFetch;
-        }
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('no results');
-    });
-  });
-
-  test.describe('integration with constants', () => {
-    test('uses defaultTz from constants', async ({ page }) => {
-      const result = await page.evaluate(async () => {
-        // Import both modules to test integration
-        const { validateCoordinates } = await import('./js/modules/location.js');
-        const { defaultTz } = await import('./js/core/constants.js');
-
-        return {
-          coordinatesValid: validateCoordinates(40.7128, -74.0060),
-          hasDefaultTz: typeof defaultTz === 'string' && defaultTz.length > 0
-        };
-      });
-
-      expect(result.coordinatesValid).toBe(true);
-      expect(result.hasDefaultTz).toBe(true);
+  await withPatchedGlobal('fetch', fetchSequence, async () => {
+    const location = await reverseGeocode(40.75, -74.03);
+    assert.deepStrictEqual(location, {
+      city: 'Hoboken',
+      tz: 'America/New_York',
     });
   });
 });
