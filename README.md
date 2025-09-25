@@ -95,7 +95,8 @@ npx playwright install webkit
 
 > **Need the full Chromium/Firefox/WebKit matrix?** Continue to run `npx playwright install --with-deps` to grab every browser plus the system dependencies Playwright expects for Linux CI images.
 
-Then run the available suites:
+Then run the available suites. The Playwright configuration respects a `PLAYWRIGHT_BROWSERS` environment variable so you can
+target a specific subset (for example `PLAYWRIGHT_BROWSERS=chromium npm run test:e2e`).
 
 ```bash
 # Playwright regression matrix across Chromium/Firefox/WebKit
@@ -108,16 +109,16 @@ npm run test:safari
 npm run test:modular
 
 # Restrict @modular flows to WebKit for Safari validation
-npm run test:safari:modular
+npm run test:modular:safari
 
 # Execute pure logic tests with Node's built-in runner
 npm run test:unit
 
-# Quick performance probe (single-browser budget check)
+# Quick performance probe (single-browser budget check, defaults to WebKit)
 npm run test:performance
 
-# Safari-only performance probe when chasing WebKit regressions
-npm run test:safari:performance
+# Run the performance suite in another browser as needed
+PLAYWRIGHT_BROWSERS=chromium npm run test:performance
 
 # Structural HTML validation + linting + unit tests
 npm run validate:all
