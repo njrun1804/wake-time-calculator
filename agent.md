@@ -1,141 +1,109 @@
-# Wake Time Calculator - Technical Documentation
+# Wake Time Calculator – Agent Handbook
 
 ## Overview
-Single-file HTML app that calculates optimal wake time based on meeting schedule, run duration, and location-aware weather conditions. UI styling uses Tailwind + DaisyUI via CDN; there is no build step.
+The project delivers a wake-time planner for runners with optional weather and daylight awareness. The codebase now favors modular ES modules and reusable styles over the original single-file implementation. All experiences are static, CDN-powered pages that run without a build step.
 
-## Project Structure
-- **Entry point**: `wake.html` contains the complete UI, styling, and client-side logic
-- **Supporting files**:
-  - `index.html` (redirect for GitHub Pages)
-  - `README.md` (user-facing overview)
-  - `package.json` (utility scripts)
-  - `.gitignore` (excludes `wake.min.html`, `node_modules/`, etc.)
-- **Tech stack**: vanilla HTML/CSS/JS with TailwindCSS + DaisyUI loaded from CDNs; no bundler or build pipeline
+## Application Variants
+- **`wake.html`** – Legacy single-file page kept for regression protection. Avoid editing unless a change must ship to the legacy experience.
+- **`index-modular.html`** – Core modular page that pulls shared CSS/JS from the `css/` and `js/` directories.
+- **`index-full-modular.html`** – Feature-complete experience with weather, daylight, geolocation, and awareness panel. This is the primary target for new work.
+- **`index.html`** – Redirect for GitHub Pages hosting.
+
+## Repository Layout
+```
+css/                → shared styling extracted from the monolith
+js/
+  core/            → business logic, constants, and persistence helpers
+  modules/         → feature modules (weather, dawn, location, UI orchestration)
+  utils/           → shared utilities (time formatting, unit conversions)
+  main.js          → entry point for `index-modular.html`
+  main-full.js     → entry point for `index-full-modular.html`
+docs/               → product docs and design notes
+playwright.config.js
+package.json        → scripts for linting, validation, and Playwright suites
+tests/              → Playwright integration, unit, and performance suites
+```
+
+Key architectural references:
+- **`MIGRATION.md`** chronicles the stepwise extraction from the monolith and explains how responsibilities moved into modules.
+- **`README.md`** gives user-facing context for the calculator and its weather-aware mode.
+- **`CLAUDE.md`** mirrors this guide for other autonomous agents and includes module dependency notes.
+
+## Core Systems
+### Calculator (`js/core`)
+- `constants.js` defines prep durations, cache windows, default times, and storage key names.
+- `calculator.js` provides pure helpers for time conversion, wake-time computation, and formatting.
+- `storage.js` wraps `localStorage` with JSON handling, cache timestamps, and a `clear()` helper.
+
+### Utilities (`js/utils`)
+- `time.js` centralizes time zone–aware formatting, ISO parsing, and minute math.
+- `conversions.js` covers unit conversions plus wind chill and wet-bulb calculations used by the awareness panel.
+
+### Feature Modules (`js/modules`)
+- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers.
+- `dawn.js` caches sunrise/sunset API results and determines headlamp requirements based on run start.
+- `location.js` performs forward/reverse geocoding, browser geolocation, and validation of latitude/longitude ranges.
+- `awareness.js` orchestrates weather + dawn lookups, handles DOM updates for the awareness panel, manages cache lifetimes, and persists location metadata.
+- `ui.js` wires DOM interactions, debounced form updates, dirt-route highlighting, and shared formatting helpers.
+
+### Entry Points
+- `js/main.js` hydrates the core modular page: caches DOM elements, restores persisted state, and wires basic calculator listeners.
+- `js/main-full.js` does the same plus initializes the awareness subsystem, synchronizes travel times with location changes, and manages daylight warnings.
+
+## Data & Caching Model
+- All persisted values live under `wake:*` keys in `localStorage`. Respect existing key names to avoid breaking saved user data.
+- API responses cache for 15 minutes (`CACHE_DURATION` in `constants.js`) with timestamp checks in both memory and storage. Always go through the storage/cache helpers instead of hand-rolling fetches.
+- Weather and dawn requests run concurrently with abort controllers and request IDs to prevent stale UI updates; follow this pattern when adding new remote data.
 
 ## Development Workflow
+### Environment Setup
+```bash
+npm install
+```
+Installs Playwright, Prettier, and HTML validator dependencies. Playwright may prompt to install browser binaries (`npx playwright install`).
 
-### Commands
-Run these from the repository root:
-
+### Key Commands
 | Purpose | Command |
 | --- | --- |
-| Serve locally (Node) | `npm start` → http://localhost:8000/wake.html |
-| Serve locally (Python) | `npm run serve` or `python3 -m http.server 8000` |
-| Format `wake.html` | `npm run format` |
-| HTML validation | `npm run validate` |
-| Lightweight smoke check | `npm run smoke` |
+| Local static server | `npm run serve` (Python HTTP server on http://localhost:8000/) |
+| Run full Playwright suite | `npm test` |
+| Variant test runs | `npm run test:legacy` · `npm run test:modular` · `npm run test:full-modular` |
+| Unit tests only | `npm run test:unit` |
+| Performance comparison | `npm run test:performance` |
+| Prettier check/write (HTML) | `npm run lint` · `npm run format` |
+| Prettier check/write (JS) | `npm run lint:js` · `npm run format:js` |
+| HTML validation | `npm run validate:html` |
+| Combined lint + validate | `npm run validate:all` |
 
-Always run `npm run format` and `npm run validate` after making changes to `wake.html`. Execute `npm run smoke` if you modified network calls or markup that could impact loading.
+Run the relevant Playwright suite(s) whenever you touch calculator logic, persistence, or UI wiring. Always run `npm run lint:js` (or `format:js`) plus `npm run validate:html` when you edit JavaScript or HTML respectively.
 
-### Guidelines
-1. Keep edits narrowly focused on the requested change; avoid broad refactors or introducing new tooling
-2. Preserve the single-file architecture—do not add frameworks, build steps, or external asset pipelines
-3. Match existing formatting and naming conventions (the file is Prettier-friendly but largely hand-formatted)
-4. Prefer `rg`, `sed -n`, or targeted search to navigate `wake.html`; it is long, so avoid full-file rewrites
-5. Do not commit `wake.min.html` or `node_modules/` (both are ignored but double-check before committing)
-
-## Key Features
-
-### Core Calculator
-- **Fixed prep time**: 45 minutes (non-configurable)
-- **Inputs**: First meeting time, run duration, breakfast time, travel time, run location
-- **Output**: Wake time (12/24hr format), run start time, breakdown of time components
-- **Previous day badge**: Shows when wake time crosses midnight
-
-### Weather Awareness Bar
-- **Dawn time**: From SunriseSunset.io API
-- **Weather data**: Open-Meteo API (temp, humidity, wind, precipitation)
-- **Trail Wetness Score**: Custom algorithm using:
-  - 7-day precipitation history with 0.85 daily decay factor
-  - ET₀ (evapotranspiration) subtraction at 60% rate
-  - Categories: Dry (<0.05"), Moist, Slick, Muddy, Soaked (>0.8")
-- **Wind chill**: NWS formula when temp ≤50°F and wind ≥3mph
-- **Wet bulb**: Direct from API or Stull approximation fallback
-
-### Data Management
-- **LocalStorage keys** (all prefixed with `wake:`):
-  - `wake:first` - First meeting time
-  - `wake:run` - Run duration
-  - `wake:travel` - Travel time
-  - `wake:breakfast` - Breakfast duration
-  - `wake:location` - Selected run location
-  - `wake:lat`, `wake:lon`, `wake:city`, `wake:tz` - Location coordinates
-- **Caching**: 15-minute cache for API responses (localStorage + in-memory)
-- **Request deduplication**: Uses request ID counter to prevent stale updates
-- **Timezone**: Forecast requests use `timezone=auto`; dawn label formats in the location's tz
-
-## Technical Details
-
-### API Endpoints
-- **Dawn**: `https://api.sunrisesunset.io/json?lat={lat}&lng={lon}&date=tomorrow`
-- **Weather**: `https://api.open-meteo.com/v1/forecast` (hourly + daily data, `timeformat=unixtime`, `timezone=auto`)
-- **Geocoding**: `https://geocoding-api.open-meteo.com/v1/search` (forward)
-- **Reverse geocoding**: `https://geocoding-api.open-meteo.com/v1/reverse` with Nominatim fallback
-
-### Units
-- **Temperature**: Fahrenheit
-- **Wind**: mph
-- **Precipitation**: inches
-- **ET₀**: mm (converted to inches internally)
-
-### Key Algorithms
-
-#### Trail Wetness Score
-```javascript
-wetness = Σ(i=0 to n-1) [max(0, rain[i] - 0.6*ET₀[i]) * 0.85^i]
-```
-Where i=0 is yesterday, going back n days (default 7)
-
-#### Wind Chill (NWS)
-```javascript
-if (tempF <= 50 && windMph >= 3):
-  windChill = 35.74 + 0.6215*T - 35.75*V^0.16 + 0.4275*T*V^0.16
-```
-
-### UI/UX Features
-- **Responsive design**: Mobile-first with breakpoints at 640px, 520px, 480px
-- **Live recalculation**: Form changes update immediately
-- **Location auto-sync**: Travel time updates when location changes (if not manually set)
-- **Ellipsis truncation**: Long location names truncate with tooltip
-- **ARIA labels**: Screen reader support on key elements
-- **Headlamp badge**: Simple red badge next to "Run location" when a dirt route is selected (no date/time logic)
-- **Clothes at dawn**: Suggestion based on wind chill with optional "+ rain jacket" if PoP ≥ 60% and not snow
-- **Visuals**: Boston-flavored hero gradient (optional image via CSS var), glass card, Tailwind/DaisyUI components
+### Editing Guidelines
+1. Prefer enhancing the modular pages (`index-modular.html`, `index-full-modular.html`) and their modules. Touch `wake.html` only for parity-critical fixes.
+2. Keep modules focused: add new functionality by extending the relevant file (e.g., weather metrics stay in `weather.js`, display tweaks in `ui.js`).
+3. Reuse constants and helpers from `js/core` and `js/utils` rather than duplicating logic.
+4. Avoid introducing bundlers or additional build steps; the project intentionally stays framework-free.
+5. Follow existing naming and formatting conventions. Use Prettier via the provided scripts to enforce consistency.
 
 ## Common Tasks
-
-### Adding a new run location
-Add to the appropriate `<optgroup>` in the location select:
-```html
-<option value="location-id" data-travel="minutes">Location Name</option>
-```
-For dirt routes, also add the location ID to the `DIRT_LOCATIONS` Set in the JavaScript.
-
-### Adjusting wetness thresholds
-Modify the `categorizeWetness` function breakpoints (currently 0.05, 0.20, 0.40, 0.80 inches)
-
-### Changing cache duration
-Update `CACHE_DURATION` constant (currently 15 minutes = 900000ms)
+- **Add a new location option**: Update the `<select>` in `index-full-modular.html` (and legacy page if parity is required) and list the location in `DIRT_LOCATIONS` within `js/modules/ui.js` when it should trigger headlamp/dirt styling.
+- **Adjust trail wetness thresholds**: Modify `categorizeWetness` in `js/modules/weather.js` and ensure the awareness panel copy stays aligned.
+- **Change prep or cache durations**: Update the relevant constant in `js/core/constants.js` and audit tests that assert those values.
+- **Persist additional fields**: Extend `DEFAULT_STATE` and helper functions in `js/core/storage.js`, then integrate with entry-point hydration logic.
 
 ## Testing Expectations
-There is no automated test suite beyond the npm scripts. Manually verify:
-- [ ] Calculator works across midnight boundary
-- [ ] Weather loads for both geolocation and manual city entry
-- [ ] Wetness score updates with location change
-- [ ] Cache prevents excessive API calls
-- [ ] Mobile layout remains functional
-- [ ] Settings persist after reload
-- [ ] Travel time syncs with location selection
-- [ ] Headlamp badge only shows for dirt routes (not "No dirt")
-- [ ] Awareness bar still renders when geolocation is unavailable
+Before committing changes:
+- [ ] Run applicable Playwright tests (full suite for cross-cutting changes, targeted suites for scoped updates).
+- [ ] Validate HTML for any touched page.
+- [ ] Prettier-check or format modified HTML/JS files.
+- [ ] Manually verify weather and daylight panels still render, especially when APIs are unavailable or geolocation is denied.
 
-## Common Gotchas
-- LocalStorage keys are prefixed with `wake:`; keep names stable to avoid breaking saved data
-- The awareness bar caches API responses for 15 minutes—respect `CACHE_DURATION` and existing caching helpers
-- Trail wetness categories are consumed in multiple spots (badging + text); adjust both when modifying thresholds
-- Tailwind components rely on CDN versions defined in the `<head>` of `wake.html`; keep the order intact when editing
+## Known Gotchas
+- Weather/dawn modules rely on request ID sequencing—ensure any new async work follows the same guardrails to avoid race conditions.
+- Browser geolocation often fails on non-HTTPS origins; keep graceful fallback messaging intact.
+- Storage values feed directly into DOM inputs during hydration. When adding new fields, initialize defaults to avoid `undefined` flashes.
+- Tests assume U.S. locale defaults (Fahrenheit, miles). Keep conversions consistent unless intentionally expanding.
 
-## Resources
-- Use `README.md` for high-level project context
-- Use `CLAUDE.md` for Claude Code specific instructions
-- This file (`agent.md`) for detailed algorithm notes and API references
+## Additional Resources
+- **`docs/`** houses deeper dives into UX flows and weather heuristics.
+- **`tests/`** examples demonstrate how the app should behave end-to-end; refer to them when scoping new features or bug fixes.
+- Use `rg`/`npm run lint:js -- --list-different` for targeted navigation and diff-friendly edits.
