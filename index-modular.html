@@ -6,10 +6,20 @@
     <title>Wake Time Calculator - Modular Version</title>
 
     <!-- External Styles -->
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="preload" href="css/main.css" as="style" />
+    <link rel="stylesheet" href="css/main.css" fetchpriority="high" />
+
+    <!-- Networking Hints for CDN assets -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
+    <!-- Preload JS entry point so hydration can start sooner -->
+    <link rel="modulepreload" href="js/main.js" />
 
     <!-- Tailwind & DaisyUI CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
   </head>
   <body>
