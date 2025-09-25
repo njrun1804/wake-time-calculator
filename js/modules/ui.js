@@ -6,12 +6,7 @@
 /**
  * Explicit list of dirt locations (robust across browsers)
  */
-const DIRT_LOCATIONS = new Set([
-  'figure8',
-  'huber',
-  'tatum',
-  'holmdel'
-]);
+const DIRT_LOCATIONS = new Set(['figure8', 'huber', 'tatum', 'holmdel']);
 
 /**
  * Check if a location requires dirt/trail conditions
@@ -29,7 +24,9 @@ export const isDirtLocation = (location) => {
  * @param {Date} dawnDate - Dawn date object
  */
 export const updateLocationBadge = (location, runStartMinutes, dawnDate) => {
-  const badge = document.querySelector('#runLocation + .dropdown-content .badge');
+  const badge = document.querySelector(
+    '#runLocation + .dropdown-content .badge'
+  );
   if (!badge) return;
 
   // Import daylight check function
@@ -111,7 +108,12 @@ export const setElementHTML = (selector, html) => {
  * @param {Function} handler - Event handler
  * @param {object} options - Event listener options
  */
-export const addEventListenerWithCleanup = (element, event, handler, options = {}) => {
+export const addEventListenerWithCleanup = (
+  element,
+  event,
+  handler,
+  options = {}
+) => {
   if (!element) return;
 
   element.addEventListener(event, handler, options);
@@ -212,7 +214,7 @@ export const validateNumericInput = (input, min = 0, max = 999) => {
  */
 export const initializeTooltips = () => {
   const elementsWithTitles = document.querySelectorAll('[title]');
-  elementsWithTitles.forEach(element => {
+  elementsWithTitles.forEach((element) => {
     // Add tooltip class for styling
     element.classList.add('has-tooltip');
   });

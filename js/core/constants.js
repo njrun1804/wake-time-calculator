@@ -15,7 +15,7 @@ export const defaults = {
   run: 0,
   travel: 0,
   breakfast: 0,
-  location: 'round-town'
+  location: 'round-town',
 };
 
 export const storageKeys = {
@@ -23,14 +23,14 @@ export const storageKeys = {
   run: 'wake:run',
   travel: 'wake:travel',
   breakfast: 'wake:breakfast',
-  location: 'wake:location'
+  location: 'wake:location',
 };
 
 export const weatherStorage = {
   lat: 'wake:weatherLat',
   lon: 'wake:weatherLon',
   city: 'wake:weatherCity',
-  tz: 'wake:weatherTz'
+  tz: 'wake:weatherTz',
 };
 
 export const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;

@@ -6,7 +6,11 @@
 import { calculateWakeTime, toMinutes } from './core/calculator.js';
 import { Storage } from './core/storage.js';
 import { defaults } from './core/constants.js';
-import { initializeAwareness, setupAwarenessListeners, getCurrentDawn } from './modules/awareness.js';
+import {
+  initializeAwareness,
+  setupAwarenessListeners,
+  getCurrentDawn,
+} from './modules/awareness.js';
 import { checkDaylightNeeded } from './modules/dawn.js';
 import { updateLocationBadge, debounce } from './modules/ui.js';
 
@@ -21,7 +25,7 @@ class FullWakeTimeApp {
       runMinutes: defaults.run,
       travelMinutes: defaults.travel,
       breakfastMinutes: defaults.breakfast,
-      location: defaults.location
+      location: defaults.location,
     };
     this.debouncedRecalculate = debounce(() => this.recalculate(), 150);
   }
@@ -65,7 +69,7 @@ class FullWakeTimeApp {
       travelBar: document.getElementById('travelBar'),
       travelBarText: document.getElementById('travelBarText'),
       breakfastBar: document.getElementById('breakfastBar'),
-      breakfastBarText: document.getElementById('breakfastBarText')
+      breakfastBarText: document.getElementById('breakfastBarText'),
     };
   }
 
@@ -121,7 +125,8 @@ class FullWakeTimeApp {
 
     // Breakfast change
     this.elements.breakfastMinutes?.addEventListener('change', () => {
-      this.state.breakfastMinutes = parseInt(this.elements.breakfastMinutes.value, 10) || 0;
+      this.state.breakfastMinutes =
+        parseInt(this.elements.breakfastMinutes.value, 10) || 0;
       this.saveAndRecalculate();
     });
 
@@ -165,7 +170,7 @@ class FullWakeTimeApp {
       meeting: this.state.meeting,
       runMinutes: this.state.runMinutes,
       travelMinutes: this.state.travelMinutes,
-      breakfastMinutes: this.state.breakfastMinutes
+      breakfastMinutes: this.state.breakfastMinutes,
     });
 
     const runStartMinutes = toMinutes(result.runStartTime);
@@ -203,7 +208,7 @@ class FullWakeTimeApp {
       run: this.state.runMinutes,
       travel: this.state.travelMinutes,
       breakfast: this.state.breakfastMinutes,
-      location: this.state.location
+      location: this.state.location,
     });
   }
 
@@ -215,7 +220,7 @@ class FullWakeTimeApp {
       meeting: this.state.meeting,
       runMinutes: this.state.runMinutes,
       travelMinutes: this.state.travelMinutes,
-      breakfastMinutes: this.state.breakfastMinutes
+      breakfastMinutes: this.state.breakfastMinutes,
     });
 
     this.updateDisplay(result);
@@ -287,7 +292,8 @@ class FullWakeTimeApp {
     // Update breakfast bar
     if (this.elements.breakfastBar) {
       this.elements.breakfastBar.style.flexBasis = `${breakfastPct}%`;
-      this.elements.breakfastBar.style.display = breakfast > 0 ? 'flex' : 'none';
+      this.elements.breakfastBar.style.display =
+        breakfast > 0 ? 'flex' : 'none';
       if (this.elements.breakfastBarText && breakfast > 0) {
         this.elements.breakfastBarText.textContent = `Breakfast ${breakfast}m`;
       }

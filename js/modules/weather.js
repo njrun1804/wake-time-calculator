@@ -76,13 +76,14 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
     const params = new URLSearchParams({
       latitude: lat,
       longitude: lon,
-      hourly: 'temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation_probability,wet_bulb_temperature_2m,weathercode,snowfall',
+      hourly:
+        'temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation_probability,wet_bulb_temperature_2m,weathercode,snowfall',
       timezone: tz,
       start_date: ymd,
       end_date: ymd,
       temperature_unit: 'fahrenheit',
       wind_speed_unit: 'mph',
-      precipitation_unit: 'inch'
+      precipitation_unit: 'inch',
     });
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
@@ -95,7 +96,7 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
     // Find closest hour to the target time
     const targetHour = whenLocal.getHours();
     const times = data.hourly.time;
-    const index = times.findIndex(t => new Date(t).getHours() === targetHour);
+    const index = times.findIndex((t) => new Date(t).getHours() === targetHour);
     if (index === -1) throw new Error('no matching hour');
 
     const weatherCode = data.hourly.weathercode?.[index];
@@ -109,15 +110,20 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
     let windChillF = null;
     if (typeof tempF === 'number' && typeof windMph === 'number') {
       if (tempF <= 50 && windMph >= 3) {
-        windChillF = 35.74 + 0.6215 * tempF - 35.75 * Math.pow(windMph, 0.16) + 0.4275 * tempF * Math.pow(windMph, 0.16);
+        windChillF =
+          35.74 +
+          0.6215 * tempF -
+          35.75 * Math.pow(windMph, 0.16) +
+          0.4275 * tempF * Math.pow(windMph, 0.16);
       } else {
         windChillF = tempF;
       }
     }
 
     // Determine if it's snowy conditions
-    const isSnow = (typeof weatherCode === 'number' && snowCodes.has(weatherCode)) ||
-                   (typeof snowfall === 'number' && snowfall > 0);
+    const isSnow =
+      (typeof weatherCode === 'number' && snowCodes.has(weatherCode)) ||
+      (typeof snowfall === 'number' && snowfall > 0);
 
     return {
       tempF,
@@ -127,7 +133,7 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
       wetBulbF,
       isSnow,
       weatherCode,
-      snowfall
+      snowfall,
     };
   });
 };
@@ -157,7 +163,7 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
       timezone: tz,
       start_date: startYMD,
       end_date: dawnYMD,
-      precipitation_unit: 'inch'
+      precipitation_unit: 'inch',
     });
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
@@ -174,7 +180,7 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
         filteredData.push({
           date: dayStr,
           precipSum: data.daily.precipitation_sum?.[i] ?? 0,
-          precipHours: data.daily.precipitation_hours?.[i] ?? 0
+          precipHours: data.daily.precipitation_hours?.[i] ?? 0,
         });
       }
     });
@@ -182,12 +188,13 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     // Analyze wetness
     let totalPrecip = 0;
     let wetDays = 0;
-    filteredData.forEach(day => {
+    filteredData.forEach((day) => {
       totalPrecip += day.precipSum;
       if (day.precipSum > 0.1) wetDays++; // Significant precipitation
     });
 
-    const avgPrecip = filteredData.length > 0 ? totalPrecip / filteredData.length : 0;
+    const avgPrecip =
+      filteredData.length > 0 ? totalPrecip / filteredData.length : 0;
     const isWet = wetDays >= 2 || avgPrecip > 0.3;
 
     return {
@@ -195,7 +202,7 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
       wetDays,
       totalPrecip,
       avgPrecip,
-      days: filteredData.length
+      days: filteredData.length,
     };
   });
 };
@@ -221,7 +228,9 @@ export const categorizeWetness = (wetnessData) => {
  * @returns {string} Formatted temperature
  */
 export const formatTemp = (temp) => {
-  return typeof temp === 'number' && !isNaN(temp) ? `${Math.round(temp)}°F` : '—';
+  return typeof temp === 'number' && !isNaN(temp)
+    ? `${Math.round(temp)}°F`
+    : '—';
 };
 
 /**
@@ -230,7 +239,9 @@ export const formatTemp = (temp) => {
  * @returns {string} Formatted wind speed
  */
 export const formatWind = (wind) => {
-  return typeof wind === 'number' && !isNaN(wind) ? `${Math.round(wind)} mph` : '—';
+  return typeof wind === 'number' && !isNaN(wind)
+    ? `${Math.round(wind)} mph`
+    : '—';
 };
 
 /**

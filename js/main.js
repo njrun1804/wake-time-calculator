@@ -18,7 +18,7 @@ class WakeTimeApp {
       runMinutes: defaults.run,
       travelMinutes: defaults.travel,
       breakfastMinutes: defaults.breakfast,
-      location: defaults.location
+      location: defaults.location,
     };
   }
 
@@ -57,7 +57,7 @@ class WakeTimeApp {
       travelBar: document.getElementById('travelBar'),
       travelBarText: document.getElementById('travelBarText'),
       breakfastBar: document.getElementById('breakfastBar'),
-      breakfastBarText: document.getElementById('breakfastBarText')
+      breakfastBarText: document.getElementById('breakfastBarText'),
     };
   }
 
@@ -113,7 +113,8 @@ class WakeTimeApp {
 
     // Breakfast change
     this.elements.breakfastMinutes?.addEventListener('change', () => {
-      this.state.breakfastMinutes = parseInt(this.elements.breakfastMinutes.value, 10) || 0;
+      this.state.breakfastMinutes =
+        parseInt(this.elements.breakfastMinutes.value, 10) || 0;
       this.saveAndRecalculate();
     });
 
@@ -156,7 +157,7 @@ class WakeTimeApp {
       run: this.state.runMinutes,
       travel: this.state.travelMinutes,
       breakfast: this.state.breakfastMinutes,
-      location: this.state.location
+      location: this.state.location,
     });
   }
 
@@ -168,7 +169,7 @@ class WakeTimeApp {
       meeting: this.state.meeting,
       runMinutes: this.state.runMinutes,
       travelMinutes: this.state.travelMinutes,
-      breakfastMinutes: this.state.breakfastMinutes
+      breakfastMinutes: this.state.breakfastMinutes,
     });
 
     this.updateDisplay(result);
@@ -239,7 +240,8 @@ class WakeTimeApp {
     // Update breakfast bar
     if (this.elements.breakfastBar) {
       this.elements.breakfastBar.style.flexBasis = `${breakfastPct}%`;
-      this.elements.breakfastBar.style.display = breakfast > 0 ? 'flex' : 'none';
+      this.elements.breakfastBar.style.display =
+        breakfast > 0 ? 'flex' : 'none';
       if (this.elements.breakfastBarText && breakfast > 0) {
         this.elements.breakfastBarText.textContent = `Breakfast ${breakfast}m`;
       }
