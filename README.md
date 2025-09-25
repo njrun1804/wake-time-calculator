@@ -86,16 +86,19 @@ main-full.js
 
 ## Quality Checks
 
-The current toolchain only wires Prettier for formatting verification.
+Automation spans formatting, structural validation, unit logic, and Playwright flows. Use the matrix below to pick the right signal for your change:
 
-| Command | What it does | Quality signal |
+| Command | Tooling | Quality signal provided |
 | --- | --- | --- |
-| `npm run serve` | Launches a simple HTTP server at <http://localhost:8000>. | None (local preview only). |
-| `npm test` | Delegates to `npm run lint`. | Formatting consistency through Prettier. |
-| `npm run lint` | Runs `prettier --check '*.html' 'js/**/*.js'`. | Fails when files deviate from Prettier formatting. |
-| `npm run format` | Runs `prettier --write '*.html' 'js/**/*.js'`. | Auto-formats files; not a validation step. |
+| `npm test` | `playwright test` (Chromium/Firefox/WebKit matrix) | Full end-to-end regression across legacy and modular entry points. |
+| `npm run test:unit` | `node --test` running `tests/unit/` | Verifies calculator math, storage helpers, and supporting utilities. |
+| `npm run test:modular` | Playwright against `index-modular.html` | Exercises the core modular UI without the awareness stack. |
+| `npm run test:full-modular` | Playwright against `index-full-modular.html` | Covers weather, dawn, and awareness flows for the complete experience. |
+| `npm run test:performance` | Playwright performance probe | Guards the modular load budget (< 8 s DOMContentLoaded). |
+| `npm run validate:all` | Prettier + html-validate + unit suite | Formatting, HTML structure, and logic sanity in one shot. |
+| `npm run serve` | `python3 -m http.server 8000` | Local preview only (no automated checks). |
 
-No unit, integration, or end-to-end tests remain in the repository. Additions that need stronger verification will require reintroducing the appropriate tooling.
+Pair one of the focused suites with `npm run validate:all` before sending a pull request to match the project’s documentation promises.
 
 ## Development
 
