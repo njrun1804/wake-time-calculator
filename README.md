@@ -86,12 +86,14 @@ main-full.js
 
 ## Testing
 
-Install dependencies and browser binaries once per clone:
+Install dependencies and the WebKit binary once per clone when you only need Safari coverage:
 
 ```bash
 npm install
-npx playwright install --with-deps
+npx playwright install webkit
 ```
+
+> **Need the full Chromium/Firefox/WebKit matrix?** Continue to run `npx playwright install --with-deps` to grab every browser plus the system dependencies Playwright expects for Linux CI images.
 
 Then run the available suites:
 
@@ -99,14 +101,23 @@ Then run the available suites:
 # Playwright regression matrix across Chromium/Firefox/WebKit
 npm run test
 
+# WebKit-only regression matrix (lean install for Safari-centric debugging)
+npm run test:safari
+
 # Focus on browser flows tagged with @modular
 npm run test:modular
+
+# Restrict @modular flows to WebKit for Safari validation
+npm run test:safari:modular
 
 # Execute pure logic tests with Node's built-in runner
 npm run test:unit
 
 # Quick performance probe (single-browser budget check)
 npm run test:performance
+
+# Safari-only performance probe when chasing WebKit regressions
+npm run test:safari:performance
 
 # Structural HTML validation + linting + unit tests
 npm run validate:all
