@@ -40,7 +40,7 @@ Key architectural references:
 - Weather-related conversions now live directly in `js/modules/weather.js` after retiring the unused `conversions.js` helper.
 
 ### Feature Modules (`js/modules`)
-- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers.
+- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers. `computeWetness()` combines rainfall, FAO evapotranspiration (60% drying coefficient), exponential decay (0.85 per day), and temperature-driven snowmelt to produce the awareness panel score and summary text.
 - `dawn.js` caches sunrise/sunset API results and determines headlamp requirements based on run start.
 - `location.js` performs forward/reverse geocoding, browser geolocation, and validation of latitude/longitude ranges.
 - `awareness.js` orchestrates weather + dawn lookups, handles DOM updates for the awareness panel, manages cache lifetimes, and persists location metadata.
