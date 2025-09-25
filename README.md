@@ -84,26 +84,18 @@ main-full.js
 - **SunriseSunset.io**: Dawn/sunrise times (free, no API key required)
 - **Browser Geolocation**: Optional GPS location detection
 
-## Testing
+## Quality Checks
 
-Run the comprehensive test suite with Playwright:
+The current toolchain only wires Prettier for formatting verification.
 
-```bash
-# Install dependencies
-npm install
+| Command | What it does | Quality signal |
+| --- | --- | --- |
+| `npm run serve` | Launches a simple HTTP server at <http://localhost:8000>. | None (local preview only). |
+| `npm test` | Delegates to `npm run lint`. | Formatting consistency through Prettier. |
+| `npm run lint` | Runs `prettier --check '*.html' 'js/**/*.js'`. | Fails when files deviate from Prettier formatting. |
+| `npm run format` | Runs `prettier --write '*.html' 'js/**/*.js'`. | Auto-formats files; not a validation step. |
 
-# Run all tests
-npx playwright test
-
-# Run specific test suites
-npx playwright test tests/unit/
-npx playwright test tests/integration/
-```
-
-Tests cover:
-- Unit tests for calculator and storage modules
-- Integration tests for modular architecture
-- Cross-browser compatibility
+No unit, integration, or end-to-end tests remain in the repository. Additions that need stronger verification will require reintroducing the appropriate tooling.
 
 ## Development
 
@@ -112,7 +104,6 @@ The application is built with modern ES6 modules requiring no build step. For de
 1. Start a local HTTP server (required for ES6 modules)
 2. Edit modules in the `js/` directory
 3. Test changes in browser
-4. Run test suite to verify functionality
 
 ## Live Demo
 
