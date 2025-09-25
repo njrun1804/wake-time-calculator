@@ -44,7 +44,7 @@ Key architectural references:
 - `dawn.js` caches sunrise/sunset API results and determines headlamp requirements based on run start.
 - `location.js` performs forward/reverse geocoding, browser geolocation, and validation of latitude/longitude ranges.
 - `awareness.js` orchestrates weather + dawn lookups, handles DOM updates for the awareness panel, manages cache lifetimes, and persists location metadata.
-- `ui.js` wires DOM interactions, debounced form updates, dirt-route highlighting, and shared formatting helpers.
+- `ui.js` manages dirt-route detection, daylight warning badges, and provides a debounce utility for form interactions.
 
 ### Entry Points
 - `js/main.js` hydrates the core modular page: caches DOM elements, restores persisted state, and wires basic calculator listeners.
