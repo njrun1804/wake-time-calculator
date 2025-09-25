@@ -109,6 +109,11 @@ const updateAwarenessDisplay = (data) => {
   // Update surface conditions
   if (els.awWet) {
     els.awWet.textContent = categorizeWetness(wetnessData);
+    if (wetnessData?.summary) {
+      els.awWet.title = wetnessData.summary;
+    } else {
+      els.awWet.removeAttribute('title');
+    }
   }
 
   if (els.awSnow) {

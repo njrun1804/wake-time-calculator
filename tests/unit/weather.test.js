@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   categorizeWetness,
+  computeWetness,
   formatTemp,
   formatWind,
   formatPoP,
@@ -18,49 +19,96 @@ test('weather: categorizeWetness handles nullish inputs', () => {
   assert.strictEqual(categorizeWetness(null), 'Dry');
   assert.strictEqual(categorizeWetness(undefined), 'Dry');
   assert.strictEqual(categorizeWetness({}), 'Dry');
-  assert.strictEqual(categorizeWetness({ isWet: false }), 'Dry');
 });
 
 test('weather: categorizeWetness maps wetness levels', () => {
+  assert.strictEqual(categorizeWetness({ score: 0 }), 'Dry');
+  assert.strictEqual(categorizeWetness({ score: 0.22 }), 'Moist');
+  assert.strictEqual(categorizeWetness({ score: 0.65 }), 'Slick');
   assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 5, avgPrecip: 0.3 }),
-    'Very Wet',
+    categorizeWetness({ score: 1.05, events: [{ balance: 0.7 }] }),
+    'Slick',
   );
   assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 3, avgPrecip: 0.2 }),
-    'Wet',
-  );
-  assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.6 }),
-    'Wet',
-  );
-  assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.3 }),
-    'Slightly Wet',
-  );
-  assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 2, avgPrecip: 0.5 }),
-    'Wet',
+    categorizeWetness({ score: 1.9, events: [{ balance: 1.4 }] }),
+    'Soaked',
   );
 });
 
-test('weather: categorizeWetness honours boundary conditions', () => {
+test('weather: categorizeWetness considers snowpack and heavy events', () => {
   assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 4, avgPrecip: 0.1 }),
-    'Very Wet',
+    categorizeWetness({ score: 0.05, snowpackRemaining: 0.25 }),
+    'Moist',
   );
   assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 2, avgPrecip: 0.1 }),
-    'Wet',
+    categorizeWetness({ score: 0.35, snowpackRemaining: 0.45 }),
+    'Slick',
   );
   assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.5 }),
-    'Slightly Wet',
+    categorizeWetness({ score: 1.3, events: [{ balance: 1.25 }] }),
+    'Muddy',
   );
   assert.strictEqual(
-    categorizeWetness({ isWet: true, wetDays: 1, avgPrecip: 0.51 }),
-    'Wet',
+    categorizeWetness({ score: 1.7, events: [{ balance: 1.35 }] }),
+    'Soaked',
   );
+  assert.strictEqual(
+    categorizeWetness({ score: 1.4, snowpackRemaining: 0.6, events: [] }),
+    'Muddy',
+  );
+});
+
+test('weather: computeWetness applies decay, drying, and intensity', () => {
+  const wetness = computeWetness(
+    [
+      {
+        date: '2024-03-05',
+        rain: 0.5,
+        precipHours: 5,
+        et0: 0.1,
+      },
+      {
+        date: '2024-03-06',
+        rain: 0.4,
+        precipHours: 2,
+        et0: 0.05,
+      },
+    ],
+    { referenceDate: new Date('2024-03-07T12:00:00Z') },
+  );
+
+  assert.ok(Math.abs(wetness.score - 0.75) < 0.02);
+  assert.strictEqual(wetness.analysisDays, 2);
+  assert.strictEqual(wetness.recentWetDays, 2);
+  assert.strictEqual(wetness.totals.precipitation, 0.9);
+  assert.strictEqual(wetness.totals.melt, 0);
+  assert.ok(wetness.totals.drying > 0.08 && wetness.totals.drying < 0.1);
+});
+
+test('weather: computeWetness captures snowmelt dynamics', () => {
+  const wetness = computeWetness(
+    [
+      {
+        date: '2024-02-25',
+        snowfall: 1,
+        et0: 0.02,
+        maxTempF: 28,
+      },
+      {
+        date: '2024-02-26',
+        snowfall: 0.2,
+        rain: 0.1,
+        precipHours: 1,
+        et0: 0.03,
+        maxTempF: 37,
+      },
+    ],
+    { referenceDate: new Date('2024-02-27T12:00:00Z') },
+  );
+
+  assert.ok(wetness.totals.melt > 0.4 && wetness.totals.melt < 0.7);
+  assert.ok(wetness.snowpackRemaining < 1 && wetness.snowpackRemaining > 0.1);
+  assert.ok(wetness.summary.includes('snowpack'));
 });
 
 test('weather: formatTemp handles temperature formatting', () => {
@@ -153,8 +201,10 @@ test('weather: fetchWetnessInputs returns safe defaults when data missing', asyn
       'America/New_York',
     );
 
-    assert.strictEqual(wetness.isWet, false);
-    assert.strictEqual(wetness.wetDays, 0);
+    assert.strictEqual(wetness.score, 0);
+    assert.strictEqual(wetness.analysisDays, 0);
+    assert.ok(Array.isArray(wetness.events));
+    assert.ok(typeof wetness.summary === 'string');
   });
 });
 

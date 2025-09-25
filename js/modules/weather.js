@@ -5,6 +5,13 @@
 
 import { CACHE_DURATION } from '../core/constants.js';
 
+const MS_PER_DAY = 86400000;
+
+const DEFAULT_DRYING_COEFFICIENT = 0.6;
+const DEFAULT_DECAY_BASE = 0.85;
+const SNOW_MELT_THRESHOLD_F = 34;
+const MAX_INTENSITY_BOOST = 1.35;
+
 /**
  * Weather cache for API responses
  */
@@ -58,6 +65,224 @@ const fetchWithCache = async (key, fetcher, signal = null) => {
     console.warn(`Fetch failed for ${key}:`, error);
     throw error;
   }
+};
+
+const numberOrNull = (value) =>
+  typeof value === 'number' && !Number.isNaN(value) ? value : null;
+
+const coerceNumber = (value) => numberOrNull(value) ?? 0;
+
+const sortByDate = (records) =>
+  [...records].sort((a, b) => {
+    if (!a?.date || !b?.date) return 0;
+    if (a.date === b.date) return 0;
+    return a.date < b.date ? -1 : 1;
+  });
+
+const inches = (value) => `${value.toFixed(2)}"`;
+
+const createWetnessSummary = (wetness) => {
+  if (!wetness) return 'No recent precipitation signal';
+
+  const parts = [];
+  const {
+    totals = {},
+    recentWetDays = 0,
+    analysisDays = 0,
+    snowpackRemaining = 0,
+  } = wetness;
+
+  if (typeof totals.precipitation === 'number' && totals.precipitation > 0.01) {
+    const windowText = analysisDays ? `${analysisDays}d` : 'recent';
+    parts.push(`${inches(totals.precipitation)} liquid over ${windowText}`);
+  }
+  if (typeof totals.melt === 'number' && totals.melt > 0.01) {
+    parts.push(`${inches(totals.melt)} melt contributions`);
+  }
+  if (typeof totals.drying === 'number' && totals.drying > 0.01) {
+    parts.push(`-${inches(totals.drying)} drying`);
+  }
+  if (snowpackRemaining > 0.05) {
+    parts.push(`${inches(snowpackRemaining)} snowpack remains`);
+  }
+  if (recentWetDays > 0) {
+    parts.push(`${recentWetDays} wet day${recentWetDays === 1 ? '' : 's'}`);
+  }
+
+  if (parts.length === 0) {
+    return 'No meaningful precipitation in the past week';
+  }
+
+  return parts.join(' · ');
+};
+
+/**
+ * Compute a moisture score based on precipitation, drying, and snowmelt dynamics.
+ * @param {Array<object>} dailyRecords
+ * @param {object} [options]
+ * @param {Date} [options.referenceDate]
+ * @param {number} [options.decayBase]
+ * @param {number} [options.dryingCoefficient]
+ * @returns {object}
+ */
+export const computeWetness = (
+  dailyRecords = [],
+  {
+    referenceDate = null,
+    decayBase = DEFAULT_DECAY_BASE,
+    dryingCoefficient = DEFAULT_DRYING_COEFFICIENT,
+  } = {}
+) => {
+  if (!Array.isArray(dailyRecords) || dailyRecords.length === 0) {
+    const base = {
+      score: 0,
+      analysisDays: 0,
+      recentWetDays: 0,
+      totals: {
+        precipitation: 0,
+        melt: 0,
+        drying: 0,
+      },
+      snowpackRemaining: 0,
+      events: [],
+      referenceDate: referenceDate ? new Date(referenceDate) : null,
+    };
+    return {
+      ...base,
+      summary: createWetnessSummary(base),
+    };
+  }
+
+  const refDate = referenceDate ? new Date(referenceDate) : null;
+  const referenceMidnight = refDate ? new Date(refDate) : null;
+  if (referenceMidnight) {
+    referenceMidnight.setHours(0, 0, 0, 0);
+  }
+  const sorted = sortByDate(dailyRecords);
+
+  let cumulativeScore = 0;
+  let runningSnowpack = 0;
+  let totalPrecip = 0;
+  let totalMelt = 0;
+  let totalDrying = 0;
+  let recentWetDays = 0;
+  let peakDailyBalance = 0;
+
+  const events = sorted.map((entry, index) => {
+    const {
+      date,
+      precipitation,
+      rain,
+      snowfall,
+      precipHours,
+      et0,
+      maxTempF,
+      minTempF,
+    } = entry;
+
+    const precipTotal = coerceNumber(precipitation);
+    const rainIn = numberOrNull(rain) ?? precipTotal;
+    const snowIn = Math.max(0, numberOrNull(snowfall) ?? 0);
+    const et0In = Math.max(0, numberOrNull(et0) ?? 0);
+
+    runningSnowpack += snowIn;
+
+    let melt = 0;
+    const thawTemp = numberOrNull(maxTempF);
+    if (
+      runningSnowpack > 0 &&
+      thawTemp !== null &&
+      thawTemp >= SNOW_MELT_THRESHOLD_F
+    ) {
+      const thawFactor = Math.min(1, (thawTemp - 32) / 10);
+      melt = Math.min(
+        runningSnowpack,
+        runningSnowpack * Math.max(0.1, thawFactor)
+      );
+      runningSnowpack = Math.max(0, runningSnowpack - melt);
+    }
+
+    totalMelt += melt;
+
+    const liquid = Math.max(0, rainIn) + melt;
+    totalPrecip += liquid;
+
+    const intensityBoost = (() => {
+      const hours = numberOrNull(precipHours);
+      if (!hours || hours <= 0) {
+        return liquid > 0.35 ? MAX_INTENSITY_BOOST : 1.15;
+      }
+      const rate = liquid / hours;
+      if (rate >= 0.35) return MAX_INTENSITY_BOOST;
+      if (rate >= 0.2) return 1.2;
+      if (rate >= 0.1) return 1.1;
+      return 1;
+    })();
+
+    const drying = dryingCoefficient * et0In;
+    totalDrying += drying;
+
+    const dailyBalance = (liquid - drying) * intensityBoost;
+    peakDailyBalance = Math.max(peakDailyBalance, dailyBalance);
+
+    if (liquid > 0.05) {
+      recentWetDays += 1;
+    }
+
+    const ageDays = (() => {
+      if (referenceMidnight && date) {
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const diff = (referenceMidnight - dayStart) / MS_PER_DAY;
+        return Number.isFinite(diff) && diff > 0 ? diff : 0;
+      }
+      const offset = sorted.length - 1 - index;
+      return offset < 0 ? 0 : offset;
+    })();
+
+    const decay = Math.pow(decayBase, ageDays);
+    const decayedBalance = dailyBalance * decay;
+    cumulativeScore += decayedBalance;
+
+    return {
+      date,
+      rain: rainIn,
+      snowfall: snowIn,
+      melt,
+      et0: et0In,
+      precipHours: numberOrNull(precipHours),
+      maxTempF: thawTemp,
+      minTempF: numberOrNull(minTempF),
+      liquid,
+      drying,
+      balance: dailyBalance,
+      decayedBalance,
+      decay,
+      ageDays,
+    };
+  });
+
+  const normalizedScore =
+    cumulativeScore + Math.max(0, peakDailyBalance * 0.05);
+
+  const result = {
+    score: Math.max(0, Number.isFinite(normalizedScore) ? normalizedScore : 0),
+    analysisDays: sorted.length,
+    recentWetDays,
+    totals: {
+      precipitation: Number(totalPrecip.toFixed(3)),
+      melt: Number(totalMelt.toFixed(3)),
+      drying: Number(totalDrying.toFixed(3)),
+    },
+    snowpackRemaining: Number(runningSnowpack.toFixed(3)),
+    events,
+    referenceDate: refDate,
+  };
+
+  return {
+    ...result,
+    summary: createWetnessSummary(result),
+  };
 };
 
 /**
@@ -159,11 +384,14 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     const params = new URLSearchParams({
       latitude: lat,
       longitude: lon,
-      daily: 'precipitation_sum,precipitation_hours',
+      daily:
+        'precipitation_sum,precipitation_hours,rain_sum,snowfall_sum,et0_fao_evapotranspiration,temperature_2m_max,temperature_2m_min',
       timezone: tz,
       start_date: startYMD,
       end_date: dawnYMD,
       precipitation_unit: 'inch',
+      temperature_unit: 'fahrenheit',
+      snowfall_unit: 'inch',
     });
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
@@ -171,38 +399,44 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     if (!res.ok) throw new Error('wetness fetch failed');
 
     const data = await res.json();
-    if (!data.daily) return { isWet: false, wetDays: 0 };
+    if (!data.daily) {
+      return computeWetness([], { referenceDate: dawnLocalDate });
+    }
 
     // Keep only days strictly BEFORE the dawn day (we're judging surface state going into dawn)
-    const filteredData = [];
-    data.daily.time.forEach((dayStr, i) => {
-      if (typeof dayStr === 'string' && dayStr < dawnYMD) {
-        filteredData.push({
-          date: dayStr,
-          precipSum: data.daily.precipitation_sum?.[i] ?? 0,
-          precipHours: data.daily.precipitation_hours?.[i] ?? 0,
-        });
-      }
+    const dailyRecords = [];
+    const {
+      time: days,
+      precipitation_sum: precipTotals = [],
+      precipitation_hours: precipHours = [],
+      rain_sum: rainTotals = [],
+      snowfall_sum: snowTotals = [],
+      et0_fao_evapotranspiration: et0Totals = [],
+      temperature_2m_max: maxTemps = [],
+      temperature_2m_min: minTemps = [],
+    } = data.daily;
+
+    days.forEach((dayStr, index) => {
+      if (typeof dayStr !== 'string' || dayStr >= dawnYMD) return;
+
+      dailyRecords.push({
+        date: dayStr,
+        precipitation: numberOrNull(precipTotals[index]),
+        rain: numberOrNull(rainTotals[index]),
+        snowfall: numberOrNull(snowTotals[index]),
+        precipHours: numberOrNull(precipHours[index]),
+        et0: numberOrNull(et0Totals[index]),
+        maxTempF: numberOrNull(maxTemps[index]),
+        minTempF: numberOrNull(minTemps[index]),
+      });
     });
 
-    // Analyze wetness
-    let totalPrecip = 0;
-    let wetDays = 0;
-    filteredData.forEach((day) => {
-      totalPrecip += day.precipSum;
-      if (day.precipSum > 0.1) wetDays++; // Significant precipitation
+    const wetness = computeWetness(dailyRecords, {
+      referenceDate: dawnLocalDate,
     });
-
-    const avgPrecip =
-      filteredData.length > 0 ? totalPrecip / filteredData.length : 0;
-    const isWet = wetDays >= 2 || avgPrecip > 0.3;
-
     return {
-      isWet,
-      wetDays,
-      totalPrecip,
-      avgPrecip,
-      days: filteredData.length,
+      ...wetness,
+      summary: createWetnessSummary(wetness),
     };
   });
 };
@@ -212,14 +446,35 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
  * @param {object} wetnessData - Wetness data from fetchWetnessInputs
  * @returns {string} Wetness category
  */
+const HEAVY_EVENT_THRESHOLD = 1.2;
+
 export const categorizeWetness = (wetnessData) => {
-  if (!wetnessData || !wetnessData.isWet) return 'Dry';
+  if (!wetnessData) return 'Dry';
 
-  if (wetnessData.wetDays >= 4) return 'Very Wet';
-  if (wetnessData.wetDays >= 2) return 'Wet';
-  if (wetnessData.avgPrecip > 0.5) return 'Wet';
+  const score = numberOrNull(wetnessData.score) ?? 0;
+  const snowpack = numberOrNull(wetnessData.snowpackRemaining) ?? 0;
+  const events = Array.isArray(wetnessData.events) ? wetnessData.events : [];
+  const heavyEvent = events.some((evt) =>
+    typeof evt?.balance === 'number'
+      ? evt.balance >= HEAVY_EVENT_THRESHOLD
+      : false
+  );
 
-  return 'Slightly Wet';
+  const adjustedScore = Math.max(score, snowpack * 0.9);
+
+  if (adjustedScore < 0.12) {
+    return snowpack > 0.15 ? 'Moist' : 'Dry';
+  }
+  if (adjustedScore < 0.4) {
+    return snowpack > 0.35 ? 'Slick' : 'Moist';
+  }
+  if (adjustedScore < 0.9) {
+    return 'Slick';
+  }
+  if (adjustedScore < 1.6) {
+    return heavyEvent || snowpack > 0.5 ? 'Muddy' : 'Slick';
+  }
+  return heavyEvent ? 'Soaked' : 'Muddy';
 };
 
 /**
