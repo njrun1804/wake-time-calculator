@@ -1,0 +1,533 @@
+name: Enhanced Multi-Variant Testing
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Stage 1: Smoke Tests for All Variants
+  smoke-all-variants:
+    runs-on: ubuntu-latest
+    name: 🔍 Smoke Test All Variants
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { file: "wake.html", name: "Legacy Monolithic", type: "legacy" }
+          - { file: "index-modular.html", name: "Basic Modular", type: "modular" }
+          - { file: "index-full-modular.html", name: "Full Modular", type: "full-modular" }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Smoke test ${{ matrix.variant.name }}
+      run: |
+        python3 -m http.server 8000 & PID=$!
+        sleep 2
+        if curl -sSfI http://localhost:8000/${{ matrix.variant.file }} >/dev/null; then
+          echo "✅ ${{ matrix.variant.name }} accessible"
+
+          # Additional checks for modular variants
+          if [[ "${{ matrix.variant.type }}" != "legacy" ]]; then
+            # Check for ES6 module script tags
+            if curl -sSf http://localhost:8000/${{ matrix.variant.file }} | grep -q 'type="module"'; then
+              echo "✅ ES6 modules detected in ${{ matrix.variant.name }}"
+            else
+              echo "❌ ES6 modules not found in ${{ matrix.variant.name }}"
+              kill $PID || true
+              exit 1
+            fi
+
+            # Check for main JS file existence
+            MAIN_JS=""
+            if [[ "${{ matrix.variant.type }}" == "modular" ]]; then
+              MAIN_JS="js/main.js"
+            elif [[ "${{ matrix.variant.type }}" == "full-modular" ]]; then
+              MAIN_JS="js/main-full.js"
+            fi
+
+            if [[ -n "$MAIN_JS" ]] && curl -sSfI http://localhost:8000/$MAIN_JS >/dev/null; then
+              echo "✅ Main module $MAIN_JS accessible"
+            else
+              echo "❌ Main module $MAIN_JS not accessible"
+              kill $PID || true
+              exit 1
+            fi
+          fi
+
+          kill $PID
+        else
+          kill $PID || true
+          exit 1
+        fi
+
+  # Stage 2: Core Functionality Tests Per Variant
+  core-functionality-tests:
+    runs-on: ubuntu-latest
+    name: 🧪 Core Tests - ${{ matrix.variant.name }}
+    needs: smoke-all-variants
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { file: "wake.html", name: "Legacy", type: "legacy", test_pattern: "tests/core.spec.js" }
+          - { file: "index-modular.html", name: "Basic Modular", type: "modular", test_pattern: "tests/integration/modular.test.js" }
+          - { file: "index-full-modular.html", name: "Full Modular", type: "full-modular", test_pattern: "tests/integration/full-modular.test.js" }
+        browser: [chromium, firefox, webkit]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+
+    - name: Run ${{ matrix.variant.name }} tests on ${{ matrix.browser }}
+      run: |
+        # Set variant-specific environment
+        export TEST_VARIANT=${{ matrix.variant.type }}
+        export TEST_ENTRY_POINT=${{ matrix.variant.file }}
+
+        # Run variant-specific tests
+        npx playwright test ${{ matrix.variant.test_pattern }} --project=${{ matrix.browser }}
+      env:
+        CI: true
+
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: core-test-results-${{ matrix.variant.type }}-${{ matrix.browser }}
+        path: |
+          playwright-report/
+          test-results/
+        retention-days: 30
+
+  # Stage 3: Feature-Specific Testing
+  feature-specific-tests:
+    runs-on: ubuntu-latest
+    name: 🎯 Feature Tests - ${{ matrix.test_type }}
+    needs: core-functionality-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        test_type:
+          - { name: "ES6 Module Loading", pattern: "tests/unit/*.test.js", variants: ["modular", "full-modular"] }
+          - { name: "Weather Awareness", pattern: "tests/integration/full-modular.test.js", variants: ["full-modular"] }
+          - { name: "Legacy Compatibility", pattern: "tests/core.spec.js", variants: ["legacy"] }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    - name: Run ${{ matrix.test_type.name }} tests
+      run: |
+        # Run tests for applicable variants
+        for variant in ${{ join(matrix.test_type.variants, ' ') }}; do
+          echo "Running ${{ matrix.test_type.name }} tests for $variant variant"
+          export TEST_VARIANT=$variant
+          npx playwright test ${{ matrix.test_type.pattern }} --project=chromium
+        done
+      env:
+        CI: true
+
+  # Stage 4: Cross-Browser Compatibility Matrix
+  cross-browser-matrix:
+    runs-on: ubuntu-latest
+    name: 🌐 Cross-Browser - ${{ matrix.variant.name }} on ${{ matrix.browser }}
+    needs: feature-specific-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { file: "wake.html", name: "Legacy", type: "legacy" }
+          - { file: "index-modular.html", name: "Modular", type: "modular" }
+          - { file: "index-full-modular.html", name: "Full Modular", type: "full-modular" }
+        browser: [chromium, firefox, webkit]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+
+    - name: Create variant-specific cross-browser test
+      run: |
+        cat > tests/cross-browser-${{ matrix.variant.type }}.spec.js << 'EOF'
+        import { test, expect } from '@playwright/test';
+
+        test.describe('Cross-Browser Compatibility - ${{ matrix.variant.name }}', () => {
+          test.beforeEach(async ({ page }) => {
+            await page.goto('/${{ matrix.variant.file }}');
+            if ('${{ matrix.variant.type }}' !== 'legacy') {
+              // Wait for ES6 modules to load
+              await page.waitForLoadState('networkidle');
+            }
+          });
+
+          test('should load and display basic interface', async ({ page }) => {
+            await expect(page.locator('#firstMeeting')).toBeVisible();
+            await expect(page.locator('#runMinutes')).toBeVisible();
+            await expect(page.locator('#chosenWake')).toBeVisible();
+          });
+
+          test('should handle basic calculation', async ({ page }) => {
+            await page.selectOption('#firstMeeting', '08:00');
+            await page.fill('#runMinutes', '45');
+            await page.waitForTimeout(500);
+
+            const wakeTime = await page.locator('#chosenWake').textContent();
+            expect(wakeTime).not.toBe('--:--');
+            expect(wakeTime).toMatch(/\d{1,2}:\d{2}/);
+          });
+
+          test('should persist form values', async ({ page }) => {
+            await page.selectOption('#firstMeeting', '09:00');
+            await page.fill('#runMinutes', '60');
+            await page.waitForTimeout(200);
+
+            const savedMeeting = await page.evaluate(() =>
+              localStorage.getItem('wake:meeting') || localStorage.getItem('wake:first')
+            );
+            expect(savedMeeting).toBe('09:00');
+          });
+        });
+        EOF
+
+    - name: Run cross-browser test for ${{ matrix.variant.name }}
+      run: npx playwright test tests/cross-browser-${{ matrix.variant.type }}.spec.js --project=${{ matrix.browser }}
+      env:
+        CI: true
+
+  # Stage 5: Mobile Testing for All Variants
+  mobile-compatibility:
+    runs-on: ubuntu-latest
+    name: 📱 Mobile - ${{ matrix.variant.name }} on ${{ matrix.device }}
+    needs: cross-browser-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { file: "wake.html", name: "Legacy", type: "legacy" }
+          - { file: "index-modular.html", name: "Modular", type: "modular" }
+          - { file: "index-full-modular.html", name: "Full Modular", type: "full-modular" }
+        device: ["Mobile Chrome", "Mobile Safari"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers for mobile
+      run: npx playwright install --with-deps chromium webkit
+
+    - name: Run mobile tests for ${{ matrix.variant.name }}
+      run: |
+        export TEST_VARIANT=${{ matrix.variant.type }}
+        export TEST_ENTRY_POINT=${{ matrix.variant.file }}
+        npx playwright test --project="${{ matrix.device }}" --grep="should load and display basic interface|should handle basic calculation"
+      env:
+        CI: true
+
+    - name: Upload mobile test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mobile-test-results-${{ matrix.variant.type }}-${{ matrix.device }}
+        path: test-results/
+
+  # Stage 6: Performance Comparison
+  performance-comparison:
+    runs-on: ubuntu-latest
+    name: 🚀 Performance Comparison
+    needs: mobile-compatibility
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright
+      run: npx playwright install --with-deps chromium
+
+    - name: Create performance comparison test
+      run: |
+        cat > tests/performance-comparison.spec.js << 'EOF'
+        import { test, expect } from '@playwright/test';
+
+        const variants = [
+          { file: 'wake.html', name: 'Legacy Monolithic', type: 'legacy' },
+          { file: 'index-modular.html', name: 'Basic Modular', type: 'modular' },
+          { file: 'index-full-modular.html', name: 'Full Modular', type: 'full-modular' }
+        ];
+
+        test.describe('Performance Comparison Across Variants', () => {
+          for (const variant of variants) {
+            test(`${variant.name} - Load Performance`, async ({ page }) => {
+              const startTime = Date.now();
+              await page.goto(`/${variant.file}`);
+
+              if (variant.type !== 'legacy') {
+                await page.waitForLoadState('networkidle');
+              } else {
+                await page.waitForLoadState('domcontentloaded');
+              }
+
+              const loadTime = Date.now() - startTime;
+              console.log(`${variant.name} load time: ${loadTime}ms`);
+
+              // Load time should be reasonable for all variants
+              expect(loadTime).toBeLessThan(5000);
+
+              // Check memory usage if available
+              const memoryUsage = await page.evaluate(() => {
+                if (performance.memory) {
+                  return performance.memory.usedJSHeapSize;
+                }
+                return null;
+              });
+
+              if (memoryUsage) {
+                console.log(`${variant.name} initial memory: ${memoryUsage} bytes`);
+                // Memory usage should be reasonable
+                expect(memoryUsage).toBeLessThan(50000000); // 50MB
+              }
+            });
+
+            test(`${variant.name} - Runtime Performance`, async ({ page }) => {
+              await page.goto(`/${variant.file}`);
+
+              if (variant.type !== 'legacy') {
+                await page.waitForLoadState('networkidle');
+              }
+
+              // Test calculation performance
+              const startCalc = Date.now();
+              await page.selectOption('#firstMeeting', '08:00');
+              await page.fill('#runMinutes', '45');
+              await page.selectOption('#breakfastMinutes', '20');
+              await page.waitForTimeout(100);
+
+              const wakeTime = await page.locator('#chosenWake').textContent();
+              const calcTime = Date.now() - startCalc;
+
+              console.log(`${variant.name} calculation time: ${calcTime}ms`);
+              expect(wakeTime).not.toBe('--:--');
+              expect(calcTime).toBeLessThan(1000);
+            });
+          }
+        });
+        EOF
+
+    - name: Run performance comparison
+      run: npx playwright test tests/performance-comparison.spec.js --project=chromium
+      env:
+        CI: true
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-comparison-results
+        path: |
+          playwright-report/
+          test-results/
+
+  # Accessibility Testing for All Variants
+  accessibility-all-variants:
+    runs-on: ubuntu-latest
+    name: ♿ Accessibility - ${{ matrix.variant.name }}
+    needs: smoke-all-variants
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { file: "wake.html", name: "Legacy", type: "legacy" }
+          - { file: "index-modular.html", name: "Modular", type: "modular" }
+          - { file: "index-full-modular.html", name: "Full Modular", type: "full-modular" }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -D @axe-core/playwright
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    - name: Create accessibility test for ${{ matrix.variant.name }}
+      run: |
+        cat > tests/a11y-${{ matrix.variant.type }}.spec.js << 'EOF'
+        import { test, expect } from '@playwright/test';
+        import AxeBuilder from '@axe-core/playwright';
+
+        test.describe('Accessibility - ${{ matrix.variant.name }}', () => {
+          test.beforeEach(async ({ page }) => {
+            await page.goto('/${{ matrix.variant.file }}');
+            if ('${{ matrix.variant.type }}' !== 'legacy') {
+              await page.waitForLoadState('networkidle');
+            } else {
+              await page.waitForLoadState('domcontentloaded');
+            }
+          });
+
+          test('should not have accessibility violations', async ({ page }) => {
+            const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+            expect(accessibilityScanResults.violations).toEqual([]);
+          });
+
+          test('should have proper focus management', async ({ page }) => {
+            await page.keyboard.press('Tab');
+            const firstFocused = await page.evaluate(() => document.activeElement?.id);
+            expect(firstFocused).toBeTruthy();
+
+            await page.keyboard.press('Tab');
+            const secondFocused = await page.evaluate(() => document.activeElement?.id);
+            expect(secondFocused).toBeTruthy();
+            expect(secondFocused).not.toBe(firstFocused);
+          });
+
+          test('should have proper ARIA labels and form associations', async ({ page }) => {
+            const inputs = await page.locator('input, select').all();
+            for (const input of inputs) {
+              const id = await input.getAttribute('id');
+              if (id) {
+                const labelCount = await page.locator(`label[for="${id}"]`).count();
+                const ariaLabel = await input.getAttribute('aria-label');
+                const ariaLabelledBy = await input.getAttribute('aria-labelledby');
+
+                // Should have at least one form of labeling
+                expect(labelCount > 0 || ariaLabel || ariaLabelledBy).toBe(true);
+              }
+            }
+          });
+        });
+        EOF
+
+    - name: Run accessibility tests for ${{ matrix.variant.name }}
+      run: npx playwright test tests/a11y-${{ matrix.variant.type }}.spec.js
+      env:
+        CI: true
+
+  # Final Test Summary
+  test-summary:
+    runs-on: ubuntu-latest
+    name: ✅ Enhanced Test Summary
+    needs: [
+      smoke-all-variants,
+      core-functionality-tests,
+      feature-specific-tests,
+      cross-browser-matrix,
+      mobile-compatibility,
+      performance-comparison,
+      accessibility-all-variants
+    ]
+    if: always()
+
+    steps:
+    - name: Generate comprehensive test report
+      run: |
+        echo "# 🎯 Multi-Variant Test Suite Results"
+        echo ""
+        echo "## Test Stage Results:"
+        echo "  • Smoke Tests: ${{ needs.smoke-all-variants.result }}"
+        echo "  • Core Functionality: ${{ needs.core-functionality-tests.result }}"
+        echo "  • Feature-Specific: ${{ needs.feature-specific-tests.result }}"
+        echo "  • Cross-Browser: ${{ needs.cross-browser-matrix.result }}"
+        echo "  • Mobile Compatibility: ${{ needs.mobile-compatibility.result }}"
+        echo "  • Performance Comparison: ${{ needs.performance-comparison.result }}"
+        echo "  • Accessibility: ${{ needs.accessibility-all-variants.result }}"
+        echo ""
+
+        # Check for failures
+        FAILURES=0
+        for result in "${{ needs.smoke-all-variants.result }}" \
+                     "${{ needs.core-functionality-tests.result }}" \
+                     "${{ needs.feature-specific-tests.result }}" \
+                     "${{ needs.cross-browser-matrix.result }}" \
+                     "${{ needs.mobile-compatibility.result }}" \
+                     "${{ needs.performance-comparison.result }}" \
+                     "${{ needs.accessibility-all-variants.result }}"; do
+          if [[ "$result" == "failure" ]]; then
+            FAILURES=$((FAILURES + 1))
+          fi
+        done
+
+        echo "## Summary:"
+        if [[ $FAILURES -eq 0 ]]; then
+          echo "🎉 All test stages passed successfully across all architectural variants!"
+          echo ""
+          echo "✅ Legacy monolithic variant: Fully tested"
+          echo "✅ Basic modular variant: ES6 modules and core functionality verified"
+          echo "✅ Full modular variant: Weather awareness and all features tested"
+        else
+          echo "❌ $FAILURES test stage(s) failed. Please review the logs above."
+          echo ""
+          echo "Failed stages require attention before merging."
+          exit 1
+        fi

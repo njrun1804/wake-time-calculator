@@ -1,0 +1,290 @@
+name: Test Wake Time Calculator
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  playwright-tests:
+    runs-on: ubuntu-latest
+    name: 🎭 Playwright E2E Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+
+    - name: Run Playwright tests on ${{ matrix.browser }}
+      run: npx playwright test --project=${{ matrix.browser }}
+      env:
+        CI: true
+
+    - name: Upload test report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report-${{ matrix.browser }}
+        path: playwright-report/
+        retention-days: 30
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: test-results-${{ matrix.browser }}
+        path: test-results/
+
+  mobile-tests:
+    runs-on: ubuntu-latest
+    name: 📱 Mobile Tests
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright browsers for mobile
+      run: |
+        npx playwright install --with-deps chromium webkit
+
+    - name: Run mobile tests
+      run: |
+        npx playwright test --project="Mobile Chrome"
+        npx playwright test --project="Mobile Safari"
+      env:
+        CI: true
+
+    - name: Upload mobile test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mobile-test-results
+        path: test-results/
+
+  validation:
+    runs-on: ubuntu-latest
+    name: 🔍 Code Validation
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Prettier check
+      run: npm run lint
+
+    - name: HTML validation
+      run: npm run validate:html
+      continue-on-error: true
+
+  accessibility:
+    runs-on: ubuntu-latest
+    name: ♿ Accessibility Tests
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -D @axe-core/playwright
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    - name: Create accessibility test
+      run: |
+        cat > tests/a11y.spec.js << 'EOF'
+        import { test, expect } from '@playwright/test';
+        import AxeBuilder from '@axe-core/playwright';
+
+        test.describe('Accessibility', () => {
+          test('should not have any automatically detectable accessibility issues', async ({ page }) => {
+            await page.goto('/wake.html');
+            await page.waitForLoadState('networkidle');
+
+            const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+            expect(accessibilityScanResults.violations).toEqual([]);
+          });
+
+          test('should have proper focus management', async ({ page }) => {
+            await page.goto('/wake.html');
+
+            await page.keyboard.press('Tab');
+            const firstFocused = await page.evaluate(() => document.activeElement?.id);
+            expect(firstFocused).toBeTruthy();
+
+            await page.keyboard.press('Tab');
+            const secondFocused = await page.evaluate(() => document.activeElement?.id);
+            expect(secondFocused).toBeTruthy();
+            expect(secondFocused).not.toBe(firstFocused);
+          });
+
+          test('should have proper ARIA labels', async ({ page }) => {
+            await page.goto('/wake.html');
+
+            const inputs = await page.locator('input').all();
+            for (const input of inputs) {
+              const id = await input.getAttribute('id');
+              if (id) {
+                const label = await page.locator(`label[for="${id}"]`).count();
+                expect(label).toBeGreaterThan(0);
+              }
+            }
+          });
+        });
+        EOF
+
+    - name: Run accessibility tests
+      run: npx playwright test tests/a11y.spec.js
+
+  performance:
+    runs-on: ubuntu-latest
+    name: 🚀 Performance Tests
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright
+      run: npx playwright install --with-deps chromium
+
+    - name: Create performance test
+      run: |
+        cat > tests/performance.spec.js << 'EOF'
+        import { test, expect } from '@playwright/test';
+
+        test.describe('Performance', () => {
+          test('should load within acceptable time', async ({ page }) => {
+            const startTime = Date.now();
+            await page.goto('/wake.html');
+            await page.waitForLoadState('networkidle');
+            const loadTime = Date.now() - startTime;
+
+            expect(loadTime).toBeLessThan(3000);
+          });
+
+          test('should have acceptable first contentful paint', async ({ page }) => {
+            await page.goto('/wake.html');
+
+            const metrics = await page.evaluate(() => {
+              const perf = performance.getEntriesByType('navigation')[0];
+              return {
+                domContentLoaded: perf.domContentLoadedEventEnd - perf.domContentLoadedEventStart,
+                loadComplete: perf.loadEventEnd - perf.loadEventStart,
+              };
+            });
+
+            expect(metrics.domContentLoaded).toBeLessThan(1500);
+            expect(metrics.loadComplete).toBeLessThan(2000);
+          });
+
+          test('should not have memory leaks on repeated calculations', async ({ page }) => {
+            await page.goto('/wake.html');
+
+            const initialMemory = await page.evaluate(() => {
+              if (performance.memory) {
+                return performance.memory.usedJSHeapSize;
+              }
+              return 0;
+            });
+
+            for (let i = 0; i < 10; i++) {
+              await page.fill('#meeting', '08:00');
+              await page.fill('#run', '45');
+              await page.click('#calculate');
+              await page.waitForTimeout(100);
+            }
+
+            const finalMemory = await page.evaluate(() => {
+              if (performance.memory) {
+                return performance.memory.usedJSHeapSize;
+              }
+              return 0;
+            });
+
+            if (initialMemory > 0 && finalMemory > 0) {
+              const memoryIncrease = finalMemory - initialMemory;
+              expect(memoryIncrease).toBeLessThan(5000000);
+            }
+          });
+        });
+        EOF
+
+    - name: Run performance tests
+      run: npx playwright test tests/performance.spec.js
+
+  test-summary:
+    runs-on: ubuntu-latest
+    name: ✅ Test Summary
+    needs: [playwright-tests, mobile-tests, validation, accessibility, performance]
+    if: always()
+
+    steps:
+    - name: Check test results
+      run: |
+        echo "✅ Test Suite Complete!"
+        echo ""
+        echo "Test Results:"
+        echo "  • E2E Tests: ${{ needs.playwright-tests.result }}"
+        echo "  • Mobile Tests: ${{ needs.mobile-tests.result }}"
+        echo "  • Validation: ${{ needs.validation.result }}"
+        echo "  • Accessibility: ${{ needs.accessibility.result }}"
+        echo "  • Performance: ${{ needs.performance.result }}"
+
+        if [[ "${{ needs.playwright-tests.result }}" == "failure" ]] || \
+           [[ "${{ needs.mobile-tests.result }}" == "failure" ]] || \
+           [[ "${{ needs.accessibility.result }}" == "failure" ]] || \
+           [[ "${{ needs.performance.result }}" == "failure" ]]; then
+          echo ""
+          echo "❌ Some critical tests failed. Please check the logs above."
+          exit 1
+        else
+          echo ""
+          echo "🎉 All tests passed successfully!"
+        fi

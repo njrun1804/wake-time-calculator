@@ -1,0 +1,290 @@
+name: Enhanced Validation - All Variants
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate-all-variants:
+    runs-on: ubuntu-latest
+    name: 🔍 Validate ${{ matrix.variant.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - { files: ["wake.html"], name: "Legacy Monolithic", type: "legacy", validateJS: false }
+          - { files: ["index-modular.html"], name: "Basic Modular HTML", type: "modular", validateJS: true }
+          - { files: ["index-full-modular.html"], name: "Full Modular HTML", type: "full-modular", validateJS: true }
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install validation tools
+      run: |
+        npm ci --no-audit --no-fund || true
+        npm install -g eslint @eslint/js
+
+    - name: Prettier check for HTML files
+      run: |
+        for file in ${{ join(matrix.variant.files, ' ') }}; do
+          echo "Checking Prettier formatting for $file"
+          npx prettier --check "$file" || {
+            echo "❌ $file failed Prettier check"
+            echo "Run: npx prettier --write $file"
+            exit 1
+          }
+          echo "✅ $file passed Prettier check"
+        done
+
+    - name: HTML validation
+      run: |
+        for file in ${{ join(matrix.variant.files, ' ') }}; do
+          echo "Validating HTML structure for $file"
+          npx html-validate "$file" || {
+            echo "❌ $file failed HTML validation"
+            exit 1
+          }
+          echo "✅ $file passed HTML validation"
+        done
+
+    - name: ES6 module validation (modular variants only)
+      if: matrix.variant.validateJS
+      run: |
+        echo "Validating ES6 modules for ${{ matrix.variant.name }}"
+
+        # Check if JS files exist and are syntactically valid
+        JS_FILES=(
+          "js/core/calculator.js"
+          "js/core/storage.js"
+          "js/core/constants.js"
+          "js/utils/time.js"
+          "js/modules/ui.js"
+        )
+
+        if [[ "${{ matrix.variant.type }}" == "full-modular" ]]; then
+          JS_FILES+=(
+            "js/modules/weather.js"
+            "js/modules/location.js"
+            "js/modules/dawn.js"
+            "js/modules/awareness.js"
+            "js/main-full.js"
+          )
+        else
+          JS_FILES+=(
+            "js/main.js"
+          )
+        fi
+
+        for jsfile in "${JS_FILES[@]}"; do
+          if [[ -f "$jsfile" ]]; then
+            echo "Validating $jsfile"
+
+            # Check for ES6 syntax
+            if grep -q "import\|export" "$jsfile"; then
+              echo "✅ $jsfile contains ES6 import/export statements"
+            else
+              echo "⚠️  $jsfile may not be using ES6 modules"
+            fi
+
+            # Basic syntax check using node
+            node -c "$jsfile" || {
+              echo "❌ $jsfile has syntax errors"
+              exit 1
+            }
+            echo "✅ $jsfile syntax is valid"
+          else
+            echo "❌ Required file $jsfile not found"
+            exit 1
+          fi
+        done
+
+    - name: Check CSS file (modular variants only)
+      if: matrix.variant.validateJS
+      run: |
+        if [[ -f "css/main.css" ]]; then
+          echo "✅ CSS file exists"
+
+          # Basic CSS validation - check file isn't empty and has basic structure
+          if [[ -s "css/main.css" ]]; then
+            echo "✅ CSS file is not empty"
+          else
+            echo "❌ CSS file is empty"
+            exit 1
+          fi
+        else
+          echo "❌ Required CSS file not found"
+          exit 1
+        fi
+
+    - name: Validate module dependencies
+      if: matrix.variant.validateJS
+      run: |
+        echo "Checking module dependency structure"
+
+        MAIN_FILE=""
+        if [[ "${{ matrix.variant.type }}" == "full-modular" ]]; then
+          MAIN_FILE="js/main-full.js"
+        else
+          MAIN_FILE="js/main.js"
+        fi
+
+        if [[ -f "$MAIN_FILE" ]]; then
+          # Check that main file imports core modules
+          if grep -q "from.*calculator" "$MAIN_FILE"; then
+            echo "✅ Main file imports calculator module"
+          else
+            echo "❌ Main file missing calculator import"
+            exit 1
+          fi
+
+          if grep -q "from.*storage" "$MAIN_FILE"; then
+            echo "✅ Main file imports storage module"
+          else
+            echo "❌ Main file missing storage import"
+            exit 1
+          fi
+
+          echo "✅ Module dependency structure appears correct"
+        else
+          echo "❌ Main file $MAIN_FILE not found"
+          exit 1
+        fi
+
+    - name: Check HTML references to JS modules
+      if: matrix.variant.validateJS
+      run: |
+        HTML_FILE="${{ matrix.variant.files[0] }}"
+
+        # Check that HTML file references the correct main JS file
+        MAIN_JS=""
+        if [[ "${{ matrix.variant.type }}" == "full-modular" ]]; then
+          MAIN_JS="js/main-full.js"
+        else
+          MAIN_JS="js/main.js"
+        fi
+
+        if grep -q "src=\"$MAIN_JS\"" "$HTML_FILE"; then
+          echo "✅ HTML file correctly references $MAIN_JS"
+        else
+          echo "❌ HTML file missing reference to $MAIN_JS"
+          exit 1
+        fi
+
+        # Check for module type
+        if grep -q 'type="module"' "$HTML_FILE"; then
+          echo "✅ HTML file includes module type declaration"
+        else
+          echo "❌ HTML file missing module type declaration"
+          exit 1
+        fi
+
+  validate-consistency:
+    runs-on: ubuntu-latest
+    name: 🔄 Cross-Variant Consistency Check
+    needs: validate-all-variants
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check consistent form elements across variants
+      run: |
+        echo "Checking form element consistency across all variants"
+
+        # Extract form element IDs from each variant
+        LEGACY_ELEMENTS=$(grep -o 'id="[^"]*"' wake.html | sort | uniq)
+        MODULAR_ELEMENTS=$(grep -o 'id="[^"]*"' index-modular.html | sort | uniq)
+        FULL_MODULAR_ELEMENTS=$(grep -o 'id="[^"]*"' index-full-modular.html | sort | uniq)
+
+        # Core elements that should exist in all variants
+        CORE_ELEMENTS=(
+          'id="firstMeeting"'
+          'id="runMinutes"'
+          'id="runLocation"'
+          'id="breakfastMinutes"'
+          'id="chosenWake"'
+        )
+
+        echo "Checking core form elements..."
+        for element in "${CORE_ELEMENTS[@]}"; do
+          # Check legacy
+          if echo "$LEGACY_ELEMENTS" | grep -q "$element"; then
+            echo "✅ Legacy has $element"
+          else
+            echo "❌ Legacy missing $element"
+            exit 1
+          fi
+
+          # Check modular
+          if echo "$MODULAR_ELEMENTS" | grep -q "$element"; then
+            echo "✅ Modular has $element"
+          else
+            echo "❌ Modular missing $element"
+            exit 1
+          fi
+
+          # Check full modular
+          if echo "$FULL_MODULAR_ELEMENTS" | grep -q "$element"; then
+            echo "✅ Full Modular has $element"
+          else
+            echo "❌ Full Modular missing $element"
+            exit 1
+          fi
+        done
+
+        echo "✅ All variants have consistent core form elements"
+
+    - name: Check localStorage key consistency
+      run: |
+        echo "Checking localStorage key consistency across variants"
+
+        # Extract localStorage keys from JavaScript code
+        if [[ -f "js/core/storage.js" ]]; then
+          STORAGE_KEYS=$(grep -o "wake:[^'\"]*" js/core/storage.js | sort | uniq)
+          echo "Modular storage keys found:"
+          echo "$STORAGE_KEYS"
+        fi
+
+        # Check legacy localStorage usage
+        LEGACY_KEYS=$(grep -o "wake:[^'\"]*" wake.html | sort | uniq)
+        echo "Legacy storage keys found:"
+        echo "$LEGACY_KEYS"
+
+        echo "✅ Storage key analysis complete"
+
+  validation-summary:
+    runs-on: ubuntu-latest
+    name: ✅ Validation Summary
+    needs: [validate-all-variants, validate-consistency]
+    if: always()
+
+    steps:
+    - name: Report validation results
+      run: |
+        echo "# 🔍 Multi-Variant Validation Results"
+        echo ""
+        echo "Validation Results:"
+        echo "  • Individual Variants: ${{ needs.validate-all-variants.result }}"
+        echo "  • Cross-Variant Consistency: ${{ needs.validate-consistency.result }}"
+        echo ""
+
+        if [[ "${{ needs.validate-all-variants.result }}" == "success" ]] && \
+           [[ "${{ needs.validate-consistency.result }}" == "success" ]]; then
+          echo "🎉 All validation checks passed!"
+          echo ""
+          echo "✅ Legacy monolithic: HTML validation and formatting passed"
+          echo "✅ Basic modular: HTML, CSS, and ES6 module validation passed"
+          echo "✅ Full modular: Complete validation including weather modules passed"
+          echo "✅ Cross-variant consistency: Core elements consistent across all variants"
+        else
+          echo "❌ One or more validation checks failed"
+          echo "Please review the validation logs above for specific issues"
+          exit 1
+        fi

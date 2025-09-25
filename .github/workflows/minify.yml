@@ -1,0 +1,25 @@
+name: Minify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  minify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install html-minifier
+        run: npm ci --no-audit --no-fund || true
+      - name: Minify wake.html
+        run: npx html-minifier-terser wake.html -o wake.min.html --collapse-whitespace --remove-comments --minify-css --minify-js
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: index-minified
+          path: index.min.html
