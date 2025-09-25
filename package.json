@@ -10,7 +10,7 @@
     "test:e2e": "playwright test",
     "test:unit": "node --test tests/unit",
     "test:modular": "playwright test --grep @modular",
-    "test:performance": "playwright test tests/performance --project=chromium",
+    "test:performance": "playwright test tests/performance --project=webkit",
     "lint": "prettier --check '*.html' 'js/**/*.js'",
     "lint:js": "prettier --check 'js/**/*.js'",
     "format": "prettier --write '*.html' 'js/**/*.js'",

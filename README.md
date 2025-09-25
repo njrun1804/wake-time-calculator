@@ -108,6 +108,9 @@ npm run test:unit
 # Quick performance probe (single-browser budget check)
 npm run test:performance
 
+# Override the default WebKit run when investigating another engine
+npm run test:performance -- --project=chromium
+
 # Structural HTML validation + linting + unit tests
 npm run validate:all
 ```
