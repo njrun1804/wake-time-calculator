@@ -6,10 +6,11 @@ This guide maps each HTML entry point to the scripts it loads and the automated 
 
 | Page | Purpose | Primary scripts | Automated coverage |
 | --- | --- | --- | --- |
-| `index.html` | Redirect shell served at the project root for GitHub Pages. | N/A – performs a meta refresh to `index-modular.html`. | Exercised by the lightweight redirect checks that ship with the Playwright integration suite. |
-| `index-modular.html` | Core modular calculator without the weather awareness experience. | `js/main.js` plus supporting modules from `js/core/` and `js/utils/`. | Covered by the Playwright modular-page specs and the calculator-focused unit tests. |
-| `index-full-modular.html` | Feature-complete modular experience with weather, daylight, and awareness UI. | `js/main-full.js` orchestrates feature modules, including weather/dawn/location helpers and the awareness panel wiring in `js/modules/awareness.js`. | Protected by the full-modular Playwright specs, performance checks, and the shared unit suites for `js/core/` and `js/utils/`. |
-| `wake.html` | Legacy single-file implementation retained for regression coverage. | Inline script at the end of the file. | Exercised by the legacy Playwright suite until the page can be retired. |
+| `index-modular.html` | Core modular calculator without the weather awareness experience. | `js/main.js` plus supporting modules from `js/core/` and `js/utils/`. | Playwright modular suite (`tests/integration/modular.test.js`) and calculator/storage unit tests (`tests/unit/*.test.js`). |
+| `index-full-modular.html` | Feature-complete modular experience with weather, daylight, and awareness UI. | `js/main-full.js` orchestrates feature modules, including weather/dawn/location helpers and the awareness panel wiring in `js/modules/awareness.js`. | Full-modular Playwright suite (`tests/integration/full-modular.test.js`) plus the performance probe (`tests/performance/load.spec.js`). |
+| `wake.html` | Legacy single-file implementation retained for regression coverage. | Inline script at the end of the file. | Legacy Playwright coverage (`tests/core.spec.js`, `tests/ui.spec.js`, `tests/weather.spec.js`) to ensure parity until retirement. |
+
+`index.html` remains a thin redirect to `index-modular.html`; sanity check it manually when you touch the redirect logic.
 
 > **Tip:** When editing a page, run the suites listed above along with `npm run lint` for HTML/JS formatting and `npm run validate:html` for structural issues.
 
