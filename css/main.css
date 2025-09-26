@@ -562,22 +562,33 @@ select:focus {
   color: #b91c1c;
 }
 
-.toggle-standard {
-  display: inline-flex;
-  gap: 0.75rem;
-}
-
-.toggle-standard-option {
+.toggle-breakfast {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 1.5rem;
+  padding: 0.25rem 0;
+}
+
+.toggle-breakfast-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #475569;
+  color: #1f2933;
   cursor: pointer;
 }
 
-.toggle-standard-option input[type='radio'] {
+.toggle-breakfast-option input[type='radio'] {
+  width: 20px;
+  height: 20px;
   accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.toggle-breakfast-option span {
+  line-height: 1;
+  padding-top: 1px;
 }
 
 #daylightWarning {
@@ -606,6 +617,36 @@ select:focus {
 .aw-credits a {
   color: #1f3b82;
   text-decoration: underline;
+}
+
+/* Location badge colors */
+.location-badge {
+  display: inline-block;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.location-badge.verification-needed {
+  background: rgba(251, 146, 60, 0.1);
+  color: #ea580c;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+.location-badge.location-verified {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Trail status text styling */
+#awDecisionText {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1rem;
 }
 
 /* ========== Media Queries ========== */

@@ -29,10 +29,95 @@
         <h1 class="title-main">
           Wake Time <span class="title-accent">Calculator</span>
         </h1>
-        <p class="title-sub">Plan the earliest alarm that keeps the run on track.</p>
       </header>
 
-      <!-- Weather Awareness Section -->
+      <!-- Input Form Section (moved to top) -->
+      <form id="wakeForm">
+        <div class="form-row">
+          <div class="field-group">
+            <label for="firstMeeting">First meeting</label>
+            <select id="firstMeeting" name="firstMeeting" required class="select select-bordered w-full">
+              <option value="06:00">6:00 AM</option>
+              <option value="06:30">6:30 AM</option>
+              <option value="07:00">7:00 AM</option>
+              <option value="07:30">7:30 AM</option>
+              <option value="08:00">8:00 AM</option>
+              <option value="08:30" selected>8:30 AM</option>
+              <option value="09:00">9:00 AM</option>
+              <option value="09:30">9:30 AM</option>
+              <option value="10:00">10:00 AM</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="runMinutes">Run (minutes)</label>
+            <input
+              id="runMinutes"
+              name="runMinutes"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="999"
+              placeholder="0"
+              class="input input-bordered w-full"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label id="breakfastLabel">Breakfast</label>
+            <div class="toggle-breakfast" role="radiogroup" aria-labelledby="breakfastLabel">
+              <label class="toggle-breakfast-option">
+                <input
+                  type="radio"
+                  class="breakfast-option"
+                  name="breakfastToggle"
+                  value="0"
+                  checked
+                />
+                <span>No</span>
+              </label>
+              <label class="toggle-breakfast-option">
+                <input
+                  type="radio"
+                  class="breakfast-option"
+                  name="breakfastToggle"
+                  value="30"
+                />
+                <span>Yes (30m)</span>
+              </label>
+            </div>
+            <input id="breakfastMinutes" name="breakfastMinutes" type="hidden" value="0" />
+          </div>
+          <div class="field-group">
+            <label for="runLocation">Run location</label>
+            <select id="runLocation" name="runLocation" class="select select-bordered w-full">
+              <optgroup label="Dirt by distance">
+                <option value="figure8" data-travel="14">Figure 8</option>
+                <option value="huber" data-travel="20">Huber</option>
+                <option value="tatum" data-travel="36">Tatum</option>
+                <option value="holmdel" data-travel="50">Holmdel</option>
+                <option value="shark-river" data-travel="52">Shark River Park</option>
+                <option value="allaire" data-travel="64">Allaire State Park</option>
+                <option value="rez" data-travel="70">Reservoir Loop</option>
+                <option value="battlefield" data-travel="60">Monmouth Battlefield</option>
+              </optgroup>
+              <optgroup label="No dirt">
+                <option value="round-town" data-travel="0" selected>Round town</option>
+                <option value="sandy-hook" data-travel="32">Sandy hook</option>
+                <option value="henry-hudson" data-travel="32">Henry Hudson Trail</option>
+                <option value="lb-boardwalk" data-travel="38">Long Branch boardwalk</option>
+                <option value="asbury-boardwalk" data-travel="50">Asbury boardwalk</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <input id="travelMinutes" name="travelMinutes" type="hidden" value="0" />
+        <!-- Hidden submit button for HTML validation -->
+        <button type="submit" class="hidden" tabindex="-1">Submit</button>
+      </form>
+
+      <!-- Weather Awareness Section (moved to middle) -->
       <section
         class="awareness bg-base-200 rounded-2xl shadow-md"
         id="awareness"
@@ -42,7 +127,7 @@
           <div class="aw-where">
             <span
               id="awCity"
-              class="badge badge-warning badge-outline text-xs md:text-sm verification-needed"
+              class="location-badge verification-needed"
               >Verify location</span
             >
           </div>
@@ -101,7 +186,8 @@
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Trail Status</div>
             <div class="value" id="awWetness">
-              <span class="decision-badge hidden" id="awDecision">OK</span>
+              <span class="status-icon hidden" id="awDecisionIcon" aria-hidden="true">⚠</span>
+              <span id="awDecisionText">—</span>
             </div>
           </div>
         </div>
@@ -119,93 +205,7 @@
         </p>
       </section>
 
-      <!-- Input Form Section -->
-      <form id="wakeForm">
-        <div class="form-row">
-          <div class="field-group">
-            <label for="firstMeeting">First meeting</label>
-            <select id="firstMeeting" name="firstMeeting" required class="select select-bordered w-full">
-              <option value="06:00">6:00 AM</option>
-              <option value="06:30">6:30 AM</option>
-              <option value="07:00">7:00 AM</option>
-              <option value="07:30">7:30 AM</option>
-              <option value="08:00">8:00 AM</option>
-              <option value="08:30" selected>8:30 AM</option>
-              <option value="09:00">9:00 AM</option>
-              <option value="09:30">9:30 AM</option>
-              <option value="10:00">10:00 AM</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label for="runMinutes">Run (minutes)</label>
-            <input
-              id="runMinutes"
-              name="runMinutes"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              max="999"
-              placeholder="0"
-              class="input input-bordered w-full"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="field-group">
-            <label id="breakfastLabel">Breakfast</label>
-            <div class="toggle-standard" role="radiogroup" aria-labelledby="breakfastLabel">
-              <label class="toggle-standard-option">
-                <input
-                  type="radio"
-                  class="breakfast-option"
-                  name="breakfastToggle"
-                  value="0"
-                  checked
-                />
-                <span>No</span>
-              </label>
-              <label class="toggle-standard-option">
-                <input
-                  type="radio"
-                  class="breakfast-option"
-                  name="breakfastToggle"
-                  value="30"
-                />
-                <span>Yes (30m)</span>
-              </label>
-            </div>
-            <input id="breakfastMinutes" name="breakfastMinutes" type="hidden" value="0" />
-          </div>
-          <div class="field-group">
-            <label for="runLocation">Run location</label>
-            <select id="runLocation" name="runLocation" class="select select-bordered w-full">
-              <optgroup label="Dirt by distance">
-                <option value="figure8" data-travel="14">Figure 8</option>
-                <option value="huber" data-travel="20">Huber</option>
-                <option value="tatum" data-travel="36">Tatum</option>
-                <option value="holmdel" data-travel="50">Holmdel</option>
-                <option value="shark-river" data-travel="52">Shark River Park</option>
-                <option value="allaire" data-travel="64">Allaire State Park</option>
-                <option value="rez" data-travel="70">Reservoir Loop</option>
-                <option value="battlefield" data-travel="60">Monmouth Battlefield</option>
-              </optgroup>
-              <optgroup label="No dirt">
-                <option value="round-town" data-travel="0" selected>Round town</option>
-                <option value="sandy-hook" data-travel="32">Sandy hook</option>
-                <option value="henry-hudson" data-travel="32">Henry Hudson Trail</option>
-                <option value="lb-boardwalk" data-travel="38">Long Branch boardwalk</option>
-                <option value="asbury-boardwalk" data-travel="50">Asbury boardwalk</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-        <input id="travelMinutes" name="travelMinutes" type="hidden" value="0" />
-        <!-- Hidden submit button for HTML validation -->
-        <button type="submit" class="hidden" tabindex="-1">Submit</button>
-      </form>
-
-      <!-- Wake Time Display Section -->
+      <!-- Wake Time Display Section (moved to bottom) -->
       <section class="wake-display-section">
         <div class="wake-hero">
           <div class="wake-hero__primary">
