@@ -38,7 +38,7 @@ Key architectural references:
 - `awareness.js` orchestrates weather + dawn lookups, handles DOM updates for the awareness panel, manages cache lifetimes, and persists location metadata.
 - `dawn.js` caches sunrise/sunset API results and determines headlamp requirements based on run start.
 - `location.js` performs forward/reverse geocoding, browser geolocation, and validation of latitude/longitude ranges.
-- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers. `computeWetness()` blends rainfall, FAO evapotranspiration (0.6 warm-season / 0.3 cool-season coefficient), exponential decay (0.85 per day), and temperature-driven snowmelt to produce the awareness panel score and summary text.
+- `weather.js` fetches Open-Meteo forecasts and precipitation history, applies wind chill and wetness scoring, and exposes display helpers. `computeWetness()` blends rainfall, FAO evapotranspiration (0.6 warm-season / 0.3 cool-season coefficient), exponential decay (0.85 per day), and temperature-driven snowmelt to produce the awareness panel score and summary text, while `interpretWetness()` also emits the Go/Caution/Avoid decision badge used in the awareness UI.
 
 ## Data & Caching Model
 - All persisted values live under `wake:*` keys in `localStorage`. Respect existing key names to avoid breaking saved user data.

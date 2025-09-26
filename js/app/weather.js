@@ -713,6 +713,21 @@ export const interpretWetness = (wetnessData = null) => {
     rating = Math.max(rating, 2);
   }
 
+  const decision = (() => {
+    if (label === 'Muddy' || label === 'Soaked' || label === 'Snowbound') {
+      return 'Avoid';
+    }
+    if (
+      label === 'Slick' ||
+      label === 'Slick/Icy' ||
+      label === 'Packed Snow' ||
+      Boolean(caution)
+    ) {
+      return 'Caution';
+    }
+    return 'Go';
+  })();
+
   const metricsSummary = [
     `24h ${formatInches(last24)}`,
     `48h ${formatInches(last48)}`,
@@ -746,6 +761,7 @@ export const interpretWetness = (wetnessData = null) => {
     rating,
     confidence,
     stats,
+    decision,
   };
 };
 
