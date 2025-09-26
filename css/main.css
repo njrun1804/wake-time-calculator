@@ -237,8 +237,8 @@ select:focus {
 }
 
 .wake-display-section {
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
 }
 
 .wake-hero-card {
@@ -523,22 +523,9 @@ select:focus {
 }
 
 #awWetness {
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-#awWetness .status-line {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-}
-
-#awWetnessLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #475569;
 }
 
 .aw-item .value.bad {

@@ -32,7 +32,7 @@ const dailyResponse = {
     snowfall_sum: 'inch',
     et0_fao_evapotranspiration: 'inch',
     temperature_2m_max: '°F',
-    temperature_2m_min: '°F'
+    temperature_2m_min: '°F',
   },
   daily: {
     time: [
@@ -42,7 +42,7 @@ const dailyResponse = {
       '2025-03-14',
       '2025-03-15',
       '2025-03-16',
-      '2025-03-17'
+      '2025-03-17',
     ],
     precipitation_sum: [0.0, 0.05, 0.12, 0.0, 0.0, 0.18, 0.22],
     precipitation_hours: [0, 2, 4, 0, 0, 3, 5],
@@ -50,8 +50,8 @@ const dailyResponse = {
     snowfall_sum: [0, 0, 0, 0, 0, 0, 0],
     et0_fao_evapotranspiration: [0.1, 0.11, 0.12, 0.13, 0.14, 0.12, 0.12],
     temperature_2m_max: [52, 50, 48, 45, 42, 38, 38],
-    temperature_2m_min: [40, 38, 36, 34, 33, 31, 28]
-  }
+    temperature_2m_min: [40, 38, 36, 34, 33, 31, 28],
+  },
 };
 
 const hourlyResponse = {
@@ -71,7 +71,7 @@ const hourlyResponse = {
     precipitation_probability: '%',
     wet_bulb_temperature_2m: '°F',
     weathercode: 'wmo code',
-    snowfall: 'inch'
+    snowfall: 'inch',
   },
   hourly: {
     time: [HOURLY_TIME],
@@ -82,31 +82,34 @@ const hourlyResponse = {
     precipitation_probability: [55],
     wet_bulb_temperature_2m: [34],
     weathercode: [61],
-    snowfall: [0]
-  }
+    snowfall: [0],
+  },
 };
 
 async function setupMockedWeather(page) {
-  await page.addInitScript(({ saved }) => {
-    localStorage.clear();
-    localStorage.setItem('wake:weatherLat', String(saved.lat));
-    localStorage.setItem('wake:weatherLon', String(saved.lon));
-    localStorage.setItem('wake:weatherCity', saved.city);
-    localStorage.setItem('wake:weatherTz', saved.tz);
-  }, {
-    saved: {
-      lat: dailyResponse.latitude,
-      lon: dailyResponse.longitude,
-      city: 'Mocked Trailhead',
-      tz: 'America/New_York'
+  await page.addInitScript(
+    ({ saved }) => {
+      localStorage.clear();
+      localStorage.setItem('wake:weatherLat', String(saved.lat));
+      localStorage.setItem('wake:weatherLon', String(saved.lon));
+      localStorage.setItem('wake:weatherCity', saved.city);
+      localStorage.setItem('wake:weatherTz', saved.tz);
+    },
+    {
+      saved: {
+        lat: dailyResponse.latitude,
+        lon: dailyResponse.longitude,
+        city: 'Mocked Trailhead',
+        tz: 'America/New_York',
+      },
     }
-  });
+  );
 
   await page.route('**/api.sunrisesunset.io/**', async (route) => {
     await route.fulfill({
       status: 200,
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(dawnFixture)
+      body: JSON.stringify(dawnFixture),
     });
   });
 
@@ -116,7 +119,7 @@ async function setupMockedWeather(page) {
       await route.fulfill({
         status: 200,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(dailyResponse)
+        body: JSON.stringify(dailyResponse),
       });
       return;
     }
@@ -124,7 +127,7 @@ async function setupMockedWeather(page) {
       await route.fulfill({
         status: 200,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(hourlyResponse)
+        body: JSON.stringify(hourlyResponse),
       });
       return;
     }
@@ -133,20 +136,20 @@ async function setupMockedWeather(page) {
 }
 
 test.describe('Weather awareness with mocked data', () => {
-  test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({ page }) => {
+  test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
+    page,
+  }) => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
     await expect(page.locator('#awDecisionText')).toHaveText('Caution');
-    await expect(page.locator('#awWetnessLabel')).toHaveText('Slick/Icy');
-    await expect(page.locator('#awWetnessLabel')).toBeVisible();
-    await expect(page.locator('#awMsg')).toHaveText(
-      'Freeze-thaw has glazed shady sections—watch for ice.'
-    );
+    await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
 
-  test('reports location denied when geolocation access fails @full', async ({ page }) => {
+  test('reports location denied when geolocation access fails @full', async ({
+    page,
+  }) => {
     await setupMockedWeather(page);
     await page.addInitScript(() => {
       const denied = {
@@ -154,11 +157,11 @@ test.describe('Weather awareness with mocked data', () => {
           setTimeout(() => {
             error({ code: 1, message: 'User denied Geolocation' });
           }, 0);
-        }
+        },
       };
       Object.defineProperty(navigator, 'geolocation', {
         configurable: true,
-        value: denied
+        value: denied,
       });
     });
 

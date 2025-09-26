@@ -69,7 +69,6 @@ const cacheAwarenessElements = () => {
       awPoPIcon: document.getElementById('awPoPIcon'),
       awWetBulbIcon: document.getElementById('awWetBulbIcon'),
       awWetness: document.getElementById('awWetness'),
-      awWetnessLabel: document.getElementById('awWetnessLabel'),
       awDecisionIcon: document.getElementById('awDecisionIcon'),
       awDecisionText: document.getElementById('awDecisionText'),
       useLoc: document.getElementById('useMyLocation'),
@@ -96,9 +95,11 @@ const updateAwarenessDisplay = (data) => {
     if (city) {
       els.awCity.textContent = city;
       els.awCity.classList.remove('verification-needed');
+      els.awCity.classList.add('location-verified');
     } else {
       els.awCity.textContent = 'Verify location';
       els.awCity.classList.add('verification-needed');
+      els.awCity.classList.remove('location-verified');
     }
   }
 
@@ -124,11 +125,7 @@ const updateAwarenessDisplay = (data) => {
   }
 
   const hasWetnessUi =
-    els.awWetness ||
-    els.awWetnessLabel ||
-    els.awDecisionText ||
-    els.awDecisionIcon ||
-    els.awMsg;
+    els.awWetness || els.awDecisionText || els.awDecisionIcon || els.awMsg;
   if (hasWetnessUi) {
     const wetnessInsight = interpretWetness(wetnessData);
 
@@ -141,20 +138,12 @@ const updateAwarenessDisplay = (data) => {
       }
     }
 
-    const wetnessLabel = wetnessInsight.label || '';
-    if (els.awWetnessLabel) {
-      if (wetnessLabel) {
-        els.awWetnessLabel.textContent = wetnessLabel;
-        els.awWetnessLabel.classList.remove('hidden');
-      } else {
-        els.awWetnessLabel.textContent = '—';
-        els.awWetnessLabel.classList.add('hidden');
-      }
-    }
-
     const decision = wetnessInsight.decision || 'OK';
+    const displayDecision =
+      decision === 'Avoid' ? 'Alert' : decision === 'OK' ? 'OK' : 'Caution';
+
     if (els.awDecisionText) {
-      els.awDecisionText.textContent = decision;
+      els.awDecisionText.textContent = displayDecision;
     }
     if (els.awDecisionIcon) {
       const decisionStatus =
@@ -167,14 +156,8 @@ const updateAwarenessDisplay = (data) => {
     }
 
     if (els.awMsg) {
-      const caution = wetnessInsight.caution || '';
-      if (caution) {
-        els.awMsg.textContent = caution;
-        els.awMsg.classList.remove('hidden');
-      } else {
-        els.awMsg.textContent = '';
-        els.awMsg.classList.add('hidden');
-      }
+      els.awMsg.textContent = '';
+      els.awMsg.classList.add('hidden');
     }
 
     // Surface latest insight for quick console inspection
@@ -258,10 +241,6 @@ const showAwarenessError = (message) => {
   }
   if (els?.awDecisionText) {
     els.awDecisionText.textContent = '—';
-  }
-  if (els?.awWetnessLabel) {
-    els.awWetnessLabel.textContent = '—';
-    els.awWetnessLabel.classList.add('hidden');
   }
 };
 
