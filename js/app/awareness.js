@@ -157,11 +157,9 @@ const updateAwarenessDisplay = (data) => {
     }
 
     const decision = wetnessInsight.decision || 'OK';
-    const displayDecision =
-      decision === 'Avoid' ? 'Alert' : decision === 'OK' ? 'OK' : 'Caution';
-
     if (els.awDecisionText) {
-      els.awDecisionText.textContent = displayDecision;
+      const labelText = wetnessInsight.label || '—';
+      els.awDecisionText.textContent = labelText;
     }
     if (els.awDecisionIcon) {
       const decisionStatus =

@@ -142,7 +142,7 @@ test.describe('Weather awareness with mocked data', () => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
-    await expect(page.locator('#awDecisionText')).toHaveText('Caution');
+    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy');
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
@@ -167,7 +167,7 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.goto('/index.html');
 
-    await expect(page.locator('#awDecisionText')).toHaveText('Caution');
+    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy');
     await page.getByRole('button', { name: 'Use my location' }).click();
 
     await expect(page.locator('#awMsg')).toHaveText('Location denied.');
