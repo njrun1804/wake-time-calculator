@@ -268,9 +268,27 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
       fetchWetnessInputs(lat, lon, dawnDate, tz),
     ]);
 
+    let displayCity = city;
+    if (displayCity && !displayCity.includes(',')) {
+      try {
+        const refined = await reverseGeocode(lat, lon);
+        if (refined?.city) {
+          displayCity = refined.city;
+          Storage.saveWeatherLocation({
+            lat,
+            lon,
+            city: displayCity,
+            tz: refined.tz || tz,
+          });
+        }
+      } catch (error) {
+        console.warn('City refinement failed:', error);
+      }
+    }
+
     // Update display with all data
     updateAwarenessDisplay({
-      city: city || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+      city: displayCity || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
       dawn: dawnDate,
       windChillF: weather.windChillF,
       pop: weather.pop,

@@ -10,9 +10,102 @@ import { defaultTz } from '../lib/constants.js';
  * @param {object} place - Place data from geocoding API
  * @returns {string} Formatted place name
  */
-const formatPlaceName = (place) => {
-  const { name, admin1, country } = place;
-  return name || admin1 || country || 'Location';
+const US_STATE_ABBR = {
+  Alabama: 'AL',
+  Alaska: 'AK',
+  Arizona: 'AZ',
+  Arkansas: 'AR',
+  California: 'CA',
+  Colorado: 'CO',
+  Connecticut: 'CT',
+  Delaware: 'DE',
+  Florida: 'FL',
+  Georgia: 'GA',
+  Hawaii: 'HI',
+  Idaho: 'ID',
+  Illinois: 'IL',
+  Indiana: 'IN',
+  Iowa: 'IA',
+  Kansas: 'KS',
+  Kentucky: 'KY',
+  Louisiana: 'LA',
+  Maine: 'ME',
+  Maryland: 'MD',
+  Massachusetts: 'MA',
+  Michigan: 'MI',
+  Minnesota: 'MN',
+  Mississippi: 'MS',
+  Missouri: 'MO',
+  Montana: 'MT',
+  Nebraska: 'NE',
+  Nevada: 'NV',
+  'New Hampshire': 'NH',
+  'New Jersey': 'NJ',
+  'New Mexico': 'NM',
+  'New York': 'NY',
+  'North Carolina': 'NC',
+  'North Dakota': 'ND',
+  Ohio: 'OH',
+  Oklahoma: 'OK',
+  Oregon: 'OR',
+  Pennsylvania: 'PA',
+  'Rhode Island': 'RI',
+  'South Carolina': 'SC',
+  'South Dakota': 'SD',
+  Tennessee: 'TN',
+  Texas: 'TX',
+  Utah: 'UT',
+  Vermont: 'VT',
+  Virginia: 'VA',
+  Washington: 'WA',
+  'West Virginia': 'WV',
+  Wisconsin: 'WI',
+  Wyoming: 'WY',
+  'District of Columbia': 'DC',
+};
+
+const dedupeParts = (parts) => {
+  const seen = new Set();
+  return parts.filter((part) => {
+    if (!part) return false;
+    const key = part.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const formatPlaceName = (place = {}) => {
+  const {
+    name,
+    city,
+    town,
+    village,
+    admin1,
+    admin2,
+    state,
+    country,
+    country_code: countryCodeRaw,
+  } = place;
+
+  const countryCode = countryCodeRaw ? countryCodeRaw.toUpperCase() : null;
+
+  const primary = name || city || town || village || admin2 || admin1;
+
+  let region = admin1 || state || admin2 || null;
+  if (countryCode === 'US' && region) {
+    region = US_STATE_ABBR[region] || region;
+  }
+
+  let countryPart = null;
+  if (countryCode) {
+    countryPart = countryCode;
+  } else if (country && country !== region) {
+    countryPart = country;
+  }
+
+  const parts = dedupeParts([primary, region, countryPart]);
+  return parts.length ? parts.join(', ') : 'Location';
 };
 
 /**
@@ -69,11 +162,15 @@ export const reverseGeocode = async (lat, lon) => {
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        if (data.display_name) {
-          const parts = data.display_name.split(',').map((s) => s.trim());
-          const city = parts[0] || parts[1] || 'Location';
-          return { city, tz: defaultTz };
-        }
+        const address = data.address || {};
+        const formatted = formatPlaceName({
+          name: address.city || address.town || address.village || data.name,
+          admin1: address.state,
+          admin2: address.county,
+          country: address.country,
+          country_code: address.country_code,
+        });
+        return { city: formatted, tz: defaultTz };
       }
     } catch (error) {
       console.warn('Nominatim reverse geocoding failed:', error);
