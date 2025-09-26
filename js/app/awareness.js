@@ -41,6 +41,24 @@ const setStatusIcon = (iconEl, status) => {
   }
 };
 
+const computeDawnStatus = (runStartMinutes, dawnDate) => {
+  if (!Number.isFinite(runStartMinutes) || !dawnDate) return 'ok';
+  const dawnMinutes = dawnDate.getHours() * 60 + dawnDate.getMinutes();
+  if (!Number.isFinite(dawnMinutes)) return 'ok';
+  const diff = runStartMinutes - dawnMinutes;
+  if (!Number.isFinite(diff)) return 'ok';
+  if (diff <= 5 && diff >= -5) return 'yield';
+  if (diff < -5) return 'warning';
+  return 'ok';
+};
+
+export const updateDawnStatus = (runStartMinutes, dawnDate) => {
+  const els = cacheAwarenessElements();
+  if (!els?.awDawnIcon) return;
+  const status = computeDawnStatus(runStartMinutes, dawnDate);
+  setStatusIcon(els.awDawnIcon, status);
+};
+
 /**
  * Weather awareness UI elements cache
  */
@@ -170,18 +188,8 @@ const updateAwarenessDisplay = (data) => {
     ? (schedule.runStartMinutes ?? toMinutes(schedule.runStartTime))
     : null;
   const runStartMinutes = Number.isFinite(scheduleStart) ? scheduleStart : null;
-  const dawnMinutesRaw = dawn ? dawn.getHours() * 60 + dawn.getMinutes() : null;
-  const dawnMinutes = Number.isFinite(dawnMinutesRaw) ? dawnMinutesRaw : null;
 
-  let dawnStatus = 'ok';
-  if (dawnMinutes !== null && runStartMinutes !== null) {
-    const diff = runStartMinutes - dawnMinutes;
-    if (diff <= 5 && diff >= -5) {
-      dawnStatus = 'yield';
-    } else if (diff < -5) {
-      dawnStatus = 'warning';
-    }
-  }
+  const dawnStatus = computeDawnStatus(runStartMinutes, dawn);
 
   const windStatus =
     typeof windChillF === 'number'
@@ -222,6 +230,8 @@ const updateAwarenessDisplay = (data) => {
   if (typeof window.updateLocationHeadlamp === 'function') {
     window.updateLocationHeadlamp();
   }
+
+  updateDawnStatus(runStartMinutes, dawn);
 };
 
 /**

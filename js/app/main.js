@@ -10,6 +10,7 @@ import {
   initializeAwareness,
   setupAwarenessListeners,
   getCurrentDawn,
+  updateDawnStatus,
 } from './awareness.js';
 import { updateLocationBadge, debounce } from './ui.js';
 import { runWhenIdle } from '../lib/schedulers.js';
@@ -185,6 +186,7 @@ class WakeTimeApp {
 
     const runStartMinutes = toMinutes(result.runStartTime);
     updateLocationBadge(this.state.location, runStartMinutes, currentDawn);
+    updateDawnStatus(runStartMinutes, currentDawn);
   }
 
   /**
