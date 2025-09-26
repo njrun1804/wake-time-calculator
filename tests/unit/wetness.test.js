@@ -39,7 +39,9 @@ const buildWetness = (daily) => {
     { rainfall: 0, melt: 0, drying: 0, et0: 0 }
   );
 
-  const recentWetDays = daily.filter((entry) => (entry.liquid ?? 0) > 0.05).length;
+  const recentWetDays = daily.filter(
+    (entry) => (entry.liquid ?? 0) > 0.05
+  ).length;
 
   return {
     analysisDays: daily.length,
@@ -73,8 +75,22 @@ test('additional rainfall cannot downgrade wetness label', () => {
 
 test('freeze-thaw without liquid keeps dry label but surfaces caution', () => {
   const freezeOnly = buildWetness([
-    { ageDays: 1, liquid: 0, precipHours: 0, balance: 0, maxTempF: 35, minTempF: 26 },
-    { ageDays: 2, liquid: 0, precipHours: 0, balance: 0, maxTempF: 33, minTempF: 24 },
+    {
+      ageDays: 1,
+      liquid: 0,
+      precipHours: 0,
+      balance: 0,
+      maxTempF: 35,
+      minTempF: 26,
+    },
+    {
+      ageDays: 2,
+      liquid: 0,
+      precipHours: 0,
+      balance: 0,
+      maxTempF: 33,
+      minTempF: 24,
+    },
   ]);
 
   const insight = interpretWetness(freezeOnly);
@@ -87,20 +103,34 @@ test('freeze-thaw without liquid keeps dry label but surfaces caution', () => {
 
 test('freeze-thaw with recent moisture escalates to slick icy', () => {
   const icy = buildWetness([
-    { ageDays: 1, liquid: 0.08, precipHours: 2, balance: 0.08, maxTempF: 36, minTempF: 27 },
-    { ageDays: 2, liquid: 0.04, precipHours: 2, balance: 0.04, maxTempF: 42, minTempF: 33 },
+    {
+      ageDays: 1,
+      liquid: 0.08,
+      precipHours: 2,
+      balance: 0.08,
+      maxTempF: 36,
+      minTempF: 27,
+    },
+    {
+      ageDays: 2,
+      liquid: 0.04,
+      precipHours: 2,
+      balance: 0.04,
+      maxTempF: 42,
+      minTempF: 33,
+    },
   ]);
 
   const insight = interpretWetness(icy);
   assert.equal(insight.label, 'Slick/Icy');
 });
 
-test('decision layer maps labels to go/caution/avoid buckets', () => {
+test('decision layer maps labels to OK/Caution/Avoid buckets', () => {
   const dryDay = buildWetness([
     { ageDays: 1, liquid: 0, precipHours: 1, balance: 0, et0: 0.05 },
   ]);
-  const goInsight = interpretWetness(dryDay);
-  assert.equal(goInsight.decision, 'Go');
+  const okInsight = interpretWetness(dryDay);
+  assert.equal(okInsight.decision, 'OK');
 
   const slickDay = buildWetness([
     { ageDays: 0.2, liquid: 0.12, precipHours: 1, balance: 0.12 },

@@ -725,7 +725,7 @@ export const interpretWetness = (wetnessData = null) => {
     ) {
       return 'Caution';
     }
-    return 'Go';
+    return 'OK';
   })();
 
   const metricsSummary = [

@@ -33,9 +33,7 @@ export const isDirtLocation = (location) => {
  * @param {Date} dawnDate - Dawn date object
  */
 export const updateLocationBadge = (location, runStartMinutes, dawnDate) => {
-  const badge = document.querySelector(
-    '#runLocation + .dropdown-content .badge'
-  );
+  const badge = document.getElementById('daylightWarning');
   if (!badge) return;
 
   // Import daylight check function
@@ -44,11 +42,9 @@ export const updateLocationBadge = (location, runStartMinutes, dawnDate) => {
 
     if (daylightCheck.needed) {
       badge.textContent = daylightCheck.message;
-      badge.classList.add('badge-warning');
       badge.classList.remove('hidden');
     } else {
       badge.classList.add('hidden');
-      badge.classList.remove('badge-warning');
     }
   });
 };

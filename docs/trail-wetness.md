@@ -14,16 +14,16 @@ The calculator now derives a `WetnessInsight` object from Open‑Meteo daily his
 
 ### Output labels
 
-| Label        | When it triggers (abridged) | Suggested guidance |
-|--------------|-----------------------------|--------------------|
-| `Dry`        | Negligible liquid last 72h & net balance near zero | Full pace OK |
-| `Moist`      | ≥0.05" in 72h, ≥1 wet day, or net ≥0.15" | Watch a few soft pockets |
-| `Slick`      | ≥0.25" in 72h, ≥3 wet days, net ≥0.35", or freeze-thaw *with* recent liquid | Dial cornering, expect greasy tread |
-| `Muddy`      | ≥0.45" in 48h, heavy event, or net ≥0.6" | Poles/gaiters recommended |
-| `Soaked`     | ≥0.6" in 24h or net ≥1.3" | Expect standing water, big slowdowns |
-| `Slick/Icy`  | Freeze-thaw cycle with recent liquid | Icy slabs at dawn |
-| `Packed Snow`| Snowpack ≥0.25" but <1.0" | Microspikes advised |
-| `Snowbound`  | Snowpack ≥1.0" | Deep snow travel |
+| Label         | When it triggers (abridged)                                                 | Suggested guidance                   |
+| ------------- | --------------------------------------------------------------------------- | ------------------------------------ |
+| `Dry`         | Negligible liquid last 72h & net balance near zero                          | Full pace OK                         |
+| `Moist`       | ≥0.05" in 72h, ≥1 wet day, or net ≥0.15"                                    | Watch a few soft pockets             |
+| `Slick`       | ≥0.25" in 72h, ≥3 wet days, net ≥0.35", or freeze-thaw _with_ recent liquid | Dial cornering, expect greasy tread  |
+| `Muddy`       | ≥0.45" in 48h, heavy event, or net ≥0.6"                                    | Poles/gaiters recommended            |
+| `Soaked`      | ≥0.6" in 24h or net ≥1.3"                                                   | Expect standing water, big slowdowns |
+| `Slick/Icy`   | Freeze-thaw cycle with recent liquid                                        | Icy slabs at dawn                    |
+| `Packed Snow` | Snowpack ≥0.25" but <1.0"                                                   | Microspikes advised                  |
+| `Snowbound`   | Snowpack ≥1.0"                                                              | Deep snow travel                     |
 
 Each label carries a caution string piped into the awareness panel and retains the API-derived summary for tooltips.
 
@@ -33,13 +33,19 @@ The awareness tooltip also surfaces raw 24h/48h/72h liquid totals, net moisture 
 
 For quick go/no-go choices, the UI now maps labels into three buckets:
 
-| Decision | Labels included | Checklist |
-|----------|-----------------|-----------|
-| `Go` | Dry, Moist | Carry on—no tread damage risk flagged. |
+| Decision  | Labels included                                               | Checklist                                       |
+| --------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| `OK`      | Dry, Moist                                                    | Carry on—no tread damage risk flagged.          |
 | `Caution` | Slick, Slick/Icy, Packed Snow, Dry/Moist with freeze cautions | Run light and expect variable footing or glaze. |
-| `Avoid` | Muddy, Soaked, Snowbound | Trails will rut—stick to roads/boardwalks. |
+| `Avoid`   | Muddy, Soaked, Snowbound                                      | Trails will rut—stick to roads/boardwalks.      |
 
 The decision badge sits above the raw label so you can see both at a glance.
+
+- **Dawn icon thresholds:** yield when run start is within ±5 minutes of dawn; warning when the start is ≥6 minutes before dawn.
+- **Wind chill:** yield at ≤40°F, warning at ≤30°F.
+- **Precipitation probability:** yield at ≥30%, warning at ≥60%.
+- **Wet bulb temperature:** yield for 65–74°F, warning for ≥75°F.
+- **Trail status badge:** yield on `Caution`, warning on `Avoid`.
 
 If a freeze-thaw signal arrives with no recent liquid, the UI now leaves the core label at `Dry`/`Moist` but adds a dedicated icy caution instead of over-escalating to `Slick`.
 

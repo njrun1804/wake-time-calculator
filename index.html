@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Wake Time Calculator</title>
+    <title>Runner Wake Navigator</title>
 
     <!-- External Styles -->
     <link rel="preload" href="css/main.css" as="style" />
@@ -25,7 +25,7 @@
   <body>
     <div class="hero-bg" aria-hidden="true"></div>
     <main>
-      <h1>Wake Time Calculator</h1>
+      <h1>Runner Wake Navigator</h1>
 
       <!-- Weather Awareness Section -->
       <section
@@ -67,32 +67,41 @@
         <div class="aw-grid grid grid-cols-5 gap-2">
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Dawn</div>
-            <time class="value" id="awDawn" datetime="">—</time>
+            <div class="value">
+              <span class="status-icon hidden" id="awDawnIcon" aria-hidden="true">⚠</span>
+              <time id="awDawn" datetime="">—</time>
+            </div>
           </div>
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Wind chill</div>
-            <div class="value" id="awWindChill">—</div>
+            <div class="value">
+              <span class="status-icon hidden" id="awWindChillIcon" aria-hidden="true">⚠</span>
+              <span id="awWindChill">—</span>
+            </div>
           </div>
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Precip %</div>
-            <div class="value" id="awPoP">—</div>
+            <div class="value">
+              <span class="status-icon hidden" id="awPoPIcon" aria-hidden="true">⚠</span>
+              <span id="awPoP">—</span>
+            </div>
           </div>
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
             <div class="label">Wet bulb</div>
-            <div class="value" id="awWetBulb">—</div>
+            <div class="value">
+              <span class="status-icon hidden" id="awWetBulbIcon" aria-hidden="true">⚠</span>
+              <span id="awWetBulb">—</span>
+            </div>
           </div>
           <div class="aw-item rounded-xl bg-base-100 border border-base-300">
-            <div class="label">Trail Wetness</div>
+            <div class="label">Trail Status</div>
             <div class="value" id="awWetness">
-              <span class="decision-badge hidden" id="awDecision">Go</span>
-              <span id="awWetnessLabel">—</span>
+              <span class="decision-badge hidden" id="awDecision">OK</span>
             </div>
           </div>
         </div>
 
-        <div class="aw-note" id="awMsg">
-          Give location to load tomorrow's daylight &amp; conditions.
-        </div>
+        <div class="aw-note hidden" id="awMsg"></div>
         <p class="aw-credits">
           Powered by
           <a href="https://sunrisesunset.io" target="_blank" rel="noopener"
@@ -139,16 +148,33 @@
 
         <div class="form-row">
           <div class="field-group">
-            <label for="breakfastMinutes">Breakfast</label>
-            <select id="breakfastMinutes" name="breakfastMinutes" class="select select-bordered w-full">
-              <option value="0" selected>None (0 min)</option>
-              <option value="10">Quick (10 min)</option>
-              <option value="20">Standard (20 min)</option>
-              <option value="45">Leisure w/ coffee (45 min)</option>
-            </select>
+            <label id="breakfastLabel">Breakfast</label>
+            <div class="toggle-group" role="radiogroup" aria-labelledby="breakfastLabel">
+              <input
+                type="radio"
+                class="toggle-input"
+                name="breakfastToggle"
+                id="breakfastNo"
+                value="0"
+                checked
+              />
+              <label class="toggle-option" for="breakfastNo">No</label>
+              <input
+                type="radio"
+                class="toggle-input"
+                name="breakfastToggle"
+                id="breakfastYes"
+                value="30"
+              />
+              <label class="toggle-option" for="breakfastYes">Yes (30m)</label>
+            </div>
+            <input id="breakfastMinutes" name="breakfastMinutes" type="hidden" value="0" />
           </div>
           <div class="field-group">
-            <label for="runLocation">Run location</label>
+            <label for="runLocation">
+              Run location
+              <span id="daylightWarning" class="badge badge-warning badge-sm align-middle hidden ml-2 uppercase tracking-wide">Headlamp?</span>
+            </label>
             <select id="runLocation" name="runLocation" class="select select-bordered w-full">
               <optgroup label="Dirt by distance">
                 <option value="figure8" data-travel="14">Figure 8</option>
@@ -191,69 +217,16 @@
         </div>
 
         <!-- Info Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <!-- Latest Wake Card -->
-          <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100 info-card">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100 info-card focus-card">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
                   Latest Wake
                 </h3>
-                <div class="text-xl font-bold text-gray-900 mt-1" id="latestWake">--:--</div>
+                <div class="text-2xl font-extrabold text-gray-900 mt-1" id="latestWake">--:--</div>
               </div>
               <div class="text-2xl">⏰</div>
-            </div>
-          </div>
-
-          <!-- Run Start Card -->
-          <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100 info-card">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                  Run Start
-                </h3>
-                <div class="text-xl font-bold text-gray-900 mt-1" id="runStart">--:--</div>
-              </div>
-              <div class="text-2xl">🏃</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Time Breakdown Bar -->
-        <div class="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
-          <h2 class="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-3">
-            Time Allocation
-          </h2>
-          <div class="relative">
-            <div class="flex rounded-full overflow-hidden h-10 mb-3" id="timeBar" style="background: linear-gradient(to right, #e5e7eb, #f3f4f6);">
-              <div
-                class="bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-xs font-semibold text-white transition-all duration-500 relative overflow-hidden"
-                id="runBar"
-                style="flex-basis: 20%; display: none;"
-              >
-                <span class="relative z-10 drop-shadow" id="runBarText">Run</span>
-              </div>
-              <div
-                class="bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-xs font-semibold text-white transition-all duration-500"
-                id="prepBar"
-                style="flex-basis: 45%"
-              >
-                <span class="relative z-10 drop-shadow" id="prepBarText">Prep 45m</span>
-              </div>
-              <div
-                class="bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center text-xs font-semibold text-white transition-all duration-500"
-                id="travelBar"
-                style="flex-basis: 20%; display: none;"
-              >
-                <span class="relative z-10 drop-shadow" id="travelBarText">Travel</span>
-              </div>
-              <div
-                class="bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center text-xs font-semibold text-white transition-all duration-500"
-                id="breakfastBar"
-                style="flex-basis: 15%; display: none;"
-              >
-                <span class="relative z-10 drop-shadow" id="breakfastBarText">Breakfast</span>
-              </div>
             </div>
           </div>
         </div>

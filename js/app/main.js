@@ -63,23 +63,15 @@ class WakeTimeApp {
       runMinutes: document.getElementById('runMinutes'),
       runLocation: document.getElementById('runLocation'),
       travelMinutes: document.getElementById('travelMinutes'),
-      breakfastMinutes: document.getElementById('breakfastMinutes'),
+      breakfastHidden: document.getElementById('breakfastMinutes'),
+      breakfastOptions: Array.from(
+        document.querySelectorAll('input[name="breakfastToggle"]')
+      ),
 
       // Output elements
       chosenWake: document.getElementById('chosenWake'),
       prevDayBadge: document.getElementById('prevDayBadge'),
       latestWake: document.getElementById('latestWake'),
-      runStart: document.getElementById('runStart'),
-
-      // Time bar elements
-      runBar: document.getElementById('runBar'),
-      runBarText: document.getElementById('runBarText'),
-      prepBar: document.getElementById('prepBar'),
-      prepBarText: document.getElementById('prepBarText'),
-      travelBar: document.getElementById('travelBar'),
-      travelBarText: document.getElementById('travelBarText'),
-      breakfastBar: document.getElementById('breakfastBar'),
-      breakfastBarText: document.getElementById('breakfastBarText'),
     };
   }
 
@@ -99,10 +91,11 @@ class WakeTimeApp {
       this.state.runMinutes = parseInt(saved.run, 10) || 0;
     }
 
-    if (saved.breakfast && this.elements.breakfastMinutes) {
-      this.elements.breakfastMinutes.value = saved.breakfast;
-      this.state.breakfastMinutes = parseInt(saved.breakfast, 10) || 0;
-    }
+    const savedBreakfast = Number.parseInt(saved.breakfast, 10);
+    const breakfastValue = Number.isFinite(savedBreakfast)
+      ? savedBreakfast
+      : this.state.breakfastMinutes;
+    this.setBreakfastMinutes(breakfastValue);
 
     if (saved.location && this.elements.runLocation) {
       this.elements.runLocation.value = saved.location;
@@ -134,11 +127,16 @@ class WakeTimeApp {
     });
 
     // Breakfast change
-    this.elements.breakfastMinutes?.addEventListener('change', () => {
-      this.state.breakfastMinutes =
-        parseInt(this.elements.breakfastMinutes.value, 10) || 0;
-      this.saveAndRecalculate();
-    });
+    if (Array.isArray(this.elements.breakfastOptions)) {
+      this.elements.breakfastOptions.forEach((input) => {
+        input.addEventListener('change', () => {
+          if (!input.checked) return;
+          const value = Number.parseInt(input.value, 10) || 0;
+          this.setBreakfastMinutes(value);
+          this.saveAndRecalculate();
+        });
+      });
+    }
 
     // Location change
     this.elements.runLocation?.addEventListener('change', () => {
@@ -204,6 +202,23 @@ class WakeTimeApp {
   }
 
   /**
+   * Update breakfast minutes state and toggle selection.
+   * @param {number} value - Minutes to allocate for breakfast
+   */
+  setBreakfastMinutes(value) {
+    const normalized = Number.isFinite(value) ? value : 0;
+    this.state.breakfastMinutes = normalized;
+    if (this.elements.breakfastHidden) {
+      this.elements.breakfastHidden.value = normalized;
+    }
+    if (Array.isArray(this.elements.breakfastOptions)) {
+      this.elements.breakfastOptions.forEach((input) => {
+        input.checked = Number.parseInt(input.value, 10) === normalized;
+      });
+    }
+  }
+
+  /**
    * Persist state and trigger recalculation.
    */
   saveAndRecalculate() {
@@ -243,6 +258,11 @@ class WakeTimeApp {
    * Update the displayed schedule outputs.
    */
   updateDisplay(result) {
+    window.__latestSchedule = {
+      ...result,
+      runStartMinutes: toMinutes(result.runStartTime),
+    };
+
     // Update wake time display
     if (this.elements.chosenWake) {
       this.elements.chosenWake.textContent = result.wakeTime12;
@@ -261,71 +281,7 @@ class WakeTimeApp {
     if (this.elements.latestWake) {
       this.elements.latestWake.textContent = result.latestWakeTime12;
     }
-
-    if (this.elements.runStart) {
-      this.elements.runStart.textContent = result.runStartTime12;
-    }
-
-    // Update time bars
-    this.updateTimeBars(result);
   }
-
-  /**
-   * Render the proportional time allocation bar.
-   */
-  updateTimeBars(result) {
-    const total = result.totalMinutes || 1;
-    const { run, travel, breakfast, prep } = result.durations;
-
-    const pct = (value) =>
-      Number.isFinite(value) ? Number(((value / total) * 100).toFixed(2)) : 0;
-
-    // Calculate percentages
-    const runPct = pct(run);
-    const travelPct = pct(travel);
-    const breakfastPct = pct(breakfast);
-    const prepPct = Number(
-      Math.max(0, 100 - (runPct + travelPct + breakfastPct)).toFixed(2)
-    );
-
-    // Update run bar
-    if (this.elements.runBar) {
-      this.elements.runBar.style.flexBasis = `${runPct}%`;
-      this.elements.runBar.style.display = run > 0 ? 'flex' : 'none';
-      if (this.elements.runBarText && run > 0) {
-        this.elements.runBarText.textContent = `Run ${run}m`;
-      }
-    }
-
-    // Update travel bar
-    if (this.elements.travelBar) {
-      this.elements.travelBar.style.flexBasis = `${travelPct}%`;
-      this.elements.travelBar.style.display = travel > 0 ? 'flex' : 'none';
-      if (this.elements.travelBarText && travel > 0) {
-        this.elements.travelBarText.textContent = `Travel ${travel}m`;
-      }
-    }
-
-    // Update breakfast bar
-    if (this.elements.breakfastBar) {
-      this.elements.breakfastBar.style.flexBasis = `${breakfastPct}%`;
-      this.elements.breakfastBar.style.display =
-        breakfast > 0 ? 'flex' : 'none';
-      if (this.elements.breakfastBarText && breakfast > 0) {
-        this.elements.breakfastBarText.textContent = `Breakfast ${breakfast}m`;
-      }
-    }
-
-    // Update prep bar
-    if (this.elements.prepBar) {
-      this.elements.prepBar.style.display = 'flex';
-      this.elements.prepBar.style.flexBasis = `${prepPct}%`;
-      if (this.elements.prepBarText) {
-        this.elements.prepBarText.textContent = `Prep ${prep}m`;
-      }
-    }
-  }
-
   /**
    * Surface awareness initialization errors gracefully.
    */

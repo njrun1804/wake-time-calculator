@@ -20,6 +20,22 @@ import {
   geocodePlace,
   validateCoordinates,
 } from './location.js';
+import { toMinutes } from '../lib/calculator.js';
+
+const setStatusIcon = (iconEl, status) => {
+  if (!iconEl) return;
+  iconEl.classList.add('hidden');
+  iconEl.classList.remove('icon-yield', 'icon-warning');
+  if (status === 'yield') {
+    iconEl.textContent = '⚠';
+    iconEl.classList.remove('hidden');
+    iconEl.classList.add('icon-yield');
+  } else if (status === 'warning') {
+    iconEl.textContent = '⛔';
+    iconEl.classList.remove('hidden');
+    iconEl.classList.add('icon-warning');
+  }
+};
 
 /**
  * Weather awareness UI elements cache
@@ -44,8 +60,11 @@ const cacheAwarenessElements = () => {
       awWindChill: document.getElementById('awWindChill'),
       awPoP: document.getElementById('awPoP'),
       awWetBulb: document.getElementById('awWetBulb'),
+      awDawnIcon: document.getElementById('awDawnIcon'),
+      awWindChillIcon: document.getElementById('awWindChillIcon'),
+      awPoPIcon: document.getElementById('awPoPIcon'),
+      awWetBulbIcon: document.getElementById('awWetBulbIcon'),
       awWetness: document.getElementById('awWetness'),
-      awWetnessLabel: document.getElementById('awWetnessLabel'),
       awDecision: document.getElementById('awDecision'),
       useLoc: document.getElementById('useMyLocation'),
       placeInput: document.getElementById('placeQuery'),
@@ -98,14 +117,9 @@ const updateAwarenessDisplay = (data) => {
     els.awPoP.title = 'Probability of precip for the hour around dawn';
   }
 
-  const hasWetnessUi =
-    els.awWetness || els.awWetnessLabel || els.awDecision || els.awMsg;
+  const hasWetnessUi = els.awWetness || els.awDecision || els.awMsg;
   if (hasWetnessUi) {
     const wetnessInsight = interpretWetness(wetnessData);
-
-    if (els.awWetnessLabel) {
-      els.awWetnessLabel.textContent = wetnessInsight.label;
-    }
 
     if (els.awWetness) {
       const tooltip = wetnessInsight.detail || wetnessData?.summary;
@@ -117,48 +131,80 @@ const updateAwarenessDisplay = (data) => {
     }
 
     if (els.awDecision) {
-      const decision = wetnessInsight.decision;
+      const decision = wetnessInsight.decision || 'OK';
       els.awDecision.classList.remove(
         'hidden',
-        'decision-go',
+        'decision-ok',
         'decision-caution',
         'decision-avoid'
       );
-      if (decision) {
-        const className =
-          decision === 'Go'
-            ? 'decision-go'
-            : decision === 'Avoid'
-            ? 'decision-avoid'
-            : 'decision-caution';
-        els.awDecision.textContent = decision;
-        els.awDecision.classList.add(className);
-      } else {
-        els.awDecision.classList.add('hidden');
-      }
+      const classNameMap = {
+        OK: 'decision-ok',
+        Caution: 'decision-caution',
+        Avoid: 'decision-avoid',
+      };
+      const className = classNameMap[decision] || 'decision-caution';
+      els.awDecision.textContent = decision;
+      els.awDecision.classList.add(className);
     }
 
     if (els.awMsg) {
-      if (wetnessInsight.caution) {
-        els.awMsg.textContent = wetnessInsight.caution;
-      } else {
-        const decisionMessageMap = {
-          Go: 'Go — trails look good with minimal damage risk.',
-          Caution:
-            'Caution — expect variable footing and tread lightly on soft spots.',
-          Avoid:
-            'Avoid — high damage risk today; opt for roads or boardwalks.',
-        };
-        const fallback = els.defaultMsg ?? '';
-        els.awMsg.textContent =
-          decisionMessageMap[wetnessInsight.decision] || fallback;
-      }
+      els.awMsg.textContent = '';
+      els.awMsg.classList.add('hidden');
     }
 
     // Surface latest insight for quick console inspection
     window.__latestWetnessInsight = wetnessInsight;
     window.__latestWetnessRaw = wetnessData;
   }
+
+  const schedule = window.__latestSchedule;
+  const runStartMinutes = schedule
+    ? (schedule.runStartMinutes ?? toMinutes(schedule.runStartTime))
+    : null;
+  const dawnMinutes = dawn ? dawn.getHours() * 60 + dawn.getMinutes() : null;
+
+  let dawnStatus = 'none';
+  if (dawnMinutes !== null && typeof runStartMinutes === 'number') {
+    const diff = runStartMinutes - dawnMinutes;
+    if (diff <= 5 && diff >= -5) {
+      dawnStatus = 'yield';
+    } else if (diff < -5) {
+      dawnStatus = 'warning';
+    }
+  }
+
+  const windStatus =
+    typeof windChillF === 'number'
+      ? windChillF <= 30
+        ? 'warning'
+        : windChillF <= 40
+          ? 'yield'
+          : 'none'
+      : 'none';
+
+  const precipStatus =
+    typeof pop === 'number'
+      ? pop >= 60
+        ? 'warning'
+        : pop >= 30
+          ? 'yield'
+          : 'none'
+      : 'none';
+
+  const wetBulbStatus =
+    typeof wetBulbF === 'number'
+      ? wetBulbF >= 75
+        ? 'warning'
+        : wetBulbF >= 65
+          ? 'yield'
+          : 'none'
+      : 'none';
+
+  setStatusIcon(els.awDawnIcon, dawnStatus);
+  setStatusIcon(els.awWindChillIcon, windStatus);
+  setStatusIcon(els.awPoPIcon, precipStatus);
+  setStatusIcon(els.awWetBulbIcon, wetBulbStatus);
 
   // Store dawn for daylight check
   currentDawnDate = dawn;
@@ -177,6 +223,19 @@ const showAwarenessError = (message) => {
   const els = cacheAwarenessElements();
   if (els?.awMsg) {
     els.awMsg.textContent = message;
+    els.awMsg.classList.remove('hidden');
+  }
+  setStatusIcon(els?.awDawnIcon, 'none');
+  setStatusIcon(els?.awWindChillIcon, 'none');
+  setStatusIcon(els?.awPoPIcon, 'none');
+  setStatusIcon(els?.awWetBulbIcon, 'none');
+  if (els?.awDecision) {
+    els.awDecision.classList.add('hidden');
+    els.awDecision.classList.remove(
+      'decision-ok',
+      'decision-caution',
+      'decision-avoid'
+    );
   }
 };
 

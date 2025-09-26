@@ -8,28 +8,48 @@ test.describe('Wake time calculator – core planner @core', () => {
     await expect(page.locator('#chosenWake')).toHaveText('7:45 AM');
 
     await page.fill('#runMinutes', '50');
-    await page.selectOption('#breakfastMinutes', '10');
+    await page.getByLabel('Yes (30m)').click();
     await page.selectOption('#runLocation', 'figure8');
 
     await expect(page.locator('#travelMinutes')).toHaveValue('14');
-    await expect(page.locator('#chosenWake')).toHaveText('6:31 AM');
-    await expect(page.locator('#latestWake')).toHaveText('6:55 AM');
-    await expect(page.locator('#runStart')).toHaveText('6:41 AM');
+
+    const expected = calculateWakeTime({
+      meeting: '08:30',
+      runMinutes: 50,
+      travelMinutes: 14,
+      breakfastMinutes: 30,
+    });
+
+    await expect(page.locator('#chosenWake')).toHaveText(expected.wakeTime12);
+    await expect(page.locator('#latestWake')).toHaveText(
+      expected.latestWakeTime12
+    );
   });
 
-  test('highlights previous-day wake times for long plans', async ({ page }) => {
+  test('highlights previous-day wake times for long plans', async ({
+    page,
+  }) => {
     await page.goto('/index.html');
 
     await page.selectOption('#firstMeeting', '06:00');
     await page.fill('#runMinutes', '240');
-    await page.selectOption('#breakfastMinutes', '45');
+    await page.getByLabel('Yes (30m)').click();
     await page.selectOption('#runLocation', 'holmdel');
 
+    const expected = calculateWakeTime({
+      meeting: '06:00',
+      runMinutes: 240,
+      travelMinutes: 50,
+      breakfastMinutes: 30,
+    });
+
     await expect(page.locator('#prevDayBadge')).toBeVisible();
-    await expect(page.locator('#chosenWake')).toHaveText('11:40 PM');
+    await expect(page.locator('#chosenWake')).toHaveText(expected.wakeTime12);
   });
 
-  test('shows baseline wake windows for each meeting option', async ({ page }) => {
+  test('shows baseline wake windows for each meeting option', async ({
+    page,
+  }) => {
     await page.goto('/index.html');
 
     const meetings = await page.$$eval('#firstMeeting option', (options) =>
@@ -45,12 +65,12 @@ test.describe('Wake time calculator – core planner @core', () => {
       await page.locator('#runForm').evaluate((form) => form.reset());
       await page.fill('#runMinutes', '0');
       await page.selectOption('#runLocation', 'round-town');
-      await page.selectOption('#breakfastMinutes', '0');
+      await page.getByLabel('No').click();
       await page.selectOption('#firstMeeting', meeting);
 
       await expect(page.locator('#chosenWake')).toHaveText(expected.wakeTime12);
       await expect(page.locator('#latestWake')).toHaveText(
-        expected.latestWakeTime12,
+        expected.latestWakeTime12
       );
     }
   });
