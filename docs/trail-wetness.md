@@ -29,6 +29,18 @@ Each label carries a caution string piped into the awareness panel and retains t
 
 The awareness tooltip also surfaces raw 24h/48h/72h liquid totals, net moisture balance, the applied ET₀ drying offset (with the actual percentage), recent wet-day count, and freeze/thaw cycles so you can sanity-check the model against field notes quickly.
 
+### Runner decision layer
+
+For quick go/no-go choices, the UI now maps labels into three buckets:
+
+| Decision | Labels included | Checklist |
+|----------|-----------------|-----------|
+| `Go` | Dry, Moist | Carry on—no tread damage risk flagged. |
+| `Caution` | Slick, Slick/Icy, Packed Snow, Dry/Moist with freeze cautions | Run light and expect variable footing or glaze. |
+| `Avoid` | Muddy, Soaked, Snowbound | Trails will rut—stick to roads/boardwalks. |
+
+The decision badge sits above the raw label so you can see both at a glance.
+
 If a freeze-thaw signal arrives with no recent liquid, the UI now leaves the core label at `Dry`/`Moist` but adds a dedicated icy caution instead of over-escalating to `Slick`.
 
 Confidence is marked `low` (<4 sampled days), `medium` (4–5), or `high` (≥6) and rendered in the tooltip to signal data sparsity.

@@ -29,19 +29,14 @@ const buildWetness = (daily) => {
   const totals = daily.reduce(
     (acc, entry) => {
       const melt = entry.melt ?? 0;
-      const rain =
-        entry.rain ?? Math.max(0, (entry.liquid ?? 0) - (entry.melt ?? 0));
+      const rain = entry.rain ?? Math.max(0, (entry.liquid ?? 0) - melt);
       acc.rainfall += rain;
       acc.melt += melt;
       acc.drying += entry.drying ?? 0;
       acc.et0 += entry.et0 ?? 0;
       return acc;
     },
-<<<<<<< HEAD
-    { precipitation: 0, melt: 0, drying: 0, et0: 0 }
-=======
-    { rainfall: 0, melt: 0, drying: 0 }
->>>>>>> 7315228 (Refine wetness totals to avoid snowmelt double counting)
+    { rainfall: 0, melt: 0, drying: 0, et0: 0 }
   );
 
   const recentWetDays = daily.filter((entry) => (entry.liquid ?? 0) > 0.05).length;
@@ -98,6 +93,28 @@ test('freeze-thaw with recent moisture escalates to slick icy', () => {
 
   const insight = interpretWetness(icy);
   assert.equal(insight.label, 'Slick/Icy');
+});
+
+test('decision layer maps labels to go/caution/avoid buckets', () => {
+  const dryDay = buildWetness([
+    { ageDays: 1, liquid: 0, precipHours: 1, balance: 0, et0: 0.05 },
+  ]);
+  const goInsight = interpretWetness(dryDay);
+  assert.equal(goInsight.decision, 'Go');
+
+  const slickDay = buildWetness([
+    { ageDays: 0.2, liquid: 0.12, precipHours: 1, balance: 0.12 },
+    { ageDays: 1.2, liquid: 0.05, precipHours: 2, balance: 0.05 },
+  ]);
+  const cautionInsight = interpretWetness(slickDay);
+  assert.equal(cautionInsight.decision, 'Caution');
+
+  const muddyDay = buildWetness([
+    { ageDays: 0.2, liquid: 0.45, precipHours: 3, balance: 0.45 },
+    { ageDays: 1.2, liquid: 0.35, precipHours: 3, balance: 0.35 },
+  ]);
+  const avoidInsight = interpretWetness(muddyDay);
+  assert.equal(avoidInsight.decision, 'Avoid');
 });
 
 test('net liquid subtracts the full scaled drying total', () => {

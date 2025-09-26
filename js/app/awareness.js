@@ -36,17 +36,21 @@ let currentDawnDate = null;
  */
 const cacheAwarenessElements = () => {
   if (!awarenessElements) {
+    const awMsgEl = document.getElementById('awMsg');
     awarenessElements = {
       awCity: document.getElementById('awCity'),
       awDawn: document.getElementById('awDawn'),
-      awMsg: document.getElementById('awMsg'),
+      awMsg: awMsgEl,
       awWindChill: document.getElementById('awWindChill'),
       awPoP: document.getElementById('awPoP'),
       awWetBulb: document.getElementById('awWetBulb'),
       awWetness: document.getElementById('awWetness'),
+      awWetnessLabel: document.getElementById('awWetnessLabel'),
+      awDecision: document.getElementById('awDecision'),
       useLoc: document.getElementById('useMyLocation'),
       placeInput: document.getElementById('placeQuery'),
       setPlace: document.getElementById('setPlace'),
+      defaultMsg: awMsgEl ? awMsgEl.textContent : '',
     };
   }
   return awarenessElements;
@@ -94,19 +98,61 @@ const updateAwarenessDisplay = (data) => {
     els.awPoP.title = 'Probability of precip for the hour around dawn';
   }
 
-  // Update surface conditions
-  if (els.awWetness) {
+  const hasWetnessUi =
+    els.awWetness || els.awWetnessLabel || els.awDecision || els.awMsg;
+  if (hasWetnessUi) {
     const wetnessInsight = interpretWetness(wetnessData);
-    els.awWetness.textContent = wetnessInsight.label;
-    const tooltip = wetnessInsight.detail || wetnessData?.summary;
-    if (tooltip) {
-      els.awWetness.title = tooltip;
-    } else {
-      els.awWetness.removeAttribute('title');
+
+    if (els.awWetnessLabel) {
+      els.awWetnessLabel.textContent = wetnessInsight.label;
     }
 
-    if (wetnessInsight.caution) {
-      els.awMsg.textContent = wetnessInsight.caution;
+    if (els.awWetness) {
+      const tooltip = wetnessInsight.detail || wetnessData?.summary;
+      if (tooltip) {
+        els.awWetness.title = tooltip;
+      } else {
+        els.awWetness.removeAttribute('title');
+      }
+    }
+
+    if (els.awDecision) {
+      const decision = wetnessInsight.decision;
+      els.awDecision.classList.remove(
+        'hidden',
+        'decision-go',
+        'decision-caution',
+        'decision-avoid'
+      );
+      if (decision) {
+        const className =
+          decision === 'Go'
+            ? 'decision-go'
+            : decision === 'Avoid'
+            ? 'decision-avoid'
+            : 'decision-caution';
+        els.awDecision.textContent = decision;
+        els.awDecision.classList.add(className);
+      } else {
+        els.awDecision.classList.add('hidden');
+      }
+    }
+
+    if (els.awMsg) {
+      if (wetnessInsight.caution) {
+        els.awMsg.textContent = wetnessInsight.caution;
+      } else {
+        const decisionMessageMap = {
+          Go: 'Go — trails look good with minimal damage risk.',
+          Caution:
+            'Caution — expect variable footing and tread lightly on soft spots.',
+          Avoid:
+            'Avoid — high damage risk today; opt for roads or boardwalks.',
+        };
+        const fallback = els.defaultMsg ?? '';
+        els.awMsg.textContent =
+          decisionMessageMap[wetnessInsight.decision] || fallback;
+      }
     }
 
     // Surface latest insight for quick console inspection
