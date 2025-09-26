@@ -62,7 +62,7 @@ test.describe('Wake time calculator – core planner @core', () => {
     }));
 
     for (const { meeting, expected } of expectations) {
-      await page.locator('#runForm').evaluate((form) => form.reset());
+      await page.locator('#wakeForm').evaluate((form) => form.reset());
       await page.fill('#runMinutes', '0');
       await page.selectOption('#runLocation', 'round-town');
       await page.getByLabel('No').click();

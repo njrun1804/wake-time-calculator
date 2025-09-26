@@ -69,7 +69,8 @@ const cacheAwarenessElements = () => {
       awPoPIcon: document.getElementById('awPoPIcon'),
       awWetBulbIcon: document.getElementById('awWetBulbIcon'),
       awWetness: document.getElementById('awWetness'),
-      awDecision: document.getElementById('awDecision'),
+      awDecisionIcon: document.getElementById('awDecisionIcon'),
+      awDecisionText: document.getElementById('awDecisionText'),
       useLoc: document.getElementById('useMyLocation'),
       placeInput: document.getElementById('placeQuery'),
       setPlace: document.getElementById('setPlace'),
@@ -121,7 +122,8 @@ const updateAwarenessDisplay = (data) => {
     els.awPoP.title = 'Probability of precip for the hour around dawn';
   }
 
-  const hasWetnessUi = els.awWetness || els.awDecision || els.awMsg;
+  const hasWetnessUi =
+    els.awWetness || els.awDecisionText || els.awDecisionIcon || els.awMsg;
   if (hasWetnessUi) {
     const wetnessInsight = interpretWetness(wetnessData);
 
@@ -134,22 +136,18 @@ const updateAwarenessDisplay = (data) => {
       }
     }
 
-    if (els.awDecision) {
-      const decision = wetnessInsight.decision || 'OK';
-      els.awDecision.classList.remove(
-        'hidden',
-        'decision-ok',
-        'decision-caution',
-        'decision-avoid'
-      );
-      const classNameMap = {
-        OK: 'decision-ok',
-        Caution: 'decision-caution',
-        Avoid: 'decision-avoid',
-      };
-      const className = classNameMap[decision] || 'decision-caution';
-      els.awDecision.textContent = decision;
-      els.awDecision.classList.add(className);
+    const decision = wetnessInsight.decision || 'OK';
+    if (els.awDecisionText) {
+      els.awDecisionText.textContent = decision;
+    }
+    if (els.awDecisionIcon) {
+      const decisionStatus =
+        decision === 'Avoid'
+          ? 'warning'
+          : decision === 'Caution'
+            ? 'yield'
+            : 'ok';
+      setStatusIcon(els.awDecisionIcon, decisionStatus);
     }
 
     if (els.awMsg) {
@@ -233,13 +231,11 @@ const showAwarenessError = (message) => {
   setStatusIcon(els?.awWindChillIcon, 'none');
   setStatusIcon(els?.awPoPIcon, 'none');
   setStatusIcon(els?.awWetBulbIcon, 'none');
-  if (els?.awDecision) {
-    els.awDecision.classList.add('hidden');
-    els.awDecision.classList.remove(
-      'decision-ok',
-      'decision-caution',
-      'decision-avoid'
-    );
+  if (els?.awDecisionIcon) {
+    setStatusIcon(els.awDecisionIcon, 'none');
+  }
+  if (els?.awDecisionText) {
+    els.awDecisionText.textContent = '—';
   }
 };
 
