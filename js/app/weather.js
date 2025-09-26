@@ -11,6 +11,7 @@ const DEFAULT_DRYING_COEFFICIENT = 0.6;
 const DEFAULT_DECAY_BASE = 0.85;
 const SNOW_MELT_THRESHOLD_F = 34;
 const MAX_INTENSITY_BOOST = 1.35;
+const SNOW_TO_WATER_RATIO = 0.1;
 
 /**
  * Weather cache for API responses
@@ -110,8 +111,16 @@ const createWetnessSummary = (wetness) => {
       : `-${inches(totals.drying)} drying`;
     parts.push(dryingSummary);
   }
-  if (snowpackRemaining > 0.05) {
-    parts.push(`${inches(snowpackRemaining)} snowpack remains`);
+  if (snowpackRemaining > 0) {
+    const snowDepth =
+      SNOW_TO_WATER_RATIO > 0
+        ? snowpackRemaining / SNOW_TO_WATER_RATIO
+        : snowpackRemaining;
+    if (snowDepth > 0.05) {
+      const sweText = inches(snowpackRemaining);
+      const depthText = inches(snowDepth);
+      parts.push(`${sweText} SWE (${depthText} depth) snowpack remains`);
+    }
   }
   if (recentWetDays > 0) {
     parts.push(`${recentWetDays} wet day${recentWetDays === 1 ? '' : 's'}`);
@@ -192,11 +201,12 @@ export const computeWetness = (
 
     const precipTotal = coerceNumber(precipitation);
     const rainIn = numberOrNull(rain) ?? precipTotal;
-    const snowIn = Math.max(0, numberOrNull(snowfall) ?? 0);
+    const snowDepthIn = Math.max(0, numberOrNull(snowfall) ?? 0);
+    const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO;
     const et0In = Math.max(0, numberOrNull(et0) ?? 0);
     totalEt0 += et0In;
 
-    runningSnowpack += snowIn;
+    runningSnowpack += snowSwe;
 
     let melt = 0;
     const thawTemp = numberOrNull(maxTempF);
@@ -270,7 +280,8 @@ export const computeWetness = (
     return {
       date,
       rain: rainIn,
-      snowfall: snowIn,
+      snowfall: snowDepthIn,
+      snowfallSWE: snowSwe,
       melt,
       et0: et0In,
       precipHours: numberOrNull(precipHours),
@@ -510,10 +521,12 @@ export const interpretWetness = (wetnessData = null) => {
   }
 
   const events = Array.isArray(wetnessData.events) ? wetnessData.events : [];
-  const snowpack = Math.max(
+  const snowpackSWE = Math.max(
     0,
     numberOrNull(wetnessData.snowpackRemaining) ?? 0
   );
+  const snowpackDepth =
+    SNOW_TO_WATER_RATIO > 0 ? snowpackSWE / SNOW_TO_WATER_RATIO : snowpackSWE;
   const recentWetDays = Math.max(
     0,
     numberOrNull(wetnessData.recentWetDays) ?? 0
@@ -586,7 +599,7 @@ export const interpretWetness = (wetnessData = null) => {
 
   const freezeWithLiquid =
     freezeThawCycles > 0 &&
-    (last24 >= 0.02 || last48 >= 0.03 || moistSignal || snowpack >= 0.1);
+    (last24 >= 0.02 || last48 >= 0.03 || moistSignal || snowpackDepth >= 0.1);
 
   const freezeOnly = freezeThawCycles > 0 && !freezeWithLiquid;
 
@@ -598,7 +611,9 @@ export const interpretWetness = (wetnessData = null) => {
     dryingTotal,
     et0Total,
     netLiquid,
-    snowpack,
+    snowpack: snowpackDepth,
+    snowpackDepth,
+    snowpackSWE,
     recentWetDays,
     heavyEvent,
     freezeThawCycles,
@@ -616,11 +631,11 @@ export const interpretWetness = (wetnessData = null) => {
   let caution = '';
   let rating = 1;
 
-  if (snowpack >= 1) {
+  if (snowpackDepth >= 1) {
     label = 'Snowbound';
     caution = 'Deep snow coverage—expect winter footing throughout.';
     rating = 5;
-  } else if (snowpack >= 0.25) {
+  } else if (snowpackDepth >= 0.25) {
     label = 'Packed Snow';
     caution = 'Lingering snow/ice—microspikes recommended.';
     rating = 4;
