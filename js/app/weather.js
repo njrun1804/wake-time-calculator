@@ -219,7 +219,19 @@ export const computeWetness = (
       return 1;
     })();
 
-    const drying = dryingCoefficient * et0In;
+    const entryDate = date ? new Date(date) : null;
+    const month = entryDate
+      ? entryDate.getMonth()
+      : refDate
+      ? refDate.getMonth()
+      : new Date().getMonth();
+    const leafOn = month >= 3 && month <= 9; // Apr–Oct
+    const warmSeasonCoefficient = dryingCoefficient;
+    const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5);
+    const seasonalDryingCoefficient = leafOn
+      ? warmSeasonCoefficient
+      : coolSeasonCoefficient;
+    const drying = seasonalDryingCoefficient * et0In;
     totalDrying += drying;
 
     const dailyBalance = (liquid - drying) * intensityBoost;
@@ -460,6 +472,13 @@ const sumWindowLiquid = (events, maxAgeDays) =>
 const formatInches = (value) =>
   value >= 0.995 ? `${value.toFixed(1)}"` : `${value.toFixed(2)}"`;
 
+const formatSignedInches = (value) => {
+  const magnitude = Math.abs(value);
+  const formatted = formatInches(magnitude);
+  const sign = value >= 0 ? '+' : '-';
+  return `${sign}${formatted}`;
+};
+
 const confidenceForWindow = (analysisDays = 0) => {
   if (analysisDays >= 6) return 'high';
   if (analysisDays >= 4) return 'medium';
@@ -498,6 +517,14 @@ export const interpretWetness = (wetnessData = null) => {
   const last24 = sumWindowLiquid(events, 1.1);
   const last48 = sumWindowLiquid(events, 2.1);
   const last72 = sumWindowLiquid(events, 3.1);
+  const wetDaysLast72 = events.reduce((count, evt) => {
+    if (!evt) return count;
+    const age = typeof evt.ageDays === 'number' ? evt.ageDays : Infinity;
+    if (age > 3) return count;
+    const liquidAmt = Math.max(0, numberOrNull(evt.liquid) ?? 0);
+    const meltAmt = Math.max(0, numberOrNull(evt.melt) ?? 0);
+    return liquidAmt + meltAmt >= 0.02 ? count + 1 : count;
+  }, 0);
 
   const heavyEvent = events.some(
     (evt) =>
@@ -535,6 +562,15 @@ export const interpretWetness = (wetnessData = null) => {
     );
   }
 
+  const moistSignal =
+    last72 >= 0.05 || netLiquid >= 0.15 || wetDaysLast72 >= 1;
+
+  const freezeWithLiquid =
+    freezeThawCycles > 0 &&
+    (last24 >= 0.02 || last48 >= 0.03 || moistSignal || snowpack >= 0.1);
+
+  const freezeOnly = freezeThawCycles > 0 && !freezeWithLiquid;
+
   const stats = {
     last24,
     last48,
@@ -546,6 +582,9 @@ export const interpretWetness = (wetnessData = null) => {
     recentWetDays,
     heavyEvent,
     freezeThawCycles,
+    wetDaysLast72,
+    freezeWithLiquid,
+    moistSignal,
   };
 
   const confidence = confidenceForWindow(wetnessData.analysisDays);
@@ -583,14 +622,15 @@ export const interpretWetness = (wetnessData = null) => {
       last72 >= 0.25 ||
       recentWetDays >= 3 ||
       netLiquid >= 0.35 ||
-      freezeThawCycles >= 1
+      freezeWithLiquid
     ) {
-      label = freezeThawCycles ? 'Slick/Icy' : 'Slick';
-      caution = freezeThawCycles
+      const icy = freezeWithLiquid;
+      label = icy ? 'Slick/Icy' : 'Slick';
+      caution = icy
         ? 'Freeze-thaw has glazed shady sections—watch for ice.'
         : 'Soft tacky ground—expect slower corners and climbs.';
       rating = 3;
-    } else if (last72 >= 0.1 || netLiquid >= 0.15) {
+    } else if (moistSignal) {
       label = 'Moist';
       caution =
         'Mostly runnable with the odd soft pocket—good for long efforts.';
@@ -598,13 +638,32 @@ export const interpretWetness = (wetnessData = null) => {
     }
   }
 
-  if (!caution && freezeThawCycles && rating < 3) {
-    label = 'Slick/Icy';
-    caution = 'Freeze-thaw overnight—icy patches likely before sunrise.';
-    rating = Math.max(rating, 3);
+  if (freezeOnly) {
+    caution = caution
+      ? `${caution} Icy bridges possible from overnight refreeze.`
+      : 'Freeze-thaw overnight—bridges may still be icy despite dry tread.';
+    rating = Math.max(rating, 2);
   }
 
-  const detail = detailParts.join(' · ') || wetnessData.summary || '';
+  const metricsSummary = [
+    `24h ${formatInches(last24)}`,
+    `48h ${formatInches(last48)}`,
+    `72h ${formatInches(last72)}`,
+    `Net ${formatSignedInches(netLiquid)}`,
+  ];
+  if (wetDaysLast72 > 0) {
+    metricsSummary.push(
+      `${wetDaysLast72} wet day${wetDaysLast72 === 1 ? '' : 's'} (72h)`
+    );
+  }
+  if (freezeThawCycles > 0) {
+    metricsSummary.push(`Freeze/thaw ${freezeThawCycles}`);
+  }
+
+  const detail =
+    [...detailParts, metricsSummary.join(' · ')]
+      .filter(Boolean)
+      .join(' · ') || wetnessData.summary || '';
 
   return {
     label,

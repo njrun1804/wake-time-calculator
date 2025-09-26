@@ -17,15 +17,19 @@ The calculator now derives a `WetnessInsight` object from Open‑Meteo daily his
 | Label        | When it triggers (abridged) | Suggested guidance |
 |--------------|-----------------------------|--------------------|
 | `Dry`        | Negligible liquid last 72h & net balance near zero | Full pace OK |
-| `Moist`      | 0.10"–0.25" in last 72h or light net balance | Watch a few soft pockets |
-| `Slick`      | ≥0.25" in 72h, ≥3 wet days, or 1 freeze/thaw | Dial cornering, expect greasy tread |
+| `Moist`      | ≥0.05" in 72h, ≥1 wet day, or net ≥0.15" | Watch a few soft pockets |
+| `Slick`      | ≥0.25" in 72h, ≥3 wet days, net ≥0.35", or freeze-thaw *with* recent liquid | Dial cornering, expect greasy tread |
 | `Muddy`      | ≥0.45" in 48h, heavy event, or net ≥0.6" | Poles/gaiters recommended |
 | `Soaked`     | ≥0.6" in 24h or net ≥1.3" | Expect standing water, big slowdowns |
-| `Slick/Icy`  | Any freeze-thaw cycle paired with low liquid | Icy slabs at dawn |
+| `Slick/Icy`  | Freeze-thaw cycle with recent liquid | Icy slabs at dawn |
 | `Packed Snow`| Snowpack ≥0.25" but <1.0" | Microspikes advised |
 | `Snowbound`  | Snowpack ≥1.0" | Deep snow travel |
 
 Each label carries a caution string piped into the awareness panel and retains the API-derived summary for tooltips.
+
+The awareness tooltip also surfaces raw 24h/48h/72h liquid totals, net moisture balance, recent wet-day count, and freeze/thaw cycles so you can sanity-check the model against field notes quickly.
+
+If a freeze-thaw signal arrives with no recent liquid, the UI now leaves the core label at `Dry`/`Moist` but adds a dedicated icy caution instead of over-escalating to `Slick`.
 
 Confidence is marked `low` (<4 sampled days), `medium` (4–5), or `high` (≥6) and rendered in the tooltip to signal data sparsity.
 
@@ -34,8 +38,9 @@ Confidence is marked `low` (<4 sampled days), `medium` (4–5), or `high` (≥6)
 1. **Model calibration** – Capture manual trail conditions after key storms to tune thresholds. Store these in a lightweight JSON log to iterate without redeploying code.
 2. **Soil type modifiers** – Introduce presets per route (e.g., Hartshorne sand vs. Allaire clay). These can weight the breakpoints above.
 3. **Trailhead sensors** – Optional integration with USGS or PRISM snow-water equivalent feeds for better snowpack confidence.
-4. **RPE impact estimate** – Map each category to an expected pace penalty (min/mi delta) so race plans can auto-adjust.
-5. **Unit tests** – Add fixture-based unit specs (dry spell, heavy rain, freeze-thaw) to lock thresholds and support future tuning.
+4. **Seasonal drying curve** – The code now halves ET₀ in the leaf-off months; revisit coefficients after a few winter logs to ensure we’re not over-drying frozen ground.
+5. **RPE impact estimate** – Map each category to an expected pace penalty (min/mi delta) so race plans can auto-adjust.
+6. **Unit tests** – Add fixture-based unit specs (dry spell, heavy rain, freeze-thaw) to lock thresholds and support future tuning.
 
 ## Proposed Path to "Your Satisfaction"
 
