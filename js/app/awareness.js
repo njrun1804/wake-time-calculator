@@ -166,13 +166,15 @@ const updateAwarenessDisplay = (data) => {
   }
 
   const schedule = window.__latestSchedule;
-  const runStartMinutes = schedule
+  const scheduleStart = schedule
     ? (schedule.runStartMinutes ?? toMinutes(schedule.runStartTime))
     : null;
-  const dawnMinutes = dawn ? dawn.getHours() * 60 + dawn.getMinutes() : null;
+  const runStartMinutes = Number.isFinite(scheduleStart) ? scheduleStart : null;
+  const dawnMinutesRaw = dawn ? dawn.getHours() * 60 + dawn.getMinutes() : null;
+  const dawnMinutes = Number.isFinite(dawnMinutesRaw) ? dawnMinutesRaw : null;
 
   let dawnStatus = 'ok';
-  if (dawnMinutes !== null && typeof runStartMinutes === 'number') {
+  if (dawnMinutes !== null && runStartMinutes !== null) {
     const diff = runStartMinutes - dawnMinutes;
     if (diff <= 5 && diff >= -5) {
       dawnStatus = 'yield';
