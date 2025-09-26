@@ -23,6 +23,7 @@ const buildWetness = (daily) => {
     precipHours: entry.precipHours ?? 1,
     maxTempF: entry.maxTempF ?? 40,
     minTempF: entry.minTempF ?? 32,
+    et0: entry.et0 ?? 0,
   }));
 
   const totals = daily.reduce(
@@ -30,9 +31,10 @@ const buildWetness = (daily) => {
       acc.precipitation += entry.liquid ?? 0;
       acc.melt += entry.melt ?? 0;
       acc.drying += entry.drying ?? 0;
+      acc.et0 += entry.et0 ?? 0;
       return acc;
     },
-    { precipitation: 0, melt: 0, drying: 0 }
+    { precipitation: 0, melt: 0, drying: 0, et0: 0 }
   );
 
   const recentWetDays = daily.filter((entry) => (entry.liquid ?? 0) > 0.05).length;
@@ -89,4 +91,22 @@ test('freeze-thaw with recent moisture escalates to slick icy', () => {
 
   const insight = interpretWetness(icy);
   assert.equal(insight.label, 'Slick/Icy');
+});
+
+test('net liquid subtracts the full scaled drying total', () => {
+  const dryingHeavy = buildWetness([
+    { ageDays: 0.5, liquid: 0.2, drying: 0.08, et0: 0.2 },
+    { ageDays: 1.5, liquid: 0.15, drying: 0.06, et0: 0.15 },
+    { ageDays: 2.4, liquid: 0.05, drying: 0.04, et0: 0.1 },
+  ]);
+
+  const insight = interpretWetness(dryingHeavy);
+
+  assert.equal(insight.stats.dryingTotal.toFixed(2), '0.18');
+  assert.equal(insight.stats.et0Total.toFixed(2), '0.45');
+  assert.equal(insight.stats.netLiquid.toFixed(2), '0.22');
+  assert.ok(
+    insight.detail.includes('40% of 0.45" ET₀'),
+    'Expected tooltip to call out 40% ET₀ drying basis'
+  );
 });
