@@ -6,7 +6,16 @@
 /**
  * Explicit list of dirt locations (robust across browsers)
  */
-const DIRT_LOCATIONS = new Set(['figure8', 'huber', 'tatum', 'holmdel']);
+const DIRT_LOCATIONS = new Set([
+  'figure8',
+  'huber',
+  'tatum',
+  'holmdel',
+  'shark-river',
+  'allaire',
+  'rez',
+  'battlefield',
+]);
 
 /**
  * Check if a location requires dirt/trail conditions
