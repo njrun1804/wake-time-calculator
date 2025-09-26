@@ -65,7 +65,7 @@ class WakeTimeApp {
       travelMinutes: document.getElementById('travelMinutes'),
       breakfastHidden: document.getElementById('breakfastMinutes'),
       breakfastOptions: Array.from(
-        document.querySelectorAll('input[name="breakfastToggle"]')
+        document.querySelectorAll('.breakfast-option')
       ),
 
       // Output elements

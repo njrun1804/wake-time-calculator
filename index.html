@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Runner Wake Navigator</title>
+    <title>Wake Time Calculator</title>
 
     <!-- External Styles -->
     <link rel="preload" href="css/main.css" as="style" />
@@ -25,7 +25,12 @@
   <body>
     <div class="hero-bg" aria-hidden="true"></div>
     <main>
-      <h1>Runner Wake Navigator</h1>
+      <header class="title-wrapper">
+        <h1 class="title-main">
+          Wake Time <span class="title-accent">Calculator</span>
+        </h1>
+        <p class="title-sub">Plan the earliest alarm that keeps the run on track.</p>
+      </header>
 
       <!-- Weather Awareness Section -->
       <section
@@ -149,32 +154,31 @@
         <div class="form-row">
           <div class="field-group">
             <label id="breakfastLabel">Breakfast</label>
-            <div class="toggle-group" role="radiogroup" aria-labelledby="breakfastLabel">
-              <input
-                type="radio"
-                class="toggle-input"
-                name="breakfastToggle"
-                id="breakfastNo"
-                value="0"
-                checked
-              />
-              <label class="toggle-option" for="breakfastNo">No</label>
-              <input
-                type="radio"
-                class="toggle-input"
-                name="breakfastToggle"
-                id="breakfastYes"
-                value="30"
-              />
-              <label class="toggle-option" for="breakfastYes">Yes (30m)</label>
+            <div class="toggle-standard" role="radiogroup" aria-labelledby="breakfastLabel">
+              <label class="toggle-standard-option">
+                <input
+                  type="radio"
+                  class="breakfast-option"
+                  name="breakfastToggle"
+                  value="0"
+                  checked
+                />
+                <span>No</span>
+              </label>
+              <label class="toggle-standard-option">
+                <input
+                  type="radio"
+                  class="breakfast-option"
+                  name="breakfastToggle"
+                  value="30"
+                />
+                <span>Yes (30m)</span>
+              </label>
             </div>
             <input id="breakfastMinutes" name="breakfastMinutes" type="hidden" value="0" />
           </div>
           <div class="field-group">
-            <label for="runLocation">
-              Run location
-              <span id="daylightWarning" class="badge badge-warning badge-sm align-middle hidden ml-2 uppercase tracking-wide">Headlamp?</span>
-            </label>
+            <label for="runLocation">Run location</label>
             <select id="runLocation" name="runLocation" class="select select-bordered w-full">
               <optgroup label="Dirt by distance">
                 <option value="figure8" data-travel="14">Figure 8</option>
@@ -203,31 +207,20 @@
 
       <!-- Wake Time Display Section -->
       <section class="wake-display-section">
-        <!-- Main Wake Time Card -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 shadow-xl wake-hero-card">
-          <div class="wake-time-display">
-            <h2 class="text-xs uppercase tracking-wider font-semibold mb-2 opacity-90">
-              Wake Time
-            </h2>
-            <div class="text-2xl md:text-3xl font-black text-white mb-1" id="chosenWake">--:--</div>
-            <span id="prevDayBadge" class="badge badge-warning badge-sm align-middle hidden mb-2">
+        <div class="wake-hero">
+          <div class="wake-hero__primary">
+            <h2 class="wake-hero__label">Wake Time</h2>
+            <div class="wake-hero__time" id="chosenWake">--:--</div>
+            <span
+              id="prevDayBadge"
+              class="badge badge-warning badge-sm align-middle hidden wake-hero__badge"
+            >
               previous day
             </span>
           </div>
-        </div>
-
-        <!-- Info Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <div class="bg-white rounded-xl p-4 shadow-md border border-gray-100 info-card focus-card">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                  Latest Wake
-                </h3>
-                <div class="text-2xl font-extrabold text-gray-900 mt-1" id="latestWake">--:--</div>
-              </div>
-              <div class="text-2xl">⏰</div>
-            </div>
+          <div class="wake-hero__secondary">
+            <h3 class="wake-hero__secondary-label">Latest Wake Window</h3>
+            <div class="wake-hero__secondary-time" id="latestWake">--:--</div>
           </div>
         </div>
       </section>

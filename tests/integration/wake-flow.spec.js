@@ -12,7 +12,7 @@ test.describe('Wake time calculator – full awareness @full', () => {
   }) => {
     await page.goto('/index.html');
 
-    await expect(page.locator('h1')).toHaveText('Runner Wake Navigator');
+    await expect(page.locator('h1')).toHaveText('Wake Time Calculator');
     await expect(page.locator('#chosenWake')).toHaveText('7:45 AM');
 
     await page.fill('#runMinutes', '60');

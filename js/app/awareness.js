@@ -25,8 +25,12 @@ import { toMinutes } from '../lib/calculator.js';
 const setStatusIcon = (iconEl, status) => {
   if (!iconEl) return;
   iconEl.classList.add('hidden');
-  iconEl.classList.remove('icon-yield', 'icon-warning');
-  if (status === 'yield') {
+  iconEl.classList.remove('icon-ok', 'icon-yield', 'icon-warning');
+  if (status === 'ok') {
+    iconEl.textContent = '✅';
+    iconEl.classList.remove('hidden');
+    iconEl.classList.add('icon-ok');
+  } else if (status === 'yield') {
     iconEl.textContent = '⚠';
     iconEl.classList.remove('hidden');
     iconEl.classList.add('icon-yield');
@@ -164,7 +168,7 @@ const updateAwarenessDisplay = (data) => {
     : null;
   const dawnMinutes = dawn ? dawn.getHours() * 60 + dawn.getMinutes() : null;
 
-  let dawnStatus = 'none';
+  let dawnStatus = 'ok';
   if (dawnMinutes !== null && typeof runStartMinutes === 'number') {
     const diff = runStartMinutes - dawnMinutes;
     if (diff <= 5 && diff >= -5) {
@@ -180,8 +184,8 @@ const updateAwarenessDisplay = (data) => {
         ? 'warning'
         : windChillF <= 40
           ? 'yield'
-          : 'none'
-      : 'none';
+          : 'ok'
+      : 'ok';
 
   const precipStatus =
     typeof pop === 'number'
@@ -189,8 +193,8 @@ const updateAwarenessDisplay = (data) => {
         ? 'warning'
         : pop >= 30
           ? 'yield'
-          : 'none'
-      : 'none';
+          : 'ok'
+      : 'ok';
 
   const wetBulbStatus =
     typeof wetBulbF === 'number'
@@ -198,8 +202,8 @@ const updateAwarenessDisplay = (data) => {
         ? 'warning'
         : wetBulbF >= 65
           ? 'yield'
-          : 'none'
-      : 'none';
+          : 'ok'
+      : 'ok';
 
   setStatusIcon(els.awDawnIcon, dawnStatus);
   setStatusIcon(els.awWindChillIcon, windStatus);
