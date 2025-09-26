@@ -93,12 +93,27 @@ const createWetnessSummary = (wetness) => {
     snowpackRemaining = 0,
   } = wetness;
 
-  if (typeof totals.precipitation === 'number' && totals.precipitation > 0.01) {
+  const totalRainfall = (() => {
+    const explicit =
+      numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? null;
+    if (explicit !== null) return Math.max(0, explicit);
+    const precip = numberOrNull(totals.precipitation);
+    const melt = numberOrNull(totals.melt);
+    if (precip !== null && melt !== null) {
+      return Math.max(0, precip - melt);
+    }
+    return Math.max(0, precip ?? 0);
+  })();
+
+  const totalMelt = Math.max(0, numberOrNull(totals.melt) ?? 0);
+  const totalLiquid = totalRainfall + totalMelt;
+
+  if (totalLiquid > 0.01) {
     const windowText = analysisDays ? `${analysisDays}d` : 'recent';
-    parts.push(`${inches(totals.precipitation)} liquid over ${windowText}`);
+    parts.push(`${inches(totalLiquid)} liquid over ${windowText}`);
   }
-  if (typeof totals.melt === 'number' && totals.melt > 0.01) {
-    parts.push(`${inches(totals.melt)} melt contributions`);
+  if (totalMelt > 0.01) {
+    parts.push(`${inches(totalMelt)} melt contributions`);
   }
   if (typeof totals.drying === 'number' && totals.drying > 0.01) {
     const et0Total = typeof totals.et0 === 'number' ? totals.et0 : null;
@@ -156,7 +171,7 @@ export const computeWetness = (
       analysisDays: 0,
       recentWetDays: 0,
       totals: {
-        precipitation: 0,
+        rainfall: 0,
         melt: 0,
         drying: 0,
         et0: 0,
@@ -180,7 +195,8 @@ export const computeWetness = (
 
   let cumulativeScore = 0;
   let runningSnowpack = 0;
-  let totalPrecip = 0;
+  let totalRain = 0;
+  let totalLiquid = 0;
   let totalMelt = 0;
   let totalDrying = 0;
   let totalEt0 = 0;
@@ -225,8 +241,10 @@ export const computeWetness = (
 
     totalMelt += melt;
 
-    const liquid = Math.max(0, rainIn) + melt;
-    totalPrecip += liquid;
+    const rainContribution = Math.max(0, rainIn);
+    const liquid = rainContribution + melt;
+    totalRain += rainContribution;
+    totalLiquid += liquid;
 
     const intensityBoost = (() => {
       const hours = numberOrNull(precipHours);
@@ -304,7 +322,7 @@ export const computeWetness = (
     analysisDays: sorted.length,
     recentWetDays,
     totals: {
-      precipitation: Number(totalPrecip.toFixed(3)),
+      rainfall: Number(totalRain.toFixed(3)),
       melt: Number(totalMelt.toFixed(3)),
       drying: Number(totalDrying.toFixed(3)),
       et0: Number(totalEt0.toFixed(3)),
@@ -533,9 +551,20 @@ export const interpretWetness = (wetnessData = null) => {
   );
 
   const totals = wetnessData.totals ?? {};
-  const totalLiquid =
-    Math.max(0, numberOrNull(totals.precipitation) ?? 0) +
-    Math.max(0, numberOrNull(totals.melt) ?? 0);
+  const totalRainfall = (() => {
+    const explicit =
+      numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? null;
+    if (explicit !== null) return Math.max(0, explicit);
+    const precip = numberOrNull(totals.precipitation);
+    const melt = numberOrNull(totals.melt);
+    if (precip !== null && melt !== null) {
+      return Math.max(0, precip - melt);
+    }
+    return Math.max(0, precip ?? 0);
+  })();
+
+  const totalMelt = Math.max(0, numberOrNull(totals.melt) ?? 0);
+  const totalLiquid = totalRainfall + totalMelt;
   const dryingTotal = Math.max(0, numberOrNull(totals.drying) ?? 0);
   const et0Total = Math.max(0, numberOrNull(totals.et0) ?? 0);
   const netLiquid = Math.max(0, totalLiquid - dryingTotal);
@@ -608,6 +637,8 @@ export const interpretWetness = (wetnessData = null) => {
     last48,
     last72,
     weeklyLiquid: totalLiquid,
+    weeklyRainfall: totalRainfall,
+    weeklyMelt: totalMelt,
     dryingTotal,
     et0Total,
     netLiquid,
@@ -686,6 +717,12 @@ export const interpretWetness = (wetnessData = null) => {
     `72h ${formatInches(last72)}`,
     `Net ${formatSignedInches(netLiquid)}`,
   ];
+  if (totalLiquid > 0.01) {
+    metricsSummary.push(`Liquid ${formatInches(totalLiquid)} (7d)`);
+  }
+  if (totalMelt > 0.01) {
+    metricsSummary.push(`Melt ${formatInches(totalMelt)} (7d)`);
+  }
   if (wetDaysLast72 > 0) {
     metricsSummary.push(
       `${wetDaysLast72} wet day${wetDaysLast72 === 1 ? '' : 's'} (72h)`

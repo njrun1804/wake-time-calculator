@@ -28,13 +28,20 @@ const buildWetness = (daily) => {
 
   const totals = daily.reduce(
     (acc, entry) => {
-      acc.precipitation += entry.liquid ?? 0;
-      acc.melt += entry.melt ?? 0;
+      const melt = entry.melt ?? 0;
+      const rain =
+        entry.rain ?? Math.max(0, (entry.liquid ?? 0) - (entry.melt ?? 0));
+      acc.rainfall += rain;
+      acc.melt += melt;
       acc.drying += entry.drying ?? 0;
       acc.et0 += entry.et0 ?? 0;
       return acc;
     },
+<<<<<<< HEAD
     { precipitation: 0, melt: 0, drying: 0, et0: 0 }
+=======
+    { rainfall: 0, melt: 0, drying: 0 }
+>>>>>>> 7315228 (Refine wetness totals to avoid snowmelt double counting)
   );
 
   const recentWetDays = daily.filter((entry) => (entry.liquid ?? 0) > 0.05).length;
@@ -108,5 +115,45 @@ test('net liquid subtracts the full scaled drying total', () => {
   assert.ok(
     insight.detail.includes('40% of 0.45" ET₀'),
     'Expected tooltip to call out 40% ET₀ drying basis'
+  );
+});
+
+test('snowmelt contributions do not inflate weekly liquid totals', () => {
+  const meltHeavy = buildWetness([
+    {
+      ageDays: 0,
+      liquid: 0.26,
+      melt: 0.1,
+      rain: 0.16,
+      drying: 0.25,
+      precipHours: 3,
+    },
+    {
+      ageDays: 1,
+      liquid: 0.18,
+      melt: 0.1,
+      rain: 0.08,
+      drying: 0.25,
+      precipHours: 3,
+    },
+    {
+      ageDays: 2.6,
+      liquid: 0.16,
+      melt: 0.1,
+      rain: 0.06,
+      drying: 0.25,
+      precipHours: 3,
+    },
+  ]);
+
+  const insight = interpretWetness(meltHeavy);
+
+  assert.equal(insight.label, 'Slick');
+  assert.ok(
+    Math.abs(
+      insight.stats.weeklyLiquid -
+        (insight.stats.weeklyRainfall + insight.stats.weeklyMelt)
+    ) < 1e-6,
+    'weekly liquid should equal rain plus melt totals'
   );
 });
