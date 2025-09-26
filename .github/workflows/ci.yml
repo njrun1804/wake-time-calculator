@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,23 +16,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run lint
+      - name: Lint, HTML validate, and unit tests
+        run: npm run validate:all
 
-  unit:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run test:unit
-
-  integration:
+  safari-tests:
     runs-on: macos-latest
-    needs: lint
+    needs: validate
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,12 +31,14 @@ jobs:
       - run: npm ci
       - name: Install Playwright WebKit
         run: npx playwright install --with-deps webkit
-      - name: Run Safari integration tests
-        run: npm test
+      - name: Run core Safari scenarios
+        run: npm run test:core
+      - name: Run awareness mocks
+        run: npm run test:awareness
 
   performance:
     runs-on: macos-latest
-    needs: lint
+    needs: validate
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
