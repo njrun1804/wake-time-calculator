@@ -101,7 +101,24 @@ h1 {
 form {
   display: grid;
   gap: 0.75rem;
-  margin-bottom: 0;
+  margin: -0.5rem -1rem 1.25rem;
+  padding: 1.25rem 1rem 1.5rem;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.03), transparent);
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+}
+
+form::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 30%;
+  right: 30%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  opacity: 0.5;
+  border-radius: 3px;
 }
 
 .form-row {
@@ -220,7 +237,8 @@ select:focus {
 }
 
 .wake-display-section {
-  margin-top: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
 }
 
 .wake-hero-card {
