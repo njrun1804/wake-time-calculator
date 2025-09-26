@@ -100,10 +100,14 @@ const createWetnessSummary = (wetness) => {
     parts.push(`${inches(totals.melt)} melt contributions`);
   }
   if (typeof totals.drying === 'number' && totals.drying > 0.01) {
-    const dryingSummary =
-      typeof totals.et0 === 'number' && totals.et0 > 0.01
-        ? `-${inches(totals.drying)} drying (40% of ${inches(totals.et0)} ET₀)`
-        : `-${inches(totals.drying)} drying`;
+    const et0Total = typeof totals.et0 === 'number' ? totals.et0 : null;
+    const dryingFraction =
+      et0Total && et0Total > 0 ? Math.min(1, totals.drying / et0Total) : null;
+    const dryingSummary = dryingFraction !== null
+      ? `-${inches(totals.drying)} drying (${Math.round(
+          dryingFraction * 100
+        )}% of ${inches(et0Total)} ET₀)`
+      : `-${inches(totals.drying)} drying`;
     parts.push(dryingSummary);
   }
   if (snowpackRemaining > 0.05) {
@@ -562,12 +566,13 @@ export const interpretWetness = (wetnessData = null) => {
   }
 
   if (dryingTotal > 0.05) {
-    const dryingDescriptor =
-      et0Total > 0.05
-        ? `-${formatInches(dryingTotal)} drying (40% of ${formatInches(
-            et0Total
-          )} ET₀)`
-        : `-${formatInches(dryingTotal)} drying`;
+    const dryingFraction =
+      et0Total > 0.05 ? Math.min(1, dryingTotal / et0Total) : null;
+    const dryingDescriptor = dryingFraction !== null
+      ? `-${formatInches(dryingTotal)} drying (${Math.round(
+          dryingFraction * 100
+        )}% of ${formatInches(et0Total)} ET₀)`
+      : `-${formatInches(dryingTotal)} drying`;
     detailParts.push(dryingDescriptor);
   }
 
