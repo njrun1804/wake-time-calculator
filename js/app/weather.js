@@ -100,7 +100,15 @@ const createWetnessSummary = (wetness) => {
     parts.push(`${inches(totals.melt)} melt contributions`);
   }
   if (typeof totals.drying === 'number' && totals.drying > 0.01) {
-    parts.push(`-${inches(totals.drying)} drying`);
+    const et0Total = typeof totals.et0 === 'number' ? totals.et0 : null;
+    const dryingFraction =
+      et0Total && et0Total > 0 ? Math.min(1, totals.drying / et0Total) : null;
+    const dryingSummary = dryingFraction !== null
+      ? `-${inches(totals.drying)} drying (${Math.round(
+          dryingFraction * 100
+        )}% of ${inches(et0Total)} ET₀)`
+      : `-${inches(totals.drying)} drying`;
+    parts.push(dryingSummary);
   }
   if (snowpackRemaining > 0.05) {
     parts.push(`${inches(snowpackRemaining)} snowpack remains`);
@@ -142,6 +150,7 @@ export const computeWetness = (
         precipitation: 0,
         melt: 0,
         drying: 0,
+        et0: 0,
       },
       snowpackRemaining: 0,
       events: [],
@@ -165,6 +174,7 @@ export const computeWetness = (
   let totalPrecip = 0;
   let totalMelt = 0;
   let totalDrying = 0;
+  let totalEt0 = 0;
   let recentWetDays = 0;
   let peakDailyBalance = 0;
 
@@ -184,6 +194,7 @@ export const computeWetness = (
     const rainIn = numberOrNull(rain) ?? precipTotal;
     const snowIn = Math.max(0, numberOrNull(snowfall) ?? 0);
     const et0In = Math.max(0, numberOrNull(et0) ?? 0);
+    totalEt0 += et0In;
 
     runningSnowpack += snowIn;
 
@@ -223,8 +234,8 @@ export const computeWetness = (
     const month = entryDate
       ? entryDate.getMonth()
       : refDate
-      ? refDate.getMonth()
-      : new Date().getMonth();
+        ? refDate.getMonth()
+        : new Date().getMonth();
     const leafOn = month >= 3 && month <= 9; // Apr–Oct
     const warmSeasonCoefficient = dryingCoefficient;
     const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5);
@@ -285,6 +296,7 @@ export const computeWetness = (
       precipitation: Number(totalPrecip.toFixed(3)),
       melt: Number(totalMelt.toFixed(3)),
       drying: Number(totalDrying.toFixed(3)),
+      et0: Number(totalEt0.toFixed(3)),
     },
     snowpackRemaining: Number(runningSnowpack.toFixed(3)),
     events,
@@ -512,7 +524,8 @@ export const interpretWetness = (wetnessData = null) => {
     Math.max(0, numberOrNull(totals.precipitation) ?? 0) +
     Math.max(0, numberOrNull(totals.melt) ?? 0);
   const dryingTotal = Math.max(0, numberOrNull(totals.drying) ?? 0);
-  const netLiquid = Math.max(0, totalLiquid - dryingTotal * 0.4);
+  const et0Total = Math.max(0, numberOrNull(totals.et0) ?? 0);
+  const netLiquid = Math.max(0, totalLiquid - dryingTotal);
 
   const last24 = sumWindowLiquid(events, 1.1);
   const last48 = sumWindowLiquid(events, 2.1);
@@ -553,7 +566,14 @@ export const interpretWetness = (wetnessData = null) => {
   }
 
   if (dryingTotal > 0.05) {
-    detailParts.push(`-${formatInches(dryingTotal)} drying`);
+    const dryingFraction =
+      et0Total > 0.05 ? Math.min(1, dryingTotal / et0Total) : null;
+    const dryingDescriptor = dryingFraction !== null
+      ? `-${formatInches(dryingTotal)} drying (${Math.round(
+          dryingFraction * 100
+        )}% of ${formatInches(et0Total)} ET₀)`
+      : `-${formatInches(dryingTotal)} drying`;
+    detailParts.push(dryingDescriptor);
   }
 
   if (recentWetDays > 0) {
@@ -562,8 +582,7 @@ export const interpretWetness = (wetnessData = null) => {
     );
   }
 
-  const moistSignal =
-    last72 >= 0.05 || netLiquid >= 0.15 || wetDaysLast72 >= 1;
+  const moistSignal = last72 >= 0.05 || netLiquid >= 0.15 || wetDaysLast72 >= 1;
 
   const freezeWithLiquid =
     freezeThawCycles > 0 &&
@@ -577,6 +596,7 @@ export const interpretWetness = (wetnessData = null) => {
     last72,
     weeklyLiquid: totalLiquid,
     dryingTotal,
+    et0Total,
     netLiquid,
     snowpack,
     recentWetDays,
@@ -661,9 +681,9 @@ export const interpretWetness = (wetnessData = null) => {
   }
 
   const detail =
-    [...detailParts, metricsSummary.join(' · ')]
-      .filter(Boolean)
-      .join(' · ') || wetnessData.summary || '';
+    [...detailParts, metricsSummary.join(' · ')].filter(Boolean).join(' · ') ||
+    wetnessData.summary ||
+    '';
 
   return {
     label,

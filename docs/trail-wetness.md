@@ -7,7 +7,7 @@ This page documents the heuristics that drive the awareness panel’s “Trail W
 The calculator now derives a `WetnessInsight` object from Open‑Meteo daily history (7d lookback) and hourly forecasts:
 
 - **Rolling windows:** liquid totals are tracked for 24h, 48h, and 72h windows to capture back‑to‑back storms separately from steady drizzle.
-- **Net moisture balance:** total rainfall + snowmelt minus 40% of FAO evapotranspiration approximates surface drying.
+- **Net moisture balance:** total rainfall + snowmelt minus a seasonal share of FAO evapotranspiration (60% in leaf-on months, 30% leaf-off). The UI surfaces both the raw ET₀ total and the exact percentage applied so you can confirm the drying adjustment.
 - **Heavy events:** any day with a balance ≥ 1.2" is treated as a saturation event.
 - **Freeze/thaw detection:** sub‑freezing minimums coupled with afternoon thaw flag icy mornings even when liquid totals drop.
 - **Snowpack context:** remaining snowpack overrides mud calls, surfacing “Snowbound” or “Packed Snow” when thresholds (0.25"/1.0") are exceeded.
@@ -27,7 +27,7 @@ The calculator now derives a `WetnessInsight` object from Open‑Meteo daily his
 
 Each label carries a caution string piped into the awareness panel and retains the API-derived summary for tooltips.
 
-The awareness tooltip also surfaces raw 24h/48h/72h liquid totals, net moisture balance, recent wet-day count, and freeze/thaw cycles so you can sanity-check the model against field notes quickly.
+The awareness tooltip also surfaces raw 24h/48h/72h liquid totals, net moisture balance, the applied ET₀ drying offset (with the actual percentage), recent wet-day count, and freeze/thaw cycles so you can sanity-check the model against field notes quickly.
 
 If a freeze-thaw signal arrives with no recent liquid, the UI now leaves the core label at `Dry`/`Moist` but adds a dedicated icy caution instead of over-escalating to `Slick`.
 
@@ -40,7 +40,7 @@ Confidence is marked `low` (<4 sampled days), `medium` (4–5), or `high` (≥6)
 3. **Trailhead sensors** – Optional integration with USGS or PRISM snow-water equivalent feeds for better snowpack confidence.
 4. **Seasonal drying curve** – The code now halves ET₀ in the leaf-off months; revisit coefficients after a few winter logs to ensure we’re not over-drying frozen ground.
 5. **RPE impact estimate** – Map each category to an expected pace penalty (min/mi delta) so race plans can auto-adjust.
-6. **Unit tests** – Add fixture-based unit specs (dry spell, heavy rain, freeze-thaw) to lock thresholds and support future tuning.
+6. **Unit tests** – Add fixture-based unit specs (dry spell, heavy rain, freeze-thaw, drying-heavy) to lock thresholds and support future tuning.
 
 ## Proposed Path to "Your Satisfaction"
 
