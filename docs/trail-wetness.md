@@ -7,10 +7,10 @@ This page documents the heuristics that drive the awareness panel’s “Trail W
 The calculator now derives a `WetnessInsight` object from Open‑Meteo daily history (7d lookback) and hourly forecasts:
 
 - **Rolling windows:** liquid totals are tracked for 24h, 48h, and 72h windows to capture back‑to‑back storms separately from steady drizzle.
-- **Net moisture balance:** total rainfall + snowmelt minus a seasonal share of FAO evapotranspiration (60% in leaf-on months, 30% leaf-off). The UI surfaces both the raw ET₀ total and the exact percentage applied so you can confirm the drying adjustment.
+- **Net moisture balance:** total rainfall + snowmelt (after converting snowfall depth to SWE at a 10:1 ratio) minus a seasonal share of FAO evapotranspiration (60% in leaf-on months, 30% leaf-off). The UI surfaces both the raw ET₀ total and the exact percentage applied so you can confirm the drying adjustment.
 - **Heavy events:** any day with a balance ≥ 1.2" is treated as a saturation event.
 - **Freeze/thaw detection:** sub‑freezing minimums coupled with afternoon thaw flag icy mornings even when liquid totals drop.
-- **Snowpack context:** remaining snowpack overrides mud calls, surfacing “Snowbound” or “Packed Snow” when thresholds (0.25"/1.0") are exceeded.
+- **Snowpack context:** remaining snowpack overrides mud calls, surfacing “Snowbound” or “Packed Snow” when thresholds (~0.25"/~1.0" depth, ≈0.025"/0.1" SWE) are exceeded.
 
 ### Output labels
 
