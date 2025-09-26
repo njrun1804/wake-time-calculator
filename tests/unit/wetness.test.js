@@ -133,10 +133,11 @@ test('decision layer maps labels to OK/Caution/Avoid buckets', () => {
   assert.equal(okInsight.decision, 'OK');
 
   const slickDay = buildWetness([
-    { ageDays: 0.2, liquid: 0.12, precipHours: 1, balance: 0.12 },
-    { ageDays: 1.2, liquid: 0.05, precipHours: 2, balance: 0.05 },
+    { ageDays: 0.2, liquid: 0.16, precipHours: 1, balance: 0.16 },
+    { ageDays: 1.2, liquid: 0.12, precipHours: 2, balance: 0.12 },
   ]);
   const cautionInsight = interpretWetness(slickDay);
+  assert.equal(cautionInsight.label, 'Slick');
   assert.equal(cautionInsight.decision, 'Caution');
 
   const muddyDay = buildWetness([

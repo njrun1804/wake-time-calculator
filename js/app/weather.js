@@ -700,8 +700,7 @@ export const interpretWetness = (wetnessData = null) => {
       rating = 3;
     } else if (moistSignal) {
       label = 'Moist';
-      caution =
-        'Mostly runnable with the odd soft pocket—good for long efforts.';
+      caution = '';
       rating = 2;
     }
   }
