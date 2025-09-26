@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { calculateWakeTime } from '../../js/lib/calculator.js';
 
 test.describe('Wake time calculator – core planner @core', () => {
   test('adjusts outputs when itinerary changes', async ({ page }) => {
@@ -26,5 +27,31 @@ test.describe('Wake time calculator – core planner @core', () => {
 
     await expect(page.locator('#prevDayBadge')).toBeVisible();
     await expect(page.locator('#chosenWake')).toHaveText('11:40 PM');
+  });
+
+  test('shows baseline wake windows for each meeting option', async ({ page }) => {
+    await page.goto('/index.html');
+
+    const meetings = await page.$$eval('#firstMeeting option', (options) =>
+      options.map((option) => option.value)
+    );
+
+    const expectations = meetings.map((meeting) => ({
+      meeting,
+      expected: calculateWakeTime({ meeting }),
+    }));
+
+    for (const { meeting, expected } of expectations) {
+      await page.locator('#runForm').evaluate((form) => form.reset());
+      await page.fill('#runMinutes', '0');
+      await page.selectOption('#runLocation', 'round-town');
+      await page.selectOption('#breakfastMinutes', '0');
+      await page.selectOption('#firstMeeting', meeting);
+
+      await expect(page.locator('#chosenWake')).toHaveText(expected.wakeTime12);
+      await expect(page.locator('#latestWake')).toHaveText(
+        expected.latestWakeTime12,
+      );
+    }
   });
 });
