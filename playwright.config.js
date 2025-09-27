@@ -8,11 +8,18 @@ export default defineConfig({
   reporter: process.env.CI
     ? [['dot'], ['json', { outputFile: 'test-results.json' }]]
     : [['html', { open: 'never' }]],
+  timeout: process.env.CI ? 20 * 1000 : 30 * 1000,
+  expect: {
+    timeout: 5000,
+  },
   use: {
     baseURL: 'http://localhost:8000',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Faster navigation in CI
+    navigationTimeout: process.env.CI ? 15000 : 30000,
+    actionTimeout: process.env.CI ? 10000 : 15000,
   },
   projects: [
     {

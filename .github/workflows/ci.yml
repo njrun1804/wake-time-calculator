@@ -57,12 +57,9 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps webkit
 
-      # Run all tests in one go to reuse the web server
+      # Run all tests in parallel with a single web server instance
       - name: Run all Safari tests
-        run: |
-          npm run test:core
-          npm run test:awareness
-          npm run test:performance
+        run: npm test -- --grep "@core|@full|@performance"
 
       - name: Upload test results
         if: always()
