@@ -108,7 +108,7 @@ async function setupMockedWeather(page) {
   await page.route('**/api.sunrisesunset.io/**', async (route) => {
     await route.fulfill({
       status: 200,
-      headers: { 'content-type': 'application/json' },
+      contentType: 'application/json',
       body: JSON.stringify(dawnFixture),
     });
   });
@@ -118,7 +118,7 @@ async function setupMockedWeather(page) {
     if (url.searchParams.get('daily')) {
       await route.fulfill({
         status: 200,
-        headers: { 'content-type': 'application/json' },
+        contentType: 'application/json',
         body: JSON.stringify(dailyResponse),
       });
       return;
@@ -126,7 +126,7 @@ async function setupMockedWeather(page) {
     if (url.searchParams.get('hourly')) {
       await route.fulfill({
         status: 200,
-        headers: { 'content-type': 'application/json' },
+        contentType: 'application/json',
         body: JSON.stringify(hourlyResponse),
       });
       return;
@@ -142,7 +142,10 @@ test.describe('Weather awareness with mocked data', () => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
-    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy');
+    // Wait for awareness to initialize
+    await page.waitForTimeout(1000);
+
+    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy', { timeout: 10000 });
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
@@ -167,7 +170,10 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.goto('/index.html');
 
-    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy');
+    // Wait for awareness to initialize with mocked data
+    await page.waitForTimeout(1000);
+
+    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy', { timeout: 10000 });
     await page.getByRole('button', { name: 'Use my location' }).click();
 
     await expect(page.locator('#awMsg')).toHaveText('Location denied.');
