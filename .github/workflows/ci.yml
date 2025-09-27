@@ -31,7 +31,7 @@ jobs:
       - name: Check scripts for '|| true'
         run: |
           set -euo pipefail
-          matches=$(grep -R --line-number --exclude='setup-dev.sh' "\|\| true" scripts/ || true)
+          matches=$(grep -R --line-number --exclude='setup-dev.sh' -F '|| true' scripts/ || true)
 
           if [ -n "$matches" ]; then
             echo "$matches"
