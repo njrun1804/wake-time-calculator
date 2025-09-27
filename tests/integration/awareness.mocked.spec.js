@@ -140,23 +140,18 @@ test.describe('Weather awareness with mocked data', () => {
     page,
   }) => {
     await setupMockedWeather(page);
+    await page.goto('/index.html');
 
-    // Create a promise to wait for the API calls
-    const weatherApiPromise = page.waitForResponse(
-      response => response.url().includes('api.open-meteo.com') && response.status() === 200,
+    // Wait for content to load - the text should change from default "—"
+    const decision = page.locator('#awDecisionText');
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('awDecisionText');
+        return el && el.textContent !== '—';
+      },
       { timeout: 15000 }
     );
 
-    await page.goto('/index.html');
-
-    // Wait for the weather API to be called
-    await weatherApiPromise;
-
-    // Add a small delay to ensure processing completes
-    await page.waitForTimeout(500);
-
-    const decision = page.locator('#awDecisionText');
-    await expect(decision).not.toHaveText('—', { timeout: 12000 });
     await expect(decision).toHaveText('Slick/Icy');
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
@@ -180,22 +175,18 @@ test.describe('Weather awareness with mocked data', () => {
       });
     });
 
-    // Create a promise to wait for the API calls
-    const weatherApiPromise = page.waitForResponse(
-      response => response.url().includes('api.open-meteo.com') && response.status() === 200,
+    await page.goto('/index.html');
+
+    // Wait for content to load - the text should change from default "—"
+    const decision = page.locator('#awDecisionText');
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('awDecisionText');
+        return el && el.textContent !== '—';
+      },
       { timeout: 15000 }
     );
 
-    await page.goto('/index.html');
-
-    // Wait for the weather API to be called
-    await weatherApiPromise;
-
-    // Add a small delay to ensure processing completes
-    await page.waitForTimeout(500);
-
-    const decision = page.locator('#awDecisionText');
-    await expect(decision).not.toHaveText('—', { timeout: 12000 });
     await expect(decision).toHaveText('Slick/Icy');
 
     await page.getByRole('button', { name: 'Use my location' }).click();
