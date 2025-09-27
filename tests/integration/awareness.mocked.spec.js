@@ -88,7 +88,7 @@ const hourlyResponse = {
 
 async function setupMockedWeather(page) {
   await page.addInitScript(
-    ({ saved }) => {
+    ({ saved, fixtures }) => {
       localStorage.clear();
       localStorage.setItem('wake:weatherLat', String(saved.lat));
       localStorage.setItem('wake:weatherLon', String(saved.lon));
@@ -101,6 +101,36 @@ async function setupMockedWeather(page) {
         return 1;
       };
       window.cancelIdleCallback = () => {};
+
+      const { dawnFixture: dawn, dailyResponse: daily, hourlyResponse: hourly } =
+        fixtures;
+
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = async (input, init = {}) => {
+        const url = typeof input === 'string' ? input : input?.url || '';
+
+        if (url.includes('api.sunrisesunset.io')) {
+          return new Response(JSON.stringify(dawn), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (url.includes('api.open-meteo.com/v1/forecast')) {
+          const params = new URL(url).searchParams;
+          if (params.get('daily')) {
+            return new Response(JSON.stringify(daily), {
+              headers: { 'Content-Type': 'application/json' },
+            });
+          }
+          if (params.get('hourly')) {
+            return new Response(JSON.stringify(hourly), {
+              headers: { 'Content-Type': 'application/json' },
+            });
+          }
+        }
+
+        return originalFetch(input, init);
+      };
     },
     {
       saved: {
@@ -108,6 +138,11 @@ async function setupMockedWeather(page) {
         lon: dailyResponse.longitude,
         city: 'Mocked Trailhead',
         tz: 'America/New_York',
+      },
+      fixtures: {
+        dawnFixture,
+        dailyResponse,
+        hourlyResponse,
       },
     }
   );
