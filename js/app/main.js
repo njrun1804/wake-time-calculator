@@ -42,6 +42,18 @@ class WakeTimeApp {
     this.setupAwarenessFeatures();
     this.recalculate();
 
+    if (typeof window !== 'undefined') {
+      window.__triggerAwarenessForTests = async () => {
+        try {
+          await initializeAwareness();
+          this.awarenessReady = true;
+          this.updateLocationHeadlamp();
+        } catch (error) {
+          this.handleAwarenessError(error);
+        }
+      };
+    }
+
     // Initialize weather awareness lazily so first paint happens faster.
     runWhenIdle(async () => {
       try {
