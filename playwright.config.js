@@ -28,11 +28,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run serve',
+    command: 'npx serve -l 8000 -s .',
     url: 'http://localhost:8000/index.html',
     reuseExistingServer: true,
     timeout: 30 * 1000,
-    stdout: process.env.CI ? 'pipe' : 'ignore',
+    stdout: 'pipe',
     stderr: 'pipe',
   },
   testIgnore: ['**/unit/**'],
