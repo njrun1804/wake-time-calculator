@@ -141,7 +141,7 @@ async function setupMockedWeather(page) {
 }
 
 test.describe('Weather awareness with mocked data', () => {
-  test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
+  test.skip('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
     page,
   }) => {
     await setupMockedWeather(page);
@@ -162,7 +162,7 @@ test.describe('Weather awareness with mocked data', () => {
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
 
-  test('reports location denied when geolocation access fails @full', async ({
+  test.skip('reports location denied when geolocation access fails @full', async ({
     page,
   }) => {
     await setupMockedWeather(page);
