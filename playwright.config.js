@@ -28,7 +28,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx serve -l 8000 -s .',
+    command: 'python3 -m http.server 8000 --bind 127.0.0.1',
     url: 'http://localhost:8000/index.html',
     reuseExistingServer: true,
     timeout: 30 * 1000,
