@@ -115,7 +115,10 @@ async function setupMockedWeather(page) {
   await page.route('**/api.sunrisesunset.io/**', async (route) => {
     await route.fulfill({
       status: 200,
-      contentType: 'application/json',
+      headers: {
+        'access-control-allow-origin': '*',
+        'content-type': 'application/json',
+      },
       body: JSON.stringify(dawnFixture),
     });
   });
@@ -125,7 +128,10 @@ async function setupMockedWeather(page) {
     if (url.searchParams.get('daily')) {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify(dailyResponse),
       });
       return;
@@ -133,7 +139,10 @@ async function setupMockedWeather(page) {
     if (url.searchParams.get('hourly')) {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify(hourlyResponse),
       });
       return;
@@ -247,7 +256,10 @@ test.describe('Weather awareness with mocked data', () => {
 
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({ results: [result] }),
       });
     });
@@ -255,7 +267,10 @@ test.describe('Weather awareness with mocked data', () => {
     await page.route('https://nominatim.openstreetmap.org/*', (route) =>
       route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({}),
       })
     );
