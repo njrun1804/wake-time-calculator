@@ -26,4 +26,10 @@ This document explains recommended secure places to store API keys and extension
 - Use minimal scopes for API tokens.
 - Never store production credentials in the repo.
 
+## 7) Local automation & CI parity
+- Husky pre-commit runs Prettier via lint-staged on staged HTML/JS files.
+- Husky pre-push runs `prettier --check '*.html' 'js/**/*.js'` and the fast unit suite (`npm run test:unit`). Pushes abort if either step fails.
+- GitHub Actions mirrors these checks (`validate:all` and Safari Playwright) and adds a `script-sanity` job that fails the build if any helper scripts (except `setup-dev.sh`) include `|| true` guards.
+
+
 *** End of doc

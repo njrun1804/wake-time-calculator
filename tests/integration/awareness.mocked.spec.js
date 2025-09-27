@@ -143,31 +143,27 @@ async function setupMockedWeather(page) {
 }
 
 test.describe('Weather awareness with mocked data', () => {
-  // TODO: Fix these tests - they fail in CI Safari due to requestIdleCallback initialization issues
-  // The awareness module uses runWhenIdle which doesn't work properly in CI Safari environment
-  test.skip('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
+  test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
     page,
   }) => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
-    // Manually trigger awareness initialization for tests
-    await page.evaluate(async () => {
-      // Import and call initializeAwareness directly
-      const module = await import('./js/app/awareness.js');
-      await module.initializeAwareness();
-    });
-
-    // Wait for API calls to complete and DOM to update
-    await page.waitForTimeout(1000);
-
     const decision = page.locator('#awDecisionText');
-    await expect(decision).toHaveText('Slick/Icy', { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('awDecisionText');
+        return el && el.textContent && el.textContent.trim() !== '—';
+      },
+      { timeout: 15000 }
+    );
+
+    await expect(decision).toHaveText('Slick/Icy');
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
 
-  test.skip('reports location denied when geolocation access fails @full', async ({
+  test('reports location denied when geolocation access fails @full', async ({
     page,
   }) => {
     await setupMockedWeather(page);
@@ -187,18 +183,16 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.goto('/index.html');
 
-    // Manually trigger awareness initialization for tests
-    await page.evaluate(async () => {
-      // Import and call initializeAwareness directly
-      const module = await import('./js/app/awareness.js');
-      await module.initializeAwareness();
-    });
-
-    // Wait for API calls to complete and DOM to update
-    await page.waitForTimeout(1000);
-
     const decision = page.locator('#awDecisionText');
-    await expect(decision).toHaveText('Slick/Icy', { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('awDecisionText');
+        return el && el.textContent && el.textContent.trim() !== '—';
+      },
+      { timeout: 15000 }
+    );
+
+    await expect(decision).toHaveText('Slick/Icy');
 
     await page.getByRole('button', { name: 'Use my location' }).click();
 

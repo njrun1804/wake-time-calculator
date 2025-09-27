@@ -103,6 +103,12 @@ Tests cover:
 - Integration tests for the modular UI flow (Safari desktop)
 - Performance guardrails for the modular entry point
 
+### Local hooks & CI parity
+
+- **Pre-commit**: Husky + lint-staged run Prettier on staged HTML/JS before every commit.
+- **Pre-push**: Husky checks formatting (`prettier --check`) and runs `npm run test:unit` before allowing pushes.
+- **CI**: GitHub Actions enforces `npm run validate:all`, the WebKit Playwright suite (`npm test -- --grep "@core|@full|@performance"`), and a `script-sanity` guard that fails if helper scripts (other than `setup-dev.sh`) hide errors with `|| true`.
+
 ## Development
 
 The application is built with modern ES6 modules requiring no build step. For development:
