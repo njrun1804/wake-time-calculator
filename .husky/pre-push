@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "[husky] running pre-push checks: lint && unit tests"
+npx --no -- prettier --check '*.html' 'js/**/*.js'
+
+# Run fast unit tests locally before allowing a push. Keep E2E (Playwright) out of pre-push
+# because it's slow — CI will run full E2E.
+npm run test:unit
+
+echo "[husky] pre-push checks passed"
