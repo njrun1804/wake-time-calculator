@@ -142,6 +142,21 @@ async function setupMockedWeather(page) {
   });
 }
 
+async function waitForAwarenessReady(page) {
+  await page.evaluate(async () => {
+    const module = await import('./js/app/awareness.js');
+    await module.initializeAwareness();
+  });
+
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('awDecisionText');
+      return el && el.textContent && el.textContent.trim() !== '—';
+    },
+    { timeout: 20000 }
+  );
+}
+
 test.describe('Weather awareness with mocked data', () => {
   test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
     page,
@@ -149,14 +164,8 @@ test.describe('Weather awareness with mocked data', () => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
+    await waitForAwarenessReady(page);
     const decision = page.locator('#awDecisionText');
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('awDecisionText');
-        return el && el.textContent && el.textContent.trim() !== '—';
-      },
-      { timeout: 15000 }
-    );
 
     await expect(decision).toHaveText('Slick/Icy');
     await expect(page.locator('#awMsg')).toBeHidden();
@@ -183,20 +192,111 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.goto('/index.html');
 
+    await waitForAwarenessReady(page);
     const decision = page.locator('#awDecisionText');
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('awDecisionText');
-        return el && el.textContent && el.textContent.trim() !== '—';
-      },
-      { timeout: 15000 }
-    );
 
     await expect(decision).toHaveText('Slick/Icy');
 
     await page.getByRole('button', { name: 'Use my location' }).click();
 
     await expect(page.locator('#awMsg')).toHaveText('Location denied.');
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('awDecisionText');
+        return el && el.textContent && el.textContent.trim() === '—';
+      },
+      { timeout: 10000 }
+    );
     await expect(decision).toHaveText('—');
+  });
+
+  test('refreshes awareness when geolocation succeeds @full', async ({ page }) => {
+    await setupMockedWeather(page);
+
+    await page.route('https://geocoding-api.open-meteo.com/v1/reverse?*', async (route) => {
+      const url = new URL(route.request().url());
+      const lat = Number(url.searchParams.get('latitude'));
+      const lon = Number(url.searchParams.get('longitude'));
+
+      const isMockedHome =
+        Math.abs(lat - dailyResponse.latitude) < 0.001 &&
+        Math.abs(lon - dailyResponse.longitude) < 0.001;
+
+      const result = isMockedHome
+        ? {
+            name: 'Mocked Trailhead',
+            admin1: 'New Jersey',
+            country: 'United States',
+            country_code: 'US',
+            latitude: dailyResponse.latitude,
+            longitude: dailyResponse.longitude,
+            timezone: 'America/New_York',
+          }
+        : {
+            name: 'Fort Collins',
+            admin1: 'Colorado',
+            country: 'United States',
+            country_code: 'US',
+            latitude: 39.7392,
+            longitude: -104.9903,
+            timezone: 'America/Denver',
+          };
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ results: [result] }),
+      });
+    });
+
+    await page.route('https://nominatim.openstreetmap.org/*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({}),
+      })
+    );
+
+    await page.goto('/index.html');
+
+    await waitForAwarenessReady(page);
+    const decision = page.locator('#awDecisionText');
+    const city = page.locator('#awCity');
+
+    await expect(decision).toHaveText('Slick/Icy');
+    await expect(city).toHaveText(/Mocked Trailhead/);
+
+    await page.evaluate(() => {
+      const success = {
+        getCurrentPosition: (resolve) => {
+          resolve({
+            coords: {
+              latitude: 39.7392,
+              longitude: -104.9903,
+            },
+            timestamp: Date.now(),
+          });
+        },
+      };
+
+      Object.defineProperty(navigator, 'geolocation', {
+        configurable: true,
+        value: success,
+      });
+    });
+
+    await page.getByRole('button', { name: 'Use my location' }).click();
+
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('awCity');
+        return el && el.textContent && el.textContent.includes('Fort Collins');
+      },
+      { timeout: 20000 }
+    );
+
+    await expect(city).toHaveText(/Fort Collins, CO, US/);
+    await expect(page.locator('#awMsg')).toBeHidden();
+    await expect(decision).toHaveText('Slick/Icy');
   });
 });
