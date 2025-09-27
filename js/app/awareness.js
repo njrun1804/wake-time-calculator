@@ -22,6 +22,26 @@ import {
 } from './location.js';
 import { toMinutes } from '../lib/calculator.js';
 
+const emitAwarenessEvent = (type, detail = {}) => {
+  if (typeof window === 'undefined') return;
+  const payload = {
+    type,
+    detail,
+    timestamp: Date.now(),
+  };
+  if (!Array.isArray(window.__awarenessEvents)) {
+    window.__awarenessEvents = [];
+  }
+  window.__awarenessEvents.push(payload);
+  if (typeof window.__onAwarenessEvent === 'function') {
+    try {
+      window.__onAwarenessEvent(payload);
+    } catch (error) {
+      console.error('awareness event callback failed', error);
+    }
+  }
+};
+
 const setStatusIcon = (iconEl, status) => {
   if (!iconEl) return;
   iconEl.classList.add('hidden');
@@ -142,10 +162,13 @@ const updateAwarenessDisplay = (data) => {
     els.awPoP.title = 'Probability of precip for the hour around dawn';
   }
 
+  let wetnessInsight = null;
+  let decision = null;
+
   const hasWetnessUi =
     els.awWetness || els.awDecisionText || els.awDecisionIcon || els.awMsg;
   if (hasWetnessUi) {
-    const wetnessInsight = interpretWetness(wetnessData);
+    wetnessInsight = interpretWetness(wetnessData);
 
     if (els.awWetness) {
       const tooltip = wetnessInsight.detail || wetnessData?.summary;
@@ -156,7 +179,7 @@ const updateAwarenessDisplay = (data) => {
       }
     }
 
-    const decision = wetnessInsight.decision || 'OK';
+    decision = wetnessInsight.decision || 'OK';
     if (els.awDecisionText) {
       const labelText = wetnessInsight.label || '—';
       els.awDecisionText.textContent = labelText;
@@ -230,6 +253,15 @@ const updateAwarenessDisplay = (data) => {
   }
 
   updateDawnStatus(runStartMinutes, dawn);
+
+  return {
+    wetnessInsight,
+    decision,
+    city,
+    dawn,
+    runStartMinutes,
+    timezone: tz,
+  };
 };
 
 /**
@@ -252,6 +284,7 @@ const showAwarenessError = (message) => {
   if (els?.awDecisionText) {
     els.awDecisionText.textContent = '—';
   }
+  emitAwarenessEvent('error', { message });
 };
 
 /**
@@ -297,7 +330,7 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
     }
 
     // Update display with all data
-    updateAwarenessDisplay({
+    const displayResult = updateAwarenessDisplay({
       city: displayCity || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
       dawn: dawnDate,
       windChillF: weather.windChillF,
@@ -310,6 +343,16 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
       isSnow: weather.isSnow,
       wetnessData: wetnessInfo,
       tz,
+    });
+
+    emitAwarenessEvent('ready', {
+      city:
+        displayResult?.city ||
+        displayCity ||
+        `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+      label: displayResult?.wetnessInsight?.label ?? null,
+      decision: displayResult?.decision ?? null,
+      dawn: dawnDate?.toISOString?.() ?? null,
     });
   } catch (error) {
     if (error.name === 'AbortError') {
@@ -331,10 +374,14 @@ export const handleUseMyLocation = async () => {
   try {
     if (!navigator.geolocation) {
       showAwarenessError('Geolocation not supported.');
+      emitAwarenessEvent('location-error', {
+        message: 'Geolocation not supported.',
+      });
       return;
     }
 
     if (els.awMsg) els.awMsg.textContent = 'Getting location…';
+    emitAwarenessEvent('location-requested');
 
     const coords = await getCurrentLocation();
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -351,6 +398,11 @@ export const handleUseMyLocation = async () => {
         tz,
       });
       await refreshAwareness(coords.lat, coords.lon, label, tz);
+      emitAwarenessEvent('location-updated', {
+        city: label,
+        lat: coords.lat,
+        lon: coords.lon,
+      });
     } catch (error) {
       console.warn('Reverse geocoding failed:', error);
       const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
@@ -361,10 +413,18 @@ export const handleUseMyLocation = async () => {
         tz: defaultTz,
       });
       await refreshAwareness(coords.lat, coords.lon, fallback, defaultTz);
+      emitAwarenessEvent('location-updated', {
+        city: fallback,
+        lat: coords.lat,
+        lon: coords.lon,
+      });
     }
   } catch (error) {
     console.warn('Location access failed:', error);
     showAwarenessError('Location denied.');
+    emitAwarenessEvent('location-denied', {
+      message: error?.message || 'Location denied.',
+    });
   }
 };
 
@@ -377,6 +437,7 @@ export const handleLocationSearch = async (query) => {
   if (!trimmed) return;
 
   showAwarenessError('Searching…');
+  emitAwarenessEvent('search-started', { query: trimmed });
 
   let location;
   try {
@@ -388,6 +449,7 @@ export const handleLocationSearch = async (query) => {
         ? 'Location not found'
         : 'Unable to search location';
     showAwarenessError(message);
+    emitAwarenessEvent('search-error', { message });
     return;
   }
 
@@ -404,6 +466,11 @@ export const handleLocationSearch = async (query) => {
     location.city,
     location.tz
   );
+  emitAwarenessEvent('location-updated', {
+    city: location.city,
+    lat: location.lat,
+    lon: location.lon,
+  });
 
   const els = cacheAwarenessElements();
   if (els?.placeInput) {
@@ -419,6 +486,7 @@ export const initializeAwareness = async () => {
 
   if (saved && validateCoordinates(saved.lat, saved.lon)) {
     // Use saved location
+    emitAwarenessEvent('init', { source: 'storage' });
     await refreshAwareness(saved.lat, saved.lon, saved.city, saved.tz);
   } else if (navigator.geolocation) {
     // Try to get current location silently
@@ -437,6 +505,7 @@ export const initializeAwareness = async () => {
           city: label,
           tz,
         });
+        emitAwarenessEvent('init', { source: 'geolocation' });
         await refreshAwareness(coords.lat, coords.lon, label, tz);
       } catch (error) {
         console.warn('Silent reverse geocoding failed:', error);
@@ -447,12 +516,16 @@ export const initializeAwareness = async () => {
           city: fallback,
           tz: defaultTz,
         });
+        emitAwarenessEvent('init', { source: 'geolocation-fallback' });
         await refreshAwareness(coords.lat, coords.lon, fallback, defaultTz);
       }
     } catch (error) {
       // Silent failure - don't show error message on startup
       console.log('Silent location detection failed:', error);
+      emitAwarenessEvent('init', { source: 'geolocation-failed' });
     }
+  } else {
+    emitAwarenessEvent('init', { source: 'unsupported' });
   }
 };
 

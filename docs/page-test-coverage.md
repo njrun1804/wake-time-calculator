@@ -13,11 +13,13 @@ This guide maps the HTML entry point to the JavaScript modules it loads and docu
 - **Current automation:**
   - Core planner journey (`tests/integration/modular.spec.js`).
   - Awareness + weather flows (`tests/integration/wake-flow.spec.js`).
+  - Deterministic awareness smoke tests with fixture-backed APIs (`tests/integration/awareness.mocked.spec.js`).
   - Performance budget check (`tests/performance/load.spec.js`).
   - Calculator unit coverage (`tests/unit/*.test.js`).
 - **Target coverage:**
   - Maintain calculator/storage unit tests to keep math and persistence deterministic.
   - Preserve both Playwright journeys so DOM interactions, awareness behaviors, and time-allocation bars stay validated.
+  - Keep the mocked awareness suite expanding to cover geolocation success/denied states and API failure messaging as regressions arise.
   - Exercise weather/dawn success and failure paths, daylight badge updates, and storage persistence of awareness preferences.
   - Continue enforcing the load budget guardrail in the performance probe.
 

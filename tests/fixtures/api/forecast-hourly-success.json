@@ -1,0 +1,33 @@
+{
+  "latitude": 40.3501,
+  "longitude": -74.0671,
+  "generationtime_ms": 0.1,
+  "utc_offset_seconds": -14400,
+  "timezone": "America/New_York",
+  "timezone_abbreviation": "EDT",
+  "elevation": 20,
+  "hourly_units": {
+    "time": "iso8601",
+    "temperature_2m": "°F",
+    "relative_humidity_2m": "%",
+    "wind_speed_10m": "mph",
+    "apparent_temperature": "°F",
+    "precipitation_probability": "%",
+    "wet_bulb_temperature_2m": "°F",
+    "weathercode": "wmo code",
+    "snowfall": "inch"
+  },
+  "hourly": {
+    "time": [
+      "2025-03-18T06:00"
+    ],
+    "temperature_2m": [35],
+    "relative_humidity_2m": [92],
+    "wind_speed_10m": [8],
+    "apparent_temperature": [33],
+    "precipitation_probability": [55],
+    "wet_bulb_temperature_2m": [34],
+    "weathercode": [61],
+    "snowfall": [0]
+  }
+}

@@ -1,219 +1,45 @@
 import { test, expect } from '@playwright/test';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {
+  resetAwarenessEvents,
+  setMockApiFailures,
+  setMockGeolocation,
+  setupAwarenessMocks,
+  waitForAwarenessEvent,
+  triggerAwareness,
+} from '../helpers/awareness-mocks.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const fixturePath = (...segments) =>
-  path.resolve(__dirname, '..', 'fixtures', ...segments);
-
-const dawnFixture = JSON.parse(
-  fs.readFileSync(fixturePath('api', 'sunrise-success.json'), 'utf-8')
-);
-
-const DAWN_ISO = '2025-03-18';
-const HOURLY_TIME = `${DAWN_ISO}T06:00`;
-
-const dailyResponse = {
-  latitude: 40.3501,
-  longitude: -74.0671,
-  generationtime_ms: 0.1,
-  utc_offset_seconds: -14400,
-  timezone: 'America/New_York',
-  timezone_abbreviation: 'EDT',
-  elevation: 20,
-  daily_units: {
-    time: 'iso8601',
-    precipitation_sum: 'inch',
-    precipitation_hours: 'hours',
-    rain_sum: 'inch',
-    snowfall_sum: 'inch',
-    et0_fao_evapotranspiration: 'inch',
-    temperature_2m_max: '°F',
-    temperature_2m_min: '°F',
-  },
-  daily: {
-    time: [
-      '2025-03-11',
-      '2025-03-12',
-      '2025-03-13',
-      '2025-03-14',
-      '2025-03-15',
-      '2025-03-16',
-      '2025-03-17',
-    ],
-    precipitation_sum: [0.0, 0.05, 0.12, 0.0, 0.0, 0.18, 0.22],
-    precipitation_hours: [0, 2, 4, 0, 0, 3, 5],
-    rain_sum: [0.0, 0.05, 0.12, 0.0, 0.0, 0.18, 0.22],
-    snowfall_sum: [0, 0, 0, 0, 0, 0, 0],
-    et0_fao_evapotranspiration: [0.1, 0.11, 0.12, 0.13, 0.14, 0.12, 0.12],
-    temperature_2m_max: [52, 50, 48, 45, 42, 38, 38],
-    temperature_2m_min: [40, 38, 36, 34, 33, 31, 28],
+const FORT_COLLINS = {
+  coords: { lat: 39.7392, lon: -104.9903 },
+  reverse: {
+    name: 'Fort Collins',
+    admin1: 'Colorado',
+    country: 'United States',
+    country_code: 'US',
+    latitude: 39.7392,
+    longitude: -104.9903,
+    timezone: 'America/Denver',
   },
 };
-
-const hourlyResponse = {
-  latitude: 40.3501,
-  longitude: -74.0671,
-  generationtime_ms: 0.1,
-  utc_offset_seconds: -14400,
-  timezone: 'America/New_York',
-  timezone_abbreviation: 'EDT',
-  elevation: 20,
-  hourly_units: {
-    time: 'iso8601',
-    temperature_2m: '°F',
-    relative_humidity_2m: '%',
-    wind_speed_10m: 'mph',
-    apparent_temperature: '°F',
-    precipitation_probability: '%',
-    wet_bulb_temperature_2m: '°F',
-    weathercode: 'wmo code',
-    snowfall: 'inch',
-  },
-  hourly: {
-    time: [HOURLY_TIME],
-    temperature_2m: [35],
-    relative_humidity_2m: [92],
-    wind_speed_10m: [8],
-    apparent_temperature: [33],
-    precipitation_probability: [55],
-    wet_bulb_temperature_2m: [34],
-    weathercode: [61],
-    snowfall: [0],
-  },
-};
-
-async function setupMockedWeather(page) {
-  await page.addInitScript(
-    ({ saved, fixtures }) => {
-      localStorage.clear();
-      localStorage.setItem('wake:weatherLat', String(saved.lat));
-      localStorage.setItem('wake:weatherLon', String(saved.lon));
-      localStorage.setItem('wake:weatherCity', saved.city);
-      localStorage.setItem('wake:weatherTz', saved.tz);
-
-      // Force immediate execution for tests
-      window.requestIdleCallback = (cb) => {
-        Promise.resolve().then(() => cb({ timeRemaining: () => 50, didTimeout: false }));
-        return 1;
-      };
-      window.cancelIdleCallback = () => {};
-
-      const { dawnFixture: dawn, dailyResponse: daily, hourlyResponse: hourly } =
-        fixtures;
-
-      const originalFetch = window.fetch.bind(window);
-      window.fetch = async (input, init = {}) => {
-        const url = typeof input === 'string' ? input : input?.url || '';
-
-        if (url.includes('api.sunrisesunset.io')) {
-          return new Response(JSON.stringify(dawn), {
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-
-        if (url.includes('api.open-meteo.com/v1/forecast')) {
-          const params = new URL(url).searchParams;
-          if (params.get('daily')) {
-            return new Response(JSON.stringify(daily), {
-              headers: { 'Content-Type': 'application/json' },
-            });
-          }
-          if (params.get('hourly')) {
-            return new Response(JSON.stringify(hourly), {
-              headers: { 'Content-Type': 'application/json' },
-            });
-          }
-        }
-
-        return originalFetch(input, init);
-      };
-    },
-    {
-      saved: {
-        lat: dailyResponse.latitude,
-        lon: dailyResponse.longitude,
-        city: 'Mocked Trailhead',
-        tz: 'America/New_York',
-      },
-      fixtures: {
-        dawnFixture,
-        dailyResponse,
-        hourlyResponse,
-      },
-    }
-  );
-
-  await page.route('**/api.sunrisesunset.io/**', async (route) => {
-    await route.fulfill({
-      status: 200,
-      headers: {
-        'access-control-allow-origin': '*',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(dawnFixture),
-    });
-  });
-
-  await page.route('**/api.open-meteo.com/v1/forecast?**', async (route) => {
-    const url = new URL(route.request().url());
-    if (url.searchParams.get('daily')) {
-      await route.fulfill({
-        status: 200,
-        headers: {
-          'access-control-allow-origin': '*',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(dailyResponse),
-      });
-      return;
-    }
-    if (url.searchParams.get('hourly')) {
-      await route.fulfill({
-        status: 200,
-        headers: {
-          'access-control-allow-origin': '*',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(hourlyResponse),
-      });
-      return;
-    }
-    await route.fallback();
-  });
-}
-
-async function waitForAwarenessReady(page) {
-  await page.evaluate(async () => {
-    const module = await import('./js/app/awareness.js');
-    await module.initializeAwareness();
-  });
-
-  await expect
-    .poll(
-      async () =>
-        page.evaluate(
-          () => window.__latestWetnessInsight?.label ?? null
-        ),
-      { timeout: 20000 }
-    )
-    .toBe('Slick/Icy');
-}
 
 test.describe('Weather awareness with mocked data', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAwarenessMocks(page);
+    await resetAwarenessEvents(page);
+  });
+
   test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
     page,
   }) => {
-    await setupMockedWeather(page);
     await page.goto('/index.html');
-
-    await waitForAwarenessReady(page);
-    const decision = page.locator('#awDecisionText');
-
-    await expect(decision).toHaveText('Slick/Icy');
+    await triggerAwareness(page);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__latestWetnessInsight?.label ?? null
+        )
+      )
+      .toBe('Slick/Icy');
+    await expect(page.locator('#awCity')).toHaveText(/Mocked Trailhead/);
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
@@ -221,137 +47,106 @@ test.describe('Weather awareness with mocked data', () => {
   test('reports location denied when geolocation access fails @full', async ({
     page,
   }) => {
-    await setupMockedWeather(page);
-    await page.addInitScript(() => {
-      const denied = {
-        getCurrentPosition: (_success, error) => {
-          setTimeout(() => {
-            error({ code: 1, message: 'User denied Geolocation' });
-          }, 0);
-        },
-      };
-      Object.defineProperty(navigator, 'geolocation', {
-        configurable: true,
-        value: denied,
-      });
-    });
-
     await page.goto('/index.html');
+    await triggerAwareness(page);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__latestWetnessInsight?.label ?? null
+        )
+      )
+      .toBe('Slick/Icy');
 
-    await waitForAwarenessReady(page);
-    const decision = page.locator('#awDecisionText');
-
-    await expect(decision).toHaveText('Slick/Icy');
-
+    await setMockGeolocation(page, { mode: 'denied' });
     await page.getByRole('button', { name: 'Use my location' }).click();
+
+    const denied = await waitForAwarenessEvent(page, 'location-denied');
+    expect(denied.detail.message).toContain('denied');
 
     await expect(page.locator('#awMsg')).toHaveText('Location denied.');
     await expect
-      .poll(
-        async () =>
-          page.evaluate(
-            () => document.getElementById('awDecisionText')?.textContent?.trim()
-          ),
-        { timeout: 10000 }
+      .poll(async () =>
+        page.evaluate(() =>
+          document.getElementById('awDecisionText')?.textContent?.trim()
+        )
       )
       .toBe('—');
   });
 
-  test('refreshes awareness when geolocation succeeds @full', async ({ page }) => {
-    await setupMockedWeather(page);
-
-    await page.route('https://geocoding-api.open-meteo.com/v1/reverse?*', async (route) => {
-      const url = new URL(route.request().url());
-      const lat = Number(url.searchParams.get('latitude'));
-      const lon = Number(url.searchParams.get('longitude'));
-
-      const isMockedHome =
-        Math.abs(lat - dailyResponse.latitude) < 0.001 &&
-        Math.abs(lon - dailyResponse.longitude) < 0.001;
-
-      const result = isMockedHome
-        ? {
-            name: 'Mocked Trailhead',
-            admin1: 'New Jersey',
-            country: 'United States',
-            country_code: 'US',
-            latitude: dailyResponse.latitude,
-            longitude: dailyResponse.longitude,
-            timezone: 'America/New_York',
-          }
-        : {
-            name: 'Fort Collins',
-            admin1: 'Colorado',
-            country: 'United States',
-            country_code: 'US',
-            latitude: 39.7392,
-            longitude: -104.9903,
-            timezone: 'America/Denver',
-          };
-
-      await route.fulfill({
-        status: 200,
-        headers: {
-          'access-control-allow-origin': '*',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ results: [result] }),
-      });
-    });
-
-    await page.route('https://nominatim.openstreetmap.org/*', (route) =>
-      route.fulfill({
-        status: 200,
-        headers: {
-          'access-control-allow-origin': '*',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      })
-    );
-
+  test('refreshes awareness when geolocation succeeds @full', async ({
+    page,
+  }) => {
     await page.goto('/index.html');
+    await triggerAwareness(page);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__latestWetnessInsight?.label ?? null
+        )
+      )
+      .toBe('Slick/Icy');
 
-    await waitForAwarenessReady(page);
-    const decision = page.locator('#awDecisionText');
-    const city = page.locator('#awCity');
-
-    await expect(decision).toHaveText('Slick/Icy');
-    await expect(city).toHaveText(/Mocked Trailhead/);
-
-    await page.evaluate(() => {
-      const success = {
-        getCurrentPosition: (resolve) => {
-          resolve({
-            coords: {
-              latitude: 39.7392,
-              longitude: -104.9903,
-            },
-            timestamp: Date.now(),
-          });
-        },
-      };
-
-      Object.defineProperty(navigator, 'geolocation', {
-        configurable: true,
-        value: success,
-      });
+    await setMockGeolocation(page, {
+      mode: 'success',
+      coords: FORT_COLLINS.coords,
+      reverse: FORT_COLLINS.reverse,
     });
 
     await page.getByRole('button', { name: 'Use my location' }).click();
 
     await expect
-      .poll(
-        async () =>
-          page.evaluate(
-            () => document.getElementById('awCity')?.textContent ?? ''
-          ),
-        { timeout: 20000 }
+      .poll(() =>
+        page.evaluate(() => document.getElementById('awCity')?.textContent ?? '')
       )
       .toContain('Fort Collins');
 
-    await expect(city).toHaveText(/Fort Collins, CO, US/);
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__latestWetnessInsight?.label ?? null
+        )
+      )
+      .toBe('Slick/Icy');
+
+    await expect(page.locator('#awCity')).toHaveText(/Fort Collins, CO, US/);
     await expect(page.locator('#awMsg')).toBeHidden();
-    await expect(decision).toHaveText('Slick/Icy');
+  });
+
+  test('surfaces error messaging when weather requests fail @edge', async ({
+    page,
+  }) => {
+    await page.goto('/index.html');
+    await triggerAwareness(page);
+    await waitForAwarenessEvent(page, 'ready');
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.__latestWetnessInsight?.label ?? null
+        )
+      )
+      .toBe('Slick/Icy');
+
+    await setMockGeolocation(page, {
+      mode: 'success',
+      coords: FORT_COLLINS.coords,
+      reverse: FORT_COLLINS.reverse,
+    });
+    await setMockApiFailures(page, { forecast: true });
+
+    await page.getByRole('button', { name: 'Use my location' }).click();
+
+    const errorEvent = await waitForAwarenessEvent(
+      page,
+      'error',
+      ({ message }) => message === 'Unable to load weather data'
+    );
+
+    expect(errorEvent.detail.message).toBe('Unable to load weather data');
+    await expect(page.locator('#awMsg')).toHaveText(
+      'Unable to load weather data'
+    );
+    await expect(page.locator('#awDecisionText')).toHaveText('—');
+
+    await setMockApiFailures(page, { forecast: false });
   });
 });
