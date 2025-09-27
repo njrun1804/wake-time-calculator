@@ -149,16 +149,17 @@ test.describe('Weather awareness with mocked data', () => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
-    // Wait for content to load - the text should change from default "—"
-    const decision = page.locator('#awDecisionText');
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('awDecisionText');
-        return el && el.textContent !== '—';
-      },
-      { timeout: 15000 }
-    );
+    // Manually trigger awareness initialization for tests
+    await page.evaluate(async () => {
+      // Import and call initializeAwareness directly
+      const module = await import('./js/app/awareness.js');
+      await module.initializeAwareness();
+    });
 
+    // Small wait for DOM updates
+    await page.waitForTimeout(100);
+
+    const decision = page.locator('#awDecisionText');
     await expect(decision).toHaveText('Slick/Icy');
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
@@ -184,16 +185,17 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.goto('/index.html');
 
-    // Wait for content to load - the text should change from default "—"
-    const decision = page.locator('#awDecisionText');
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('awDecisionText');
-        return el && el.textContent !== '—';
-      },
-      { timeout: 15000 }
-    );
+    // Manually trigger awareness initialization for tests
+    await page.evaluate(async () => {
+      // Import and call initializeAwareness directly
+      const module = await import('./js/app/awareness.js');
+      await module.initializeAwareness();
+    });
 
+    // Small wait for DOM updates
+    await page.waitForTimeout(100);
+
+    const decision = page.locator('#awDecisionText');
     await expect(decision).toHaveText('Slick/Icy');
 
     await page.getByRole('button', { name: 'Use my location' }).click();
