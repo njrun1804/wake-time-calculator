@@ -95,10 +95,12 @@ async function setupMockedWeather(page) {
       localStorage.setItem('wake:weatherCity', saved.city);
       localStorage.setItem('wake:weatherTz', saved.tz);
 
-      // Force requestIdleCallback to be available and run immediately
-      if (!window.requestIdleCallback) {
-        window.requestIdleCallback = (cb) => setTimeout(cb, 0);
-      }
+      // Force immediate execution for tests
+      window.requestIdleCallback = (cb) => {
+        Promise.resolve().then(() => cb({ timeRemaining: () => 50, didTimeout: false }));
+        return 1;
+      };
+      window.cancelIdleCallback = () => {};
     },
     {
       saved: {
@@ -141,7 +143,7 @@ async function setupMockedWeather(page) {
 }
 
 test.describe('Weather awareness with mocked data', () => {
-  test.skip('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
+  test('surfaces slick icy caution when wetness heuristics trigger freeze-thaw @full', async ({
     page,
   }) => {
     await setupMockedWeather(page);
@@ -162,7 +164,7 @@ test.describe('Weather awareness with mocked data', () => {
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
 
-  test.skip('reports location denied when geolocation access fails @full', async ({
+  test('reports location denied when geolocation access fails @full', async ({
     page,
   }) => {
     await setupMockedWeather(page);
