@@ -94,6 +94,11 @@ async function setupMockedWeather(page) {
       localStorage.setItem('wake:weatherLon', String(saved.lon));
       localStorage.setItem('wake:weatherCity', saved.city);
       localStorage.setItem('wake:weatherTz', saved.tz);
+
+      // Force requestIdleCallback to be available and run immediately
+      if (!window.requestIdleCallback) {
+        window.requestIdleCallback = (cb) => setTimeout(cb, 0);
+      }
     },
     {
       saved: {
