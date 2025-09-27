@@ -148,13 +148,15 @@ async function waitForAwarenessReady(page) {
     await module.initializeAwareness();
   });
 
-  await page.waitForFunction(
-    () => {
-      const el = document.getElementById('awDecisionText');
-      return el && el.textContent && el.textContent.trim() !== '—';
-    },
-    { timeout: 20000 }
-  );
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(
+          () => window.__latestWetnessInsight?.label ?? null
+        ),
+      { timeout: 20000 }
+    )
+    .toBe('Slick/Icy');
 }
 
 test.describe('Weather awareness with mocked data', () => {
@@ -200,14 +202,15 @@ test.describe('Weather awareness with mocked data', () => {
     await page.getByRole('button', { name: 'Use my location' }).click();
 
     await expect(page.locator('#awMsg')).toHaveText('Location denied.');
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('awDecisionText');
-        return el && el.textContent && el.textContent.trim() === '—';
-      },
-      { timeout: 10000 }
-    );
-    await expect(decision).toHaveText('—');
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            () => document.getElementById('awDecisionText')?.textContent?.trim()
+          ),
+        { timeout: 10000 }
+      )
+      .toBe('—');
   });
 
   test('refreshes awareness when geolocation succeeds @full', async ({ page }) => {
@@ -287,13 +290,15 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.getByRole('button', { name: 'Use my location' }).click();
 
-    await page.waitForFunction(
-      () => {
-        const el = document.getElementById('awCity');
-        return el && el.textContent && el.textContent.includes('Fort Collins');
-      },
-      { timeout: 20000 }
-    );
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            () => document.getElementById('awCity')?.textContent ?? ''
+          ),
+        { timeout: 20000 }
+      )
+      .toContain('Fort Collins');
 
     await expect(city).toHaveText(/Fort Collins, CO, US/);
     await expect(page.locator('#awMsg')).toBeHidden();
