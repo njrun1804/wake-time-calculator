@@ -142,10 +142,9 @@ test.describe('Weather awareness with mocked data', () => {
     await setupMockedWeather(page);
     await page.goto('/index.html');
 
-    // Wait for awareness to initialize
-    await page.waitForTimeout(1000);
-
-    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy', { timeout: 10000 });
+    const decision = page.locator('#awDecisionText');
+    await expect(decision).not.toHaveText('—', { timeout: 8000 });
+    await expect(decision).toHaveText('Slick/Icy');
     await expect(page.locator('#awMsg')).toBeHidden();
     await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
   });
@@ -170,13 +169,13 @@ test.describe('Weather awareness with mocked data', () => {
 
     await page.goto('/index.html');
 
-    // Wait for awareness to initialize with mocked data
-    await page.waitForTimeout(1000);
+    const decision = page.locator('#awDecisionText');
+    await expect(decision).not.toHaveText('—', { timeout: 8000 });
+    await expect(decision).toHaveText('Slick/Icy');
 
-    await expect(page.locator('#awDecisionText')).toHaveText('Slick/Icy', { timeout: 10000 });
     await page.getByRole('button', { name: 'Use my location' }).click();
 
     await expect(page.locator('#awMsg')).toHaveText('Location denied.');
-    await expect(page.locator('#awDecisionText')).toHaveText('—');
+    await expect(decision).toHaveText('—');
   });
 });
