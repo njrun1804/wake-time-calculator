@@ -262,9 +262,21 @@ export async function triggerAwareness(page) {
     )
     .toBe(true);
 
-  await page.evaluate(async () => {
-    await window.__triggerAwarenessForTests();
-  });
+  try {
+    await page.evaluate(async () => {
+      await window.__triggerAwarenessForTests();
+    });
+  } catch (error) {
+    console.error('[Test Helper] triggerAwareness failed:', error);
+    // Log any console errors from the page
+    const consoleErrors = await page.evaluate(() => {
+      return window.__consoleErrors || [];
+    });
+    if (consoleErrors.length > 0) {
+      console.error('[Page Console Errors]:', consoleErrors);
+    }
+    throw error;
+  }
 
   // Wait for awareness to be ready
   await waitForAwarenessEvent(page, 'ready', undefined, { timeout: 10000 });

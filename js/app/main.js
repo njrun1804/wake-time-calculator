@@ -49,7 +49,9 @@ class WakeTimeApp {
           this.awarenessReady = true;
           this.updateLocationHeadlamp();
         } catch (error) {
+          console.error('[Test] Failed to initialize awareness:', error);
           this.handleAwarenessError(error);
+          throw error; // Re-throw so tests can catch it
         }
       };
     }

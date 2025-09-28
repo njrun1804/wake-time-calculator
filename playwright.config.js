@@ -4,7 +4,8 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Use 3 workers in CI for better performance (Safari tests can be memory-intensive)
+  workers: process.env.CI ? 3 : undefined,
   reporter: process.env.CI
     ? [['dot'], ['json', { outputFile: 'test-results.json' }]]
     : [['html', { open: 'never' }]],
