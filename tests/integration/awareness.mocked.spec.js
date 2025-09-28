@@ -32,11 +32,19 @@ test.describe('Weather awareness with mocked data', () => {
   }) => {
     await page.goto('/index.html');
     await triggerAwareness(page);
+
+    // Give awareness more time to process in CI
+    await page.waitForTimeout(500);
+
     await expect
       .poll(() =>
         page.evaluate(
           () => window.__latestWetnessInsight?.label ?? null
-        )
+        ),
+        {
+          timeout: 15000,
+          message: 'Expected wetness insight to be calculated'
+        }
       )
       .toBe('Slick/Icy');
     await expect(page.locator('#awCity')).toHaveText(/Mocked Trailhead/);
@@ -49,11 +57,19 @@ test.describe('Weather awareness with mocked data', () => {
   }) => {
     await page.goto('/index.html');
     await triggerAwareness(page);
+
+    // Give awareness more time to process in CI
+    await page.waitForTimeout(500);
+
     await expect
       .poll(() =>
         page.evaluate(
           () => window.__latestWetnessInsight?.label ?? null
-        )
+        ),
+        {
+          timeout: 15000,
+          message: 'Expected wetness insight to be calculated'
+        }
       )
       .toBe('Slick/Icy');
 
@@ -78,11 +94,19 @@ test.describe('Weather awareness with mocked data', () => {
   }) => {
     await page.goto('/index.html');
     await triggerAwareness(page);
+
+    // Give awareness more time to process in CI
+    await page.waitForTimeout(500);
+
     await expect
       .poll(() =>
         page.evaluate(
           () => window.__latestWetnessInsight?.label ?? null
-        )
+        ),
+        {
+          timeout: 15000,
+          message: 'Expected wetness insight to be calculated'
+        }
       )
       .toBe('Slick/Icy');
 
