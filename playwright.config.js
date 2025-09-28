@@ -40,7 +40,7 @@ export default defineConfig({
     reuseExistingServer: true,
     timeout: 30 * 1000,
     stdout: 'ignore',
-    stderr: 'pipe',
+    stderr: process.env.CI ? 'ignore' : 'pipe',
   },
   testIgnore: ['**/unit/**'],
 });
