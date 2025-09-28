@@ -376,23 +376,6 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
       dawn: dawnDate?.toISOString?.() ?? null,
     });
   } catch (error) {
-    if (typeof window !== 'undefined') {
-      // Keep last 10 errors in circular buffer to prevent memory leak
-      const MAX_DEBUG_ERRORS = 10;
-      window.__awarenessDebugErrors = window.__awarenessDebugErrors || [];
-      window.__awarenessDebugErrors.push({
-        name: error?.name ?? null,
-        message: error?.message ?? null,
-        stack: error?.stack ?? null,
-        timestamp: new Date().toISOString(),
-      });
-      // Trim to max size if needed
-      if (window.__awarenessDebugErrors.length > MAX_DEBUG_ERRORS) {
-        window.__awarenessDebugErrors =
-          window.__awarenessDebugErrors.slice(-MAX_DEBUG_ERRORS);
-      }
-    }
-
     if (error.name === 'AbortError') {
       console.error('Awareness refresh aborted:', error);
       showAwarenessError('Request timed out');

@@ -255,52 +255,15 @@ export async function waitForAwarenessEvent(
 }
 
 export async function triggerAwareness(page) {
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () => typeof window.__triggerAwarenessForTests === 'function'
-      )
-    )
-    .toBe(true);
-
-  try {
-    await page.evaluate(async () => {
-      await window.__triggerAwarenessForTests();
-    });
-  } catch (error) {
-    console.error('[Test Helper] triggerAwareness failed:', error);
-    // Log any console errors from the page
-    const consoleErrors = await page.evaluate(() => {
-      return window.__consoleErrors || [];
-    });
-    if (consoleErrors.length > 0) {
-      console.error('[Page Console Errors]:', consoleErrors);
-    }
-    throw error;
-  }
+  // Directly initialize awareness module
+  await page.evaluate(async () => {
+    // Import and initialize awareness directly
+    const module = await import('./js/app/awareness.js');
+    await module.initializeAwareness();
+  });
 
   // Wait for awareness to be ready
   await waitForAwarenessEvent(page, 'ready', undefined, { timeout: 10000 });
-
-  const summary = await page.evaluate(() => {
-    const events = Array.isArray(window.__awarenessEvents)
-      ? window.__awarenessEvents.map((event) => ({
-          type: event?.type,
-          detail: {
-            source: event?.detail?.source,
-            label: event?.detail?.label,
-            message: event?.detail?.message,
-          },
-        }))
-      : [];
-    const latestInsight = window.__latestWetnessInsight || null;
-    const debugErrors = Array.isArray(window.__awarenessDebugErrors)
-      ? window.__awarenessDebugErrors
-      : [];
-    return { events, latestInsight, debugErrors };
-  });
-
-  console.log('[Test Helper] awareness events:', JSON.stringify(summary));
 }
 
 export async function getLatestAwarenessEvent(page, type) {
