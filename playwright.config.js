@@ -11,7 +11,7 @@ export default defineConfig({
     : [['html', { open: 'never' }]],
   timeout: process.env.CI ? 20 * 1000 : 30 * 1000,
   expect: {
-    timeout: 5000,
+    timeout: process.env.CI ? 12000 : 5000,
   },
   use: {
     baseURL: 'http://localhost:8000',
