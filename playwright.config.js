@@ -24,7 +24,6 @@ export default defineConfig({
     // Enable browser HTTP cache
     bypassCSP: false,
     offline: false,
-    httpCredentials: null,
     ignoreHTTPSErrors: false,
     extraHTTPHeaders: {},
   },

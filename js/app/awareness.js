@@ -376,10 +376,20 @@ export const refreshAwareness = async (lat, lon, city = '', tz = defaultTz) => {
       dawn: dawnDate?.toISOString?.() ?? null,
     });
   } catch (error) {
+    if (typeof window !== 'undefined') {
+      window.__awarenessDebugErrors = window.__awarenessDebugErrors || [];
+      window.__awarenessDebugErrors.push({
+        name: error?.name ?? null,
+        message: error?.message ?? null,
+        stack: error?.stack ?? null,
+      });
+    }
+
     if (error.name === 'AbortError') {
+      console.error('Awareness refresh aborted:', error);
       showAwarenessError('Request timed out');
     } else {
-      console.warn('Awareness refresh failed:', error);
+      console.error('Awareness refresh failed:', error);
       showAwarenessError('Unable to load weather data');
     }
   }

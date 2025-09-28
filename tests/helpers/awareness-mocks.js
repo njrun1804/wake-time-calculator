@@ -294,7 +294,10 @@ export async function triggerAwareness(page) {
         }))
       : [];
     const latestInsight = window.__latestWetnessInsight || null;
-    return { events, latestInsight };
+    const debugErrors = Array.isArray(window.__awarenessDebugErrors)
+      ? window.__awarenessDebugErrors
+      : [];
+    return { events, latestInsight, debugErrors };
   });
 
   console.log('[Test Helper] awareness events:', JSON.stringify(summary));
