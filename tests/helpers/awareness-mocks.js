@@ -265,6 +265,9 @@ export async function triggerAwareness(page) {
   await page.evaluate(async () => {
     await window.__triggerAwarenessForTests();
   });
+
+  // Wait for awareness to be ready
+  await waitForAwarenessEvent(page, 'ready', undefined, { timeout: 10000 });
 }
 
 export async function getLatestAwarenessEvent(page, type) {

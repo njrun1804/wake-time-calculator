@@ -218,6 +218,11 @@ const updateAwarenessDisplay = (data) => {
     // Surface latest insight for quick console inspection
     window.__latestWetnessInsight = wetnessInsight;
     window.__latestWetnessRaw = wetnessData;
+
+    // Log for test debugging
+    if (typeof window !== 'undefined' && window.__awarenessMock) {
+      console.log('[Awareness] Wetness insight calculated:', wetnessInsight);
+    }
   }
 
   const schedule = window.__latestSchedule;
@@ -503,7 +508,14 @@ export const initializeAwareness = async () => {
   if (saved && validateCoordinates(saved.lat, saved.lon)) {
     // Use saved location
     emitAwarenessEvent('init', { source: 'storage' });
-    await refreshAwareness(saved.lat, saved.lon, saved.city, saved.tz);
+    try {
+      await refreshAwareness(saved.lat, saved.lon, saved.city, saved.tz);
+      emitAwarenessEvent('ready', { source: 'storage' });
+    } catch (error) {
+      console.error('[Awareness] Failed to refresh from storage:', error);
+      emitAwarenessEvent('error', { message: error.message });
+      throw error;
+    }
   } else if (navigator.geolocation) {
     // Try to get current location silently
     try {
