@@ -29,11 +29,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx http-server -p 8000',
+    command: 'npx http-server -p 8000 --silent',
     url: 'http://localhost:8000',
     reuseExistingServer: true,
     timeout: 30 * 1000,
-    stdout: 'pipe',
+    stdout: 'ignore',
     stderr: 'pipe',
   },
   testIgnore: ['**/unit/**'],
