@@ -375,8 +375,26 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
     // Find closest hour to the target time
     const targetHour = whenLocal.getHours();
     const times = data.hourly.time;
-    const index = times.findIndex((t) => new Date(t).getHours() === targetHour);
-    if (index === -1) throw new Error('no matching hour');
+
+    // First try exact match
+    let index = times.findIndex((t) => new Date(t).getHours() === targetHour);
+
+    // If no exact match, find the closest hour
+    if (index === -1 && times.length > 0) {
+      let closestIndex = 0;
+      let smallestDiff = Math.abs(new Date(times[0]).getHours() - targetHour);
+
+      for (let i = 1; i < times.length; i++) {
+        const hourDiff = Math.abs(new Date(times[i]).getHours() - targetHour);
+        if (hourDiff < smallestDiff) {
+          smallestDiff = hourDiff;
+          closestIndex = i;
+        }
+      }
+      index = closestIndex;
+    }
+
+    if (index === -1) throw new Error('no hourly data available');
 
     const weatherCode = data.hourly.weathercode?.[index];
     const tempF = data.hourly.temperature_2m?.[index] ?? null;
