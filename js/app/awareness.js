@@ -535,6 +535,7 @@ export const initializeAwareness = async () => {
         });
         emitAwarenessEvent('init', { source: 'geolocation' });
         await refreshAwareness(coords.lat, coords.lon, label, tz);
+        emitAwarenessEvent('ready', { source: 'geolocation' });
       } catch (error) {
         console.warn('Silent reverse geocoding failed:', error);
         const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
@@ -546,6 +547,7 @@ export const initializeAwareness = async () => {
         });
         emitAwarenessEvent('init', { source: 'geolocation-fallback' });
         await refreshAwareness(coords.lat, coords.lon, fallback, defaultTz);
+        emitAwarenessEvent('ready', { source: 'geolocation-fallback' });
       }
     } catch (error) {
       // Silent failure - don't show error message on startup
@@ -554,6 +556,7 @@ export const initializeAwareness = async () => {
     }
   } else {
     emitAwarenessEvent('init', { source: 'unsupported' });
+    emitAwarenessEvent('ready', { source: 'unsupported' });
   }
 };
 
