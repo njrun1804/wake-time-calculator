@@ -92,28 +92,44 @@ let currentDawnDate = null;
 /**
  * Cache DOM elements for awareness UI
  */
+const buildAwarenessElements = () => {
+  const awMsgEl = document.getElementById('awMsg');
+  return {
+    awCity: document.getElementById('awCity'),
+    awDawn: document.getElementById('awDawn'),
+    awMsg: awMsgEl,
+    awWindChill: document.getElementById('awWindChill'),
+    awPoP: document.getElementById('awPoP'),
+    awWetBulb: document.getElementById('awWetBulb'),
+    awDawnIcon: document.getElementById('awDawnIcon'),
+    awWindChillIcon: document.getElementById('awWindChillIcon'),
+    awPoPIcon: document.getElementById('awPoPIcon'),
+    awWetBulbIcon: document.getElementById('awWetBulbIcon'),
+    awWetness: document.getElementById('awWetness'),
+    awDecisionIcon: document.getElementById('awDecisionIcon'),
+    awDecisionText: document.getElementById('awDecisionText'),
+    useLoc: document.getElementById('useMyLocation'),
+    placeInput: document.getElementById('placeQuery'),
+    setPlace: document.getElementById('setPlace'),
+    defaultMsg: awMsgEl ? awMsgEl.textContent : '',
+  };
+};
+
+const isElementStale = (el) => {
+  if (!el) return true;
+  if (typeof Element !== 'undefined' && el instanceof Element) {
+    return !el.isConnected;
+  }
+  return false;
+};
+
 const cacheAwarenessElements = () => {
-  if (!awarenessElements) {
-    const awMsgEl = document.getElementById('awMsg');
-    awarenessElements = {
-      awCity: document.getElementById('awCity'),
-      awDawn: document.getElementById('awDawn'),
-      awMsg: awMsgEl,
-      awWindChill: document.getElementById('awWindChill'),
-      awPoP: document.getElementById('awPoP'),
-      awWetBulb: document.getElementById('awWetBulb'),
-      awDawnIcon: document.getElementById('awDawnIcon'),
-      awWindChillIcon: document.getElementById('awWindChillIcon'),
-      awPoPIcon: document.getElementById('awPoPIcon'),
-      awWetBulbIcon: document.getElementById('awWetBulbIcon'),
-      awWetness: document.getElementById('awWetness'),
-      awDecisionIcon: document.getElementById('awDecisionIcon'),
-      awDecisionText: document.getElementById('awDecisionText'),
-      useLoc: document.getElementById('useMyLocation'),
-      placeInput: document.getElementById('placeQuery'),
-      setPlace: document.getElementById('setPlace'),
-      defaultMsg: awMsgEl ? awMsgEl.textContent : '',
-    };
+  if (
+    !awarenessElements ||
+    isElementStale(awarenessElements.awMsg) ||
+    isElementStale(awarenessElements.awCity)
+  ) {
+    awarenessElements = buildAwarenessElements();
   }
   return awarenessElements;
 };
