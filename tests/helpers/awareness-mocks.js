@@ -280,6 +280,23 @@ export async function triggerAwareness(page) {
 
   // Wait for awareness to be ready
   await waitForAwarenessEvent(page, 'ready', undefined, { timeout: 10000 });
+
+  const summary = await page.evaluate(() => {
+    const events = Array.isArray(window.__awarenessEvents)
+      ? window.__awarenessEvents.map((event) => ({
+          type: event?.type,
+          detail: {
+            source: event?.detail?.source,
+            label: event?.detail?.label,
+            message: event?.detail?.message,
+          },
+        }))
+      : [];
+    const latestInsight = window.__latestWetnessInsight || null;
+    return { events, latestInsight };
+  });
+
+  console.log('[Test Helper] awareness events:', JSON.stringify(summary));
 }
 
 export async function getLatestAwarenessEvent(page, type) {
