@@ -21,6 +21,12 @@ export default defineConfig({
     // Faster navigation in CI
     navigationTimeout: process.env.CI ? 15000 : 30000,
     actionTimeout: process.env.CI ? 10000 : 15000,
+    // Enable browser HTTP cache
+    bypassCSP: false,
+    offline: false,
+    httpCredentials: null,
+    ignoreHTTPSErrors: false,
+    extraHTTPHeaders: {},
   },
   projects: [
     {
@@ -29,7 +35,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx http-server -p 8000 --silent',
+    command: 'npx http-server -p 8000 --silent -c3600',
     url: 'http://localhost:8000',
     reuseExistingServer: true,
     timeout: 30 * 1000,

@@ -60,6 +60,7 @@ export async function setupAwarenessMocks(page, options = {}) {
     ...(options.geolocation || {}),
   };
 
+
   await page.addInitScript(
     ({ savedLocation, geoState, fixtures }) => {
       const state = {
