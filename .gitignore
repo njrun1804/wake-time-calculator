@@ -12,6 +12,7 @@ dist/
 test-visual.js
 wake-updated.png
 test-results/
+test-results.json
 wake-tests.js
 playwright-report/
 playwright/.cache/

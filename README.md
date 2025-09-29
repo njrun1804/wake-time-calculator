@@ -1,6 +1,6 @@
 # Wake Time Calculator
 
-A comprehensive wake time calculator for runners with weather awareness and modular architecture. Calculates optimal wake times based on your first meeting, run duration, travel time, and breakfast preferences.
+A weather-aware wake time calculator for runners. Calculates optimal wake times based on your first meeting, run duration, and weather conditions to help you plan the perfect morning run.
 
 ## Features
 
@@ -41,28 +41,28 @@ python3 -m http.server 8000
 
 ### File Structure
 ```
-├── index.html               # Single entry point
+├── index.html               # Main application
 ├── css/
-│   └── main.css             # Extracted styles
+│   └── main.css             # Application styles
 ├── js/
-│   ├── app/                 # UI orchestrators & helpers
-│   │   ├── main.js          # App orchestration & awareness wiring
-│   │   ├── ui.js            # UI utilities & daylight badge helpers
-│   │   ├── awareness.js     # Weather awareness coordinator
-│   │   ├── dawn.js          # Dawn time & daylight checks
-│   │   ├── location.js      # Geocoding & GPS
-│   │   └── weather.js       # Weather data & processing
-│   ├── lib/                 # Pure logic, constants, shared utilities
-│   │   ├── calculator.js    # Time calculations
-│   │   ├── storage.js       # Data persistence
-│   │   ├── constants.js     # Shared constants & defaults
-│   │   ├── schedulers.js    # Idle helpers
-│   │   └── time.js          # Time formatting utilities
-└── tests/                  # Playwright & unit suites
-    ├── integration/
-    ├── performance/
-    └── unit/
-```
+│   ├── app/                 # Application modules
+│   │   ├── main.js          # Entry point & initialization
+│   │   ├── ui.js            # UI components & interactions
+│   │   ├── awareness.js     # Weather awareness logic
+│   │   ├── dawn.js          # Dawn time calculations
+│   │   ├── location.js      # Location services
+│   │   └── weather.js       # Weather API integration
+│   └── lib/                 # Utility libraries
+│       ├── calculator.js    # Core wake time calculations
+│       ├── storage.js       # Local storage management
+│       ├── constants.js     # Application constants
+│       ├── schedulers.js    # Scheduling utilities
+│       └── time.js          # Time manipulation utilities
+├── tests/                   # Test suites
+│   ├── integration/         # Integration tests
+│   ├── unit/                # Unit tests
+│   └── performance/         # Performance tests
+└── docs/                    # Documentation
 
 ### Module Dependencies
 ```
@@ -120,9 +120,11 @@ The application is built with modern ES6 modules requiring no build step. For de
 
 ## Documentation
 
-- `docs/trail-wetness.md` – Details the heuristics behind the trail condition labels and the roadmap for further calibration.
-- `docs/page-test-coverage.md` – Maps entry points to the automation suites that exercise them.
-- `docs/quality-signals.md` – Lists the quality gates (linting, tests, performance budgets).
+- `CLAUDE.md` – Comprehensive developer documentation with architecture details
+- `docs/trail-wetness.md` – Trail condition scoring algorithm and calibration
+- `docs/page-test-coverage.md` – Test coverage mapping for all features
+- `docs/quality-signals.md` – Quality gates and performance budgets
+- `docs/dev-setup.md` – Development environment setup guide
 
 ## Live Demo
 

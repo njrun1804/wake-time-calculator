@@ -1,30 +1,185 @@
-# Page-to-Test Coverage Expectations
+# Test Coverage Documentation
 
-This guide maps the HTML entry point to the JavaScript modules it loads and documents both the **current automation status** and the **target coverage** we intend to maintain.
+This document maps the application components to their test coverage and defines the testing strategy for maintaining quality.
 
-## Coverage Matrix
+## Application Test Coverage
 
-| Entry Point | Automated Coverage | Notes |
-|-------------|--------------------|-------|
-| `index.html` | Playwright integration suites (`tests/integration/wake-flow.spec.js`, `tests/integration/modular.spec.js`), performance probe (`tests/performance/load.spec.js`), and Node unit tests (`tests/unit/*.test.js`). | Single-page experience with calculator, storage, weather awareness, and daylight warnings. |
+### Entry Point: `index.html`
+The single-page application with full calculator and weather awareness functionality.
 
-## `index.html` – Wake Time Calculator
-- **Module entry point:** `js/app/main.js`, orchestrating library helpers (`js/lib/`), awareness modules (`js/app/awareness.js`, `js/app/weather.js`, `js/app/dawn.js`, `js/app/location.js`), UI utilities, and idle scheduling helpers.
-- **Current automation:**
-  - Core planner journey (`tests/integration/modular.spec.js`).
-  - Awareness + weather flows (`tests/integration/wake-flow.spec.js`).
-  - Deterministic awareness smoke tests with fixture-backed APIs (`tests/integration/awareness.mocked.spec.js`).
-  - Performance budget check (`tests/performance/load.spec.js`).
-  - Calculator unit coverage (`tests/unit/*.test.js`).
-- **Target coverage:**
-  - Maintain calculator/storage unit tests to keep math and persistence deterministic.
-  - Preserve both Playwright journeys so DOM interactions, awareness behaviors, and time-allocation bars stay validated.
-  - Keep the mocked awareness suite expanding to cover geolocation success/denied states and API failure messaging as regressions arise.
-  - Exercise weather/dawn success and failure paths, daylight badge updates, and storage persistence of awareness preferences.
-  - Continue enforcing the load budget guardrail in the performance probe.
+**Module Dependencies:**
+- `js/app/main.js` - Entry point and orchestration
+- `js/app/ui.js` - UI components and interactions
+- `js/app/awareness.js` - Weather awareness coordination
+- `js/app/weather.js` - Weather API and analysis
+- `js/app/dawn.js` - Dawn time calculations
+- `js/app/location.js` - Geolocation services
+- `js/lib/calculator.js` - Core calculation logic
+- `js/lib/storage.js` - Data persistence
+- `js/lib/time.js` - Time utilities
+- `js/lib/constants.js` - Configuration
+- `js/lib/schedulers.js` - Deferred execution
 
-## Documentation Promises & Backlog
-- **MIGRATION.md:** Commits to unit, integration, and cross-browser coverage for the modular architecture. Treat these expectations as the backlog to uphold rather than a description of a future state.
-- **README.md:** Reinforces the modular testing matrix (unit + integration Playwright suites). Keep documentation honest by checking in test assets alongside any updates to these promises.
+## Test Suite Organization
 
-Use this document as the canonical reference when proposing new or restored test suites so reviewers know which flows each suite must exercise, and annotate future edits with the actual automation status at that time.
+### Unit Tests (`tests/unit/`)
+**Purpose:** Test pure functions and business logic in isolation
+
+**Coverage:**
+- Calculator logic (wake time calculations, sleep cycles)
+- Time formatting and manipulation
+- Storage operations
+- Weather data processing
+- Dawn time calculations
+
+**Test Files:**
+- `calculator.test.js` - Core calculation functions
+- `storage.test.js` - LocalStorage operations
+- `time.test.js` - Time utilities
+- `weather.test.js` - Weather processing logic
+
+### Integration Tests (`tests/integration/`)
+**Purpose:** Test complete user workflows and feature interactions
+
+**Core Tests** (`@core` tag):
+- Basic calculator functionality
+- Form input and validation
+- Time display updates
+- Storage persistence
+- Previous day handling
+
+**Awareness Tests** (`@full` tag):
+- Weather data fetching and display
+- Location detection and fallback
+- Dawn time integration
+- Trail wetness scoring
+- Daylight warnings
+- API error handling
+
+**Regression Tests** (`@regression` tag):
+- Previously fixed bugs
+- Edge cases discovered in production
+- Browser-specific issues
+
+### Performance Tests (`tests/performance/`)
+**Purpose:** Monitor and enforce performance budgets
+
+**Metrics:**
+- Page load time (< 2 seconds)
+- Time to Interactive (< 3 seconds)
+- API response handling (< 1 second)
+- Memory usage patterns
+- Bundle size monitoring
+
+## Test Execution Matrix
+
+| Test Type | Command | When to Run | CI/CD |
+|-----------|---------|-------------|-------|
+| Unit | `npm run test:unit` | Every code change | Pre-push hook |
+| Core Integration | `npm run test:core` | Feature changes | PR validation |
+| Full Integration | `npm run test:awareness` | Weather/API changes | PR validation |
+| Performance | `npm run test:performance` | Before release | Nightly builds |
+| All Tests | `npm test` | Before merge | Required |
+
+## Coverage Requirements
+
+### Critical Paths (100% Coverage Required)
+1. Wake time calculation
+2. Form submission and validation
+3. Data persistence to LocalStorage
+4. Time zone handling
+
+### High Priority (>90% Coverage)
+1. Weather data processing
+2. Location services
+3. Dawn time calculations
+4. UI state management
+
+### Medium Priority (>80% Coverage)
+1. API error handling
+2. Fallback behaviors
+3. Edge case scenarios
+4. Cross-browser compatibility
+
+## Test Data Management
+
+### Fixtures
+- Mock weather API responses
+- Sample location data
+- Time zone test cases
+- Edge case scenarios
+
+### Test Environment
+- LocalStorage isolation per test
+- API mocking capabilities
+- Deterministic time handling
+- Browser context management
+
+## Continuous Integration
+
+### Pre-commit Hooks
+- Prettier formatting
+- Lint-staged checks
+
+### Pre-push Hooks
+- Format verification
+- Unit test execution
+
+### Pull Request Checks
+- Full test suite
+- Performance benchmarks
+- HTML validation
+- Code coverage report
+
+### Deployment Gate
+- All tests passing
+- Performance budgets met
+- No console errors
+- Accessibility checks
+
+## Adding New Tests
+
+### For New Features
+1. Write unit tests for logic
+2. Add integration test for user flow
+3. Include performance impact check
+4. Update this documentation
+
+### For Bug Fixes
+1. Add regression test first (should fail)
+2. Fix the bug
+3. Verify test passes
+4. Tag with `@regression`
+
+## Test Maintenance
+
+### Weekly
+- Review flaky tests
+- Update test data
+- Check coverage metrics
+
+### Monthly
+- Performance baseline update
+- Cross-browser testing
+- Dependency updates
+
+### Quarterly
+- Coverage gap analysis
+- Test suite optimization
+- Documentation review
+
+## Known Testing Gaps
+
+Current areas needing additional coverage:
+- Mobile device testing
+- Offline functionality
+- Accessibility testing
+- Internationalization
+- Performance under poor network conditions
+
+## Resources
+
+- [Playwright Documentation](https://playwright.dev/)
+- [Node.js Test Runner](https://nodejs.org/api/test.html)
+- [Testing Best Practices](https://testingjavascript.com/)
+- [Web Performance Testing](https://web.dev/vitals/)
