@@ -4,6 +4,13 @@
 
 Wake Time Calculator is a vanilla JavaScript web application that helps runners plan optimal wake times based on weather conditions. The application provides personalized recommendations by analyzing weather forecasts, dawn times, and run durations.
 
+## Environment & Dependencies
+
+- Served as plain ES modules from `index.html`; no bundler or build step
+- Development server is Python `http.server` via `npm run serve`
+- No environment variables or API keys required (Open-Meteo and SunriseSunset.io are keyless)
+- Project dependencies live in dev-only tooling (Playwright, Prettier, Husky, html-validate)
+
 ## Entry Point
 
 - **`index.html`** – Single-page application with full weather awareness served directly without build steps

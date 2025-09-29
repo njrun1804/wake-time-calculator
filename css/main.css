@@ -152,39 +152,11 @@ select {
 
 input[type='time']:focus,
 input[type='number']:focus,
-select:focus {
+select:focus,
+input[type='text']:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-color: #3b82f6;
-}
-
-/* Override DaisyUI dark theme for form elements */
-.select-bordered,
-.input-bordered {
-  background-color: #ffffff !important;
-  color: #1f2933 !important;
-  border-color: #d2d8e1 !important;
-}
-
-.select-bordered:focus,
-.input-bordered:focus {
-  background-color: #ffffff !important;
-  color: #1f2933 !important;
-  border-color: #3b82f6 !important;
-}
-
-/* Awareness section input styling */
-#placeQuery {
-  background-color: #ffffff !important;
-  color: #1f2933 !important;
-  border-color: #d2d8e1 !important;
-}
-
-#placeQuery:focus {
-  background-color: #ffffff !important;
-  color: #1f2933 !important;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .actions {
@@ -193,7 +165,49 @@ select:focus {
   gap: 0.6rem;
 }
 
-/* Button styles are handled by DaisyUI .btn classes */
+/* ========== Button Styles ========== */
+button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.btn-secondary:active {
+  background: #d1d5db;
+}
 
 .status {
   min-height: 1.25rem;
@@ -436,7 +450,7 @@ select:focus {
 .aw-top {
   display: flex;
   gap: 0.6rem;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -456,15 +470,26 @@ select:focus {
   display: flex;
   gap: 0.4rem;
   align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #e5e9f2;
+  border-radius: 12px;
+  padding: 0.5rem;
 }
 
 .aw-actions input {
   width: 10rem;
   font: inherit;
-  padding: 0.4rem 0.55rem;
+  padding: 0.5rem 0.65rem;
   border: 1px solid #d2d8e1;
   border-radius: 8px;
-  background: #fdfdff;
+  background: #ffffff;
+  font-size: 0.85rem;
+}
+
+.aw-actions button {
+  padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
 }
 

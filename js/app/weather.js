@@ -4,6 +4,7 @@
  */
 
 import { CACHE_DURATION } from '../lib/constants.js';
+import { Storage } from '../lib/storage.js';
 
 const MS_PER_DAY = 86400000;
 
@@ -14,52 +15,24 @@ const MAX_INTENSITY_BOOST = 1.35;
 const SNOW_TO_WATER_RATIO = 0.1;
 
 /**
- * Weather cache for API responses
- */
-const weatherCache = {};
-
-/**
  * Weather codes that indicate snow
  */
 const snowCodes = new Set([71, 73, 75, 77, 85, 86]);
 
 /**
- * Cache data with timestamp
- * @param {string} key - Cache key
- * @param {any} data - Data to cache
- */
-const cacheData = (key, data) => {
-  weatherCache[key] = { data, time: Date.now() };
-};
-
-/**
- * Get cached data if not expired
- * @param {string} key - Cache key
- * @param {number} maxAge - Max age in milliseconds
- * @returns {any|null} Cached data or null if expired/missing
- */
-const getCachedData = (key, maxAge = CACHE_DURATION) => {
-  const cached = weatherCache[key];
-  if (cached && Date.now() - cached.time < maxAge) {
-    return cached.data;
-  }
-  return null;
-};
-
-/**
- * Fetch data with caching
+ * Fetch data with caching using Storage module
  * @param {string} key - Cache key
  * @param {Function} fetcher - Function that returns Promise<data>
  * @param {AbortSignal} signal - Abort signal
  * @returns {Promise<any>} Cached or fresh data
  */
 const fetchWithCache = async (key, fetcher, signal = null) => {
-  const cached = getCachedData(key);
+  const cached = Storage.loadCache(key, CACHE_DURATION);
   if (cached) return cached;
 
   try {
     const data = await fetcher(signal);
-    cacheData(key, data);
+    Storage.saveCache(key, data);
     return data;
   } catch (error) {
     if (signal?.aborted) throw error;

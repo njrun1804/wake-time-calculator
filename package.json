@@ -13,9 +13,7 @@
     "test:performance": "playwright test tests/performance",
     "test:ci": "playwright test --grep '@core|@full|@performance|@regression' --reporter=dot",
     "lint": "prettier --check '*.html' 'js/**/*.js'",
-    "lint:js": "prettier --check 'js/**/*.js'",
     "format": "prettier --write '*.html' 'js/**/*.js'",
-    "format:js": "prettier --write 'js/**/*.js'",
     "validate:html": "html-validate index*.html",
     "validate:all": "npm run lint && npm run validate:html && npm run test:unit",
     "prepare": "husky install"
@@ -23,10 +21,9 @@
   "devDependencies": {
     "@playwright/test": "^1.48.2",
     "html-validate": "^10.0.0",
-    "http-server": "^14.1.1",
-    "prettier": "^3.3.3",
     "husky": "^8.0.0",
-    "lint-staged": "^14.0.0"
+    "lint-staged": "^14.0.0",
+    "prettier": "^3.3.3"
   },
   "lint-staged": {
     "*.html": "prettier --write",

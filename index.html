@@ -9,18 +9,8 @@
     <link rel="preload" href="css/main.css" as="style" />
     <link rel="stylesheet" href="css/main.css" fetchpriority="high" />
 
-    <!-- Networking Hints for CDN assets -->
-    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-
     <!-- Preload JS entry point so hydration can start sooner -->
     <link rel="modulepreload" href="js/app/main.js" />
-
-    <!-- Tailwind & DaisyUI CDN -->
-    <script src="https://cdn.tailwindcss.com" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" />
   </head>
   <body>
     <div class="hero-bg" aria-hidden="true"></div>
@@ -36,7 +26,7 @@
         <div class="form-row">
           <div class="field-group">
             <label for="firstMeeting">First meeting</label>
-            <select id="firstMeeting" name="firstMeeting" required class="select select-bordered w-full">
+            <select id="firstMeeting" name="firstMeeting" required>
               <option value="06:00">6:00 AM</option>
               <option value="06:30">6:30 AM</option>
               <option value="07:00">7:00 AM</option>
@@ -58,7 +48,6 @@
               min="0"
               max="999"
               placeholder="0"
-              class="input input-bordered w-full"
             />
           </div>
         </div>
@@ -91,7 +80,7 @@
           </div>
           <div class="field-group">
             <label for="runLocation">Run location</label>
-            <select id="runLocation" name="runLocation" class="select select-bordered w-full">
+            <select id="runLocation" name="runLocation">
               <optgroup label="Dirt by distance">
                 <option value="figure8" data-travel="14">Figure 8</option>
                 <option value="huber" data-travel="20">Huber</option>
@@ -119,11 +108,11 @@
 
       <!-- Weather Awareness Section (moved to middle) -->
       <section
-        class="awareness bg-base-200 rounded-2xl shadow-md"
+        class="awareness"
         id="awareness"
         aria-live="polite"
       >
-        <div class="aw-top flex items-center justify-start gap-2 flex-wrap">
+        <div class="aw-top">
           <div class="aw-where">
             <span
               id="awCity"
@@ -131,13 +120,11 @@
               >Verify location</span
             >
           </div>
-          <div
-            class="aw-actions rounded-xl bg-base-100/70 border border-base-300 px-2 py-1 flex gap-2 flex-wrap"
-          >
+          <div class="aw-actions">
             <button
               type="button"
               id="useMyLocation"
-              class="btn btn-primary btn-sm"
+              class="btn-primary"
             >
               Use my location
             </button>
@@ -146,44 +133,43 @@
               type="text"
               placeholder="City or ZIP"
               aria-label="City or ZIP"
-              class="input input-bordered input-sm w-40"
             />
-            <button type="button" id="setPlace" class="btn btn-ghost btn-sm">
+            <button type="button" id="setPlace" class="btn-secondary">
               Set
             </button>
           </div>
         </div>
 
-        <div class="aw-grid grid grid-cols-5 gap-2">
-          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+        <div class="aw-grid">
+          <div class="aw-item">
             <div class="label">Dawn</div>
             <div class="value">
               <span class="status-icon hidden" id="awDawnIcon" aria-hidden="true">⚠</span>
               <time id="awDawn" datetime="">—</time>
             </div>
           </div>
-          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+          <div class="aw-item">
             <div class="label">Wind chill</div>
             <div class="value">
               <span class="status-icon hidden" id="awWindChillIcon" aria-hidden="true">⚠</span>
               <span id="awWindChill">—</span>
             </div>
           </div>
-          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+          <div class="aw-item">
             <div class="label">Precip %</div>
             <div class="value">
               <span class="status-icon hidden" id="awPoPIcon" aria-hidden="true">⚠</span>
               <span id="awPoP">—</span>
             </div>
           </div>
-          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+          <div class="aw-item">
             <div class="label">Wet bulb</div>
             <div class="value">
               <span class="status-icon hidden" id="awWetBulbIcon" aria-hidden="true">⚠</span>
               <span id="awWetBulb">—</span>
             </div>
           </div>
-          <div class="aw-item rounded-xl bg-base-100 border border-base-300">
+          <div class="aw-item">
             <div class="label">Trail Status</div>
             <div class="value" id="awWetness">
               <span class="status-icon hidden" id="awDecisionIcon" aria-hidden="true">⚠</span>
@@ -213,7 +199,7 @@
             <div class="wake-hero__time" id="chosenWake">--:--</div>
             <span
               id="prevDayBadge"
-              class="badge badge-warning badge-sm align-middle hidden wake-hero__badge"
+              class="badge hidden wake-hero__badge"
             >
               previous day
             </span>

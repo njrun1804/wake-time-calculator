@@ -3,6 +3,8 @@
  * UI utilities, form helpers, and display functions
  */
 
+import { checkDaylightNeeded } from './dawn.js';
+
 /**
  * Explicit list of dirt locations (robust across browsers)
  */
@@ -36,17 +38,14 @@ export const updateLocationBadge = (location, runStartMinutes, dawnDate) => {
   const badge = document.getElementById('daylightWarning');
   if (!badge) return;
 
-  // Import daylight check function
-  import('./dawn.js').then(({ checkDaylightNeeded }) => {
-    const daylightCheck = checkDaylightNeeded(runStartMinutes, dawnDate);
+  const daylightCheck = checkDaylightNeeded(runStartMinutes, dawnDate);
 
-    if (daylightCheck.needed) {
-      badge.textContent = daylightCheck.message;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-  });
+  if (daylightCheck.needed) {
+    badge.textContent = daylightCheck.message;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
 };
 
 /**
