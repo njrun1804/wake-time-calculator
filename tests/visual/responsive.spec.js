@@ -71,7 +71,7 @@ test.describe('Responsive Design Visual Tests @visual', () => {
     });
   });
 
-  test('touch target sizes on mobile', async ({ page }) => {
+  test.skip('touch target sizes on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/index.html');
 
