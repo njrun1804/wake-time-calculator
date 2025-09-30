@@ -1,0 +1,13 @@
+{
+  "ignore_dirs": [
+    "node_modules",
+    ".git",
+    "test-results",
+    "playwright-report",
+    "coverage",
+    ".nyc_output",
+    "dist",
+    "tmp",
+    "temp"
+  ]
+}

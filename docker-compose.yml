@@ -5,6 +5,12 @@ services:
       - "8080:80"
     restart: unless-stopped
     container_name: wake-time-calculator
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
   dev:
     image: python:3.11-alpine
@@ -15,9 +21,15 @@ services:
       - "8000:8000"
     command: python3 -m http.server 8000
     container_name: wake-time-calculator-dev
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.48.2-jammy
+    image: mcr.microsoft.com/playwright:v1.55.1-jammy
     working_dir: /app
     volumes:
       - .:/app
@@ -30,7 +42,7 @@ services:
     container_name: wake-time-calculator-playwright
 
   playwright-visual:
-    image: mcr.microsoft.com/playwright:v1.48.2-jammy
+    image: mcr.microsoft.com/playwright:v1.55.1-jammy
     working_dir: /app
     volumes:
       - .:/app

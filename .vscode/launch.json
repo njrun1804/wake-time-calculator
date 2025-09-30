@@ -42,7 +42,7 @@
     {
       "name": "Server + Chrome",
       "configurations": ["Launch Chrome"],
-      "preLaunchTask": "Start Dev Server",
+      "preLaunchTask": "Serve (python http.server)",
       "presentation": {
         "order": 1
       }

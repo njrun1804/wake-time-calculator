@@ -1,4 +1,4 @@
-.PHONY: help install serve test format validate docker-build docker-run docker-dev clean
+.PHONY: help install serve test test-unit test-core test-watch coverage format validate docker-build docker-run docker-dev docker-test docker-logs docker-stop clean clean-cache deps-check deps-audit docs ci quick optimize-git
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -21,8 +21,20 @@ test-unit: ## Run unit tests only
 test-core: ## Run core integration tests
 	npm run test:core
 
+test-watch: ## Watch unit tests for changes
+	npm run test:unit:watch
+
+watch: test-watch ## Alias for test-watch
+
+coverage: ## Generate code coverage report
+	npm run test:unit:coverage
+	@echo "📊 Coverage report: file://$(PWD)/coverage/index.html"
+
 format: ## Format code
 	npm run format
+
+lint-fix: ## Fix linting issues automatically
+	npm run lint:fix
 
 validate: ## Run all validations
 	npm run validate:all
@@ -37,6 +49,13 @@ docker-run: docker-build ## Run production Docker container
 docker-dev: ## Run development server in Docker
 	docker-compose up dev
 
+docker-test: ## Run all tests in Docker
+	docker-compose up playwright --abort-on-container-exit
+	docker-compose down
+
+docker-logs: ## View Docker container logs
+	docker-compose logs -f
+
 docker-stop: ## Stop and remove Docker containers
 	docker-compose down
 	-docker stop wake-time-calculator 2>/dev/null
@@ -46,5 +65,40 @@ clean: ## Clean temporary files and caches
 	rm -rf node_modules
 	rm -rf playwright-report
 	rm -rf test-results
+	rm -rf coverage
 	rm -rf .vscode/chrome-debug
 	find . -name ".DS_Store" -delete
+
+clean-cache: ## Quick clean of test artifacts only
+	npm run clean:cache
+
+deps-check: ## Check for outdated packages
+	@echo "🔍 Checking for outdated packages..."
+	@npm outdated || true
+
+deps-audit: ## Check for security vulnerabilities
+	@echo "🔒 Checking for security vulnerabilities..."
+	@npm audit
+
+docs: ## Generate API documentation
+	npm run docs:generate
+	@echo "📚 Documentation generated: docs/API.md"
+
+ci: ## Run full CI suite locally
+	@echo "🔄 Running full CI pipeline..."
+	@npm run validate:all
+	@npm run test:ci
+	@echo "✅ CI checks passed!"
+
+quick: ## Quick validation (no tests)
+	@echo "⚡ Running quick checks..."
+	@npm run lint
+	@npm run validate:html
+	@echo "✅ Quick checks passed!"
+
+optimize-git: ## Optimize git repository for performance
+	@echo "🔧 Optimizing git repository..."
+	@git gc --aggressive --prune=now
+	@git repack -Ad
+	@git prune
+	@echo "✅ Git optimization complete!"

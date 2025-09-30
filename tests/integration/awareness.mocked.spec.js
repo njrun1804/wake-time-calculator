@@ -49,7 +49,7 @@ test.describe('Weather awareness with mocked data', () => {
       .toBe('Slick/Icy');
     await expect(page.locator('#awCity')).toHaveText(/Mocked Trailhead/);
     await expect(page.locator('#awMsg')).toBeHidden();
-    await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22\"/);
+    await expect(page.locator('#awWetness')).toHaveAttribute('title', /0.22"/);
   });
 
   test('reports location denied when geolocation access fails @full', async ({

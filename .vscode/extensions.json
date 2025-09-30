@@ -3,11 +3,15 @@
     "esbenp.prettier-vscode",
     "ms-playwright.playwright",
     "html-validate.vscode-html-validate",
-    "ryanrosello-og.playwright-vscode-trace-viewer",
-    "rangav.vscode-thunder-client",
-    "genieai.chatgpt-vscode",
     "ms-azuretools.vscode-docker",
-    "mhutchie.git-graph"
+    "mhutchie.git-graph",
+    "dbaeumer.vscode-eslint",
+    "christian-kohler.path-intellisense",
+    "usernamehw.errorlens"
   ],
-  "unwantedRecommendations": []
+  "unwantedRecommendations": [
+    "genieai.chatgpt-vscode",
+    "rangav.vscode-thunder-client",
+    "ryanrosello-og.playwright-vscode-trace-viewer"
+  ]
 }

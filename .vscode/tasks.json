@@ -76,6 +76,48 @@
         "reveal": "always",
         "panel": "shared"
       }
+    },
+    {
+      "label": "Watch unit tests",
+      "type": "shell",
+      "command": "npm run test:unit:watch",
+      "isBackground": true,
+      "group": "test",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Generate coverage report",
+      "type": "shell",
+      "command": "npm run test:unit:coverage",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run visual tests",
+      "type": "shell",
+      "command": "npm run test:visual",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Update visual baselines",
+      "type": "shell",
+      "command": "npm run test:visual:update",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     }
   ]
 }

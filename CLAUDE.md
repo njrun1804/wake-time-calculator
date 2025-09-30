@@ -40,11 +40,11 @@ wake-time-calculator/
 
 ### Technology Stack
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Testing**: Playwright for integration tests, Node.js test runner for unit tests
-- **Code Quality**: Prettier, HTML Validator, Husky for pre-commit hooks
+- **Testing**: Playwright (integration + visual), Node.js test runner (unit)
+- **Code Quality**: Prettier, ESLint, HTML Validator, Husky (pre-commit/pre-push)
 - **Development Server**: Python HTTP server (local), Docker (containerized)
 - **Package Manager**: npm
-- **Containerization**: Docker and Docker Compose available
+- **Containerization**: Docker and Docker Compose
 - **Build Automation**: Makefile for common tasks
 
 ## Key Components
@@ -158,10 +158,13 @@ The project includes VS Code configuration for enhanced development:
 
 **Extensions**:
 - Prettier (auto-formatting)
+- ESLint (JavaScript linting)
 - Playwright (test runner integration)
 - HTML Validate (real-time validation)
 - Docker (container management)
 - Git Graph (visual git history)
+- Path Intellisense (file path autocomplete)
+- Error Lens (inline error display)
 
 ### Key Scripts
 - `serve`: Starts Python HTTP server on port 8000
@@ -243,7 +246,14 @@ Excludes unnecessary files from Docker builds
 
 ## Recent Major Changes
 
-### Removed Components
+### Added (2024-2025)
+- **Visual Regression Testing Suite** (Sept 2024): Comprehensive UI testing across multiple viewports and browsers
+- **ESLint Configuration** (Sept 2024): Modern flat config for JavaScript linting
+- **Multi-Browser CI Pipeline** (Sept 2024): Chromium, Firefox, and WebKit testing
+- **Docker Containerization** (Sept 2024): Development and production containers with healthchecks
+- **VS Code Integration** (Sept 2024): Enhanced debugging, tasks, and extension recommendations
+
+### Removed Components (Migration from TypeScript)
 - TypeScript compilation (migrated to vanilla JS)
 - Complex build pipeline
 - Service worker and offline functionality

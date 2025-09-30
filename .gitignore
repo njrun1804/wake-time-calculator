@@ -17,5 +17,35 @@ wake-tests.js
 playwright-report/
 playwright/.cache/
 
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Generated documentation
+docs/api/
+docs/API.md
+
 # Visual test screenshots (keep baselines, ignore current test runs)
 tests/visual/screenshots/current/
+
+# macOS optimizations
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+
+# IDE and editor caches
+.idea/
+*.swp
+*.swo
+*~
+
+# Package manager caches
+.npm/
+.yarn/
+.pnp.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
