@@ -10,7 +10,7 @@ import {
   reverseGeocode,
   geocodePlace,
   validateCoordinates,
-} from '../location.js';
+} from '../location/index.js';
 import { cacheAwarenessElements } from './dom.js';
 import { showAwarenessError } from './display.js';
 import { refreshAwareness } from './core.js';

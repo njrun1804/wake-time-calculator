@@ -6,7 +6,7 @@
 import { defaultTz } from '../../lib/constants.js';
 import { fmtTime12InZone } from '../../lib/time.js';
 import { toMinutes } from '../../lib/calculator.js';
-import { interpretWetness, formatTemp, formatPoP } from '../weather.js';
+import { interpretWetness, formatTemp, formatPoP } from '../weather/index.js';
 import { cacheAwarenessElements } from './dom.js';
 import {
   setStatusIcon,

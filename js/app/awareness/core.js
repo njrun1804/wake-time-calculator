@@ -5,9 +5,9 @@
 
 import { Storage } from '../../lib/storage.js';
 import { defaultTz } from '../../lib/constants.js';
-import { fetchWeatherAround, fetchWetnessInputs } from '../weather.js';
-import { fetchDawn } from '../dawn.js';
-import { reverseGeocode } from '../location.js';
+import { fetchWeatherAround, fetchWetnessInputs } from '../weather/index.js';
+import { fetchDawn } from '../dawn/index.js';
+import { reverseGeocode } from '../location/index.js';
 import { updateAwarenessDisplay, showAwarenessError } from './display.js';
 import { emitAwarenessEvent } from './events.js';
 
