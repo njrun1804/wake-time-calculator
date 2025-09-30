@@ -87,6 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     timeout-minutes: 10
+    continue-on-error: true  # Allow failures until baselines are generated for Linux
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
