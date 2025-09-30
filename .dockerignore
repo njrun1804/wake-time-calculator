@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.vscode
+.DS_Store
+playwright-report
+test-results
+.history
+.env
+*.log
+coverage
+.husky

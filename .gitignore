@@ -5,7 +5,7 @@ wake.min.html
 *.log
 .DS_Store
 npm-debug.log*
-/.vscode/
+/.vscode/chrome-debug/
 dist/
 
 # Test artifacts

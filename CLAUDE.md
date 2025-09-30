@@ -39,8 +39,10 @@ wake-time-calculator/
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
 - **Testing**: Playwright for integration tests, Node.js test runner for unit tests
 - **Code Quality**: Prettier, HTML Validator, Husky for pre-commit hooks
-- **Development Server**: Python HTTP server
+- **Development Server**: Python HTTP server (local), Docker (containerized)
 - **Package Manager**: npm
+- **Containerization**: Docker and Docker Compose available
+- **Build Automation**: Makefile for common tasks
 
 ## Key Components
 
@@ -84,28 +86,79 @@ wake-time-calculator/
 npm install
 
 # Start development server
-npm run serve
+npm run serve              # Python server on port 8000
+make serve                 # Same via Makefile
 
 # Run all tests
 npm test
+make test
 
 # Run specific test suites
 npm run test:unit          # Unit tests
 npm run test:core          # Core integration tests
 npm run test:awareness     # Full integration tests with awareness features
 npm run test:performance   # Performance tests
+make test-unit             # Unit tests via Makefile
+make test-core             # Core tests via Makefile
 
 # Code quality checks
 npm run lint               # Check formatting
 npm run format             # Auto-format code
 npm run validate:html      # Validate HTML
 npm run validate:all       # Run all validations
+make format                # Format via Makefile
+make validate              # Validate via Makefile
 ```
+
+### Docker Commands
+```bash
+# Development with Docker
+docker-compose up dev      # Dev server in container (port 8000)
+make docker-dev            # Same via Makefile
+
+# Production build
+docker build -t wake-time-calculator .
+docker run -p 8080:80 wake-time-calculator
+# Or use Makefile
+make docker-build          # Build production image
+make docker-run            # Build and run production container (port 8080)
+
+# Cleanup
+docker-compose down
+make docker-stop           # Stop all containers
+make clean                 # Remove all temporary files
+```
+
+### VS Code Integration
+The project includes VS Code configuration for enhanced development:
+
+**Tasks** (⌘+Shift+B):
+- Start Dev Server
+- Run All Tests
+- Run Unit Tests
+- Run Core Tests
+- Format Code
+- Validate All
+
+**Debug Configurations** (F5):
+- Debug Playwright Tests
+- Debug Current Playwright Test
+- Debug Unit Tests
+- Launch Chrome (with debugger)
+- Server + Chrome (compound - starts server then debugger)
+
+**Extensions**:
+- Prettier (auto-formatting)
+- Playwright (test runner integration)
+- HTML Validate (real-time validation)
+- Docker (container management)
+- Git Graph (visual git history)
 
 ### Key Scripts
 - `serve`: Starts Python HTTP server on port 8000
 - `test:ci`: Runs CI test suite with specific tags
 - `prepare`: Installs Husky hooks
+- Makefile targets available via `make help`
 
 ## Testing Strategy
 
@@ -136,6 +189,22 @@ Integration test configuration with browser settings and test patterns
 
 ### `.env.example`
 Environment variables template (if using API keys)
+
+### `.vscode/`
+VS Code workspace configuration:
+- `settings.json`: Editor settings optimized for Claude Code CLI
+- `tasks.json`: Quick access to dev server, tests, validation
+- `launch.json`: Debug configurations for tests and Chrome
+- `extensions.json`: Recommended extensions
+
+### `Makefile`
+Build automation with common development tasks. Run `make help` to see all targets.
+
+### `Dockerfile` & `docker-compose.yml`
+Container configuration for development and production environments
+
+### `.dockerignore`
+Excludes unnecessary files from Docker builds
 
 ## Recent Major Changes
 
@@ -195,16 +264,44 @@ Environment variables template (if using API keys)
 6. Add integration tests in `tests/integration/`
 
 ### Debugging
-- Use browser DevTools console
+**Browser DevTools:**
+- Use console for JavaScript errors
 - Check Network tab for API calls
 - Inspect Local Storage for saved data
 - Review test outputs for failures
 
+**VS Code Debugging:**
+- Set breakpoints in test files
+- Use F5 to start "Server + Chrome" debug configuration
+- Debug Playwright tests with built-in debugger
+- Debug unit tests with Node.js debugger
+
+**Docker Debugging:**
+- Check container logs: `docker-compose logs dev`
+- Shell into container: `docker exec -it wake-time-calculator-dev sh`
+- Verify container status: `docker ps`
+
 ### Deployment
+**Static Hosting:**
 - No build step required
 - Serve static files directly
 - Configure web server for SPA routing if needed
 - Ensure CORS headers for API access
+
+**Docker Deployment:**
+```bash
+# Production deployment
+docker build -t wake-time-calculator:latest .
+docker run -d -p 80:80 wake-time-calculator:latest
+
+# Or with docker-compose
+docker-compose up -d app
+```
+
+**Files:**
+- `Dockerfile`: Nginx-based production image (~10MB)
+- `docker-compose.yml`: Multi-environment container configs
+- `.dockerignore`: Optimized image builds
 
 ## API Integration
 

@@ -1,0 +1,88 @@
+{
+  // Editor settings optimized for Claude Code
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
+    "source.fixAll": "explicit"
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.inlineSuggest.enabled": true,
+  "editor.lineNumbers": "on",
+  "editor.rulers": [80, 120],
+
+  // Language-specific formatters
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // File management
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/playwright-report": true,
+    "**/.history": true,
+    "**/.git": true,
+    "**/.DS_Store": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.autoSave": "onFocusChange",
+
+  // Search optimization
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/*.log": true,
+    "**/playwright-report": true
+  },
+
+  // JavaScript/ES6 settings
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // Git integration
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+
+  // Terminal
+  "terminal.integrated.defaultProfile.osx": "zsh",
+
+
+  // Security
+  "security.workspace.trust.untrustedFiles": "open",
+
+  // Prettier
+  "prettier.requireConfig": true,
+  "prettier.enableDebugLogs": false,
+
+  // HTML validation
+  "html-validate.config": "${workspaceFolder}/.htmlvalidate.json",
+  "html-validate.enable": true,
+
+  // Playwright
+  "playwright.configPath": "./playwright.config.js",
+  "playwright.reuseBrowser": true,
+  "playwright.showTrace": false,
+
+  // Thunder Client
+  "rest-client.saveResponseInHistory": true,
+  "thunder-client.workspacePath": "${workspaceFolder}/.thunder-client"
+}
+
+
+
