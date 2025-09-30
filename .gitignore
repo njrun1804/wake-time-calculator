@@ -16,3 +16,6 @@ test-results.json
 wake-tests.js
 playwright-report/
 playwright/.cache/
+
+# Visual test screenshots (keep baselines, ignore current test runs)
+tests/visual/screenshots/current/

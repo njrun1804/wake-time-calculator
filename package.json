@@ -11,6 +11,8 @@
     "test:core": "playwright test --grep @core",
     "test:awareness": "playwright test --grep @full",
     "test:performance": "playwright test tests/performance",
+    "test:visual": "playwright test tests/visual",
+    "test:visual:update": "playwright test tests/visual --update-snapshots",
     "test:ci": "playwright test --grep '@core|@full|@performance|@regression' --reporter=dot",
     "lint": "prettier --check '*.html' 'js/**/*.js'",
     "format": "prettier --write '*.html' 'js/**/*.js'",

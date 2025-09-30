@@ -15,3 +15,29 @@ services:
       - "8000:8000"
     command: python3 -m http.server 8000
     container_name: wake-time-calculator-dev
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.48.2-jammy
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - CI=true
+    command: npx playwright test
+    depends_on:
+      - dev
+    network_mode: "host"
+    container_name: wake-time-calculator-playwright
+
+  playwright-visual:
+    image: mcr.microsoft.com/playwright:v1.48.2-jammy
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - CI=false
+    command: npx playwright test tests/visual
+    depends_on:
+      - dev
+    network_mode: "host"
+    container_name: wake-time-calculator-visual

@@ -29,7 +29,10 @@ wake-time-calculator/
 ├── tests/                    # Test suite
 │   ├── integration/         # Integration tests
 │   ├── unit/                # Unit tests
-│   └── performance/         # Performance tests
+│   ├── visual/              # Visual regression tests
+│   │   └── screenshots/     # Screenshot baselines
+│   ├── performance/         # Performance tests
+│   └── helpers/             # Test utilities and mocks
 ├── scripts/                  # Build and utility scripts
 └── docs/                    # Documentation
 
@@ -98,6 +101,8 @@ npm run test:unit          # Unit tests
 npm run test:core          # Core integration tests
 npm run test:awareness     # Full integration tests with awareness features
 npm run test:performance   # Performance tests
+npm run test:visual        # Visual regression tests
+npm run test:visual:update # Update visual test baselines
 make test-unit             # Unit tests via Makefile
 make test-core             # Core tests via Makefile
 
@@ -115,6 +120,10 @@ make validate              # Validate via Makefile
 # Development with Docker
 docker-compose up dev      # Dev server in container (port 8000)
 make docker-dev            # Same via Makefile
+
+# Testing with Docker
+docker-compose up playwright        # Run all Playwright tests
+docker-compose up playwright-visual # Run visual regression tests only
 
 # Production build
 docker build -t wake-time-calculator .
@@ -166,13 +175,36 @@ The project includes VS Code configuration for enhanced development:
 - **Unit Tests**: Core calculations, utilities, and data transformations
 - **Integration Core Tests** (`@core`): Essential user flows
 - **Integration Full Tests** (`@full`): Complete feature coverage including weather awareness
+- **Visual Regression Tests** (`@visual`): UI appearance, responsive design, accessibility
 - **Performance Tests**: Load times, API response handling
 - **Regression Tests** (`@regression`): Previously fixed bugs
+
+### Visual Testing
+The project includes comprehensive visual regression testing:
+- **Responsive Design Tests**: Multiple viewport sizes (mobile, tablet, desktop, wide)
+- **Weather State Tests**: Color-coded UI states (OK/green, Caution/yellow, Avoid/red)
+- **Accessibility Tests**: Focus states, keyboard navigation, WCAG compliance, touch targets
+- **Cross-Browser Testing**: Chromium, Firefox, and WebKit in CI
+
+**Visual Test Files:**
+- `tests/visual/responsive.spec.js`: Viewport and layout testing
+- `tests/visual/weather-states.spec.js`: Weather awareness UI states
+- `tests/visual/accessibility.spec.js`: Focus rings, contrast, screen reader support
+
+**Interactive Visual Testing with Puppeteer MCP:**
+For development and debugging, Puppeteer MCP can be used interactively via Claude Code CLI:
+- Capture screenshots at any viewport size
+- Test form interactions visually
+- Generate documentation screenshots
+- Debug UI issues in real-time
+- No code changes required - works directly through Claude Code
 
 ### Test Organization
 Tests are tagged for selective execution:
 - `@core`: Essential functionality
 - `@full`: Complete feature set
+- `@visual`: Visual regression tests
+- `@a11y`: Accessibility tests
 - `@performance`: Performance metrics
 - `@regression`: Bug fix validation
 
@@ -185,7 +217,10 @@ Code formatting configuration for consistent style
 HTML validation rules ensuring accessibility and standards compliance
 
 ### `playwright.config.js`
-Integration test configuration with browser settings and test patterns
+Integration test configuration with browser settings and test patterns. Configured for multi-browser testing:
+- **WebKit** (Safari): Default for local development
+- **Chromium** (Chrome/Edge): Used in CI visual tests
+- **Firefox**: Used in CI visual tests
 
 ### `.env.example`
 Environment variables template (if using API keys)
@@ -262,6 +297,8 @@ Excludes unnecessary files from Docker builds
 4. Style with CSS in `css/main.css`
 5. Write unit tests in `tests/unit/`
 6. Add integration tests in `tests/integration/`
+7. Add visual tests in `tests/visual/` if UI changes are significant
+8. Update visual baselines with `npm run test:visual:update`
 
 ### Debugging
 **Browser DevTools:**
