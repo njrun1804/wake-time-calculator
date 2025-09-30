@@ -3,7 +3,7 @@
  * UI utilities, form helpers, and display functions
  */
 
-import { checkDaylightNeeded } from './dawn.js';
+import { checkDaylightNeeded } from './dawn/index.js';
 
 /**
  * Explicit list of dirt locations (robust across browsers)

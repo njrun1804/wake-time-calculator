@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeWetness } from '../../js/app/weather/wetness.js';
+import { computeWetness } from '../../../../js/app/weather/wetness.js';
 
 // Test empty input
 test('computeWetness returns zero state for empty array', () => {

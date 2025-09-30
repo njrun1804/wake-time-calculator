@@ -1,0 +1,35 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "Wake Time Calculator"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/playwright-report": true,
+      "**/test-results": true,
+      "**/coverage": true,
+      "**/.nyc_output": true,
+      "**/.git": true,
+      "**/.DS_Store": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/playwright-report": true,
+      "**/test-results": true,
+      "**/coverage": true,
+      "**/.git": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "ms-playwright.playwright",
+      "html-validate.vscode-html-validate",
+      "ms-azuretools.vscode-docker"
+    ]
+  }
+}

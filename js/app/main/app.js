@@ -3,7 +3,10 @@
  * Main application orchestrator
  */
 
-import { initializeAwareness, setupAwarenessListeners } from '../awareness.js';
+import {
+  initializeAwareness,
+  setupAwarenessListeners,
+} from '../awareness/index.js';
 import { debounce } from '../ui.js';
 import { runWhenIdle } from '../../lib/schedulers.js';
 import { createInitialState, updateLocationWithTravel } from './state.js';

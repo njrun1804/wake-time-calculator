@@ -5,7 +5,7 @@
 
 import { calculateWakeTime, toMinutes } from '../../lib/calculator.js';
 import { updateLocationBadge } from '../ui.js';
-import { getCurrentDawn, updateDawnStatus } from '../awareness.js';
+import { getCurrentDawn, updateDawnStatus } from '../awareness/index.js';
 
 /**
  * Recalculate schedule from state

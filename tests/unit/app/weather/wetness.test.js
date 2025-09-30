@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { interpretWetness } from '../../js/app/weather.js';
+import { interpretWetness } from '../../../../js/app/weather/analysis.js';
 
 const WETNESS_RANK = Object.freeze({
   Dry: 0,
