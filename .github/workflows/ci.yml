@@ -71,9 +71,9 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install webkit
 
-      # Run all tests in parallel with a single web server instance
+      # Run all tests in parallel with a single web server instance (WebKit only)
       - name: Run all Safari tests
-        run: npm run test:ci
+        run: npm run test:ci -- --project=webkit
 
       - name: Upload Playwright report
         if: always() && hashFiles('playwright-report/**') != ''
