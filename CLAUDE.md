@@ -175,12 +175,29 @@ The project includes VS Code configuration for enhanced development:
 ## Testing Strategy
 
 ### Test Coverage
+The project maintains high test coverage (>96%) with comprehensive test suites:
+
 - **Unit Tests**: Core calculations, utilities, and data transformations
+  - Weather wetness calculations (`wetness-compute.test.js`): 18 tests covering precipitation dynamics, snowmelt, evapotranspiration, time decay
+  - Weather API integration (`weather-api.test.js`): 16 tests covering fetch operations, caching, data transformation, error handling
+  - Storage operations (`storage.test.js`): 16 tests covering localStorage persistence, caching, error handling
+  - Time utilities (`time.test.js`): 4 tests covering time conversions and formatting
+  - Calculator logic (`calculator.test.js`): 3 tests covering wake time calculations
+  - Wetness interpretation (`wetness.test.js`): 6 tests covering trail condition logic, freeze-thaw detection
 - **Integration Core Tests** (`@core`): Essential user flows
 - **Integration Full Tests** (`@full`): Complete feature coverage including weather awareness
 - **Visual Regression Tests** (`@visual`): UI appearance, responsive design, accessibility
 - **Performance Tests**: Load times, API response handling
 - **Regression Tests** (`@regression`): Previously fixed bugs
+
+### Current Coverage Metrics
+- **Overall**: 96.78% statement coverage
+- **weather/api.js**: 99.02% (API integration and caching)
+- **weather/wetness.js**: 97.83% (core moisture scoring algorithm)
+- **weather/analysis.js**: 91.19% (trail condition analysis)
+- **weather/formatting.js**: 88.70% (display formatting)
+- **lib/storage.js**: 100% (persistence layer)
+- **lib/calculator.js**: 100% (wake time calculations)
 
 ### Visual Testing
 The project includes comprehensive visual regression testing:
