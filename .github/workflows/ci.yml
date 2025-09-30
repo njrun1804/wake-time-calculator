@@ -88,10 +88,6 @@ jobs:
     needs: validate
     timeout-minutes: 10
     continue-on-error: true  # Allow failures until baselines are generated for Linux
-    strategy:
-      matrix:
-        browser: [chromium, firefox, webkit]
-      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
@@ -103,17 +99,26 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
-      - name: Run visual regression tests
-        run: npm run test:visual -- --project=${{ matrix.browser }}
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run visual regression tests (all browsers in parallel)
+        run: npm run test:visual
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-test-results-${{ matrix.browser }}
+          name: visual-test-results
           path: test-results/
           retention-days: 7
 
@@ -121,7 +126,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-screenshots-${{ matrix.browser }}
+          name: visual-screenshots
           path: tests/visual/screenshots/
           retention-days: 30
 

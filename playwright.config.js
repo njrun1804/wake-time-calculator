@@ -4,8 +4,8 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  // Use 4 workers in CI (optimal for 3 vCPU with I/O-bound tests)
-  workers: process.env.CI ? 4 : undefined,
+  // Optimize workers: 75% of cores locally, 100% in CI (I/O-bound tests benefit from oversubscription)
+  workers: process.env.CI ? '100%' : '75%',
   reporter: process.env.CI
     ? [['dot'], ['json', { outputFile: 'test-results.json' }]]
     : [['html', { open: 'never' }]],

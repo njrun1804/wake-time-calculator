@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "serve": "python3 -m http.server 8000",
+    "serve": "http-server -p 8000 -c-1 --cors",
     "test": "playwright test",
     "test:unit": "node --test 'tests/unit/**/*.test.js'",
     "test:unit:watch": "node --test --watch 'tests/unit/**/*.test.js'",

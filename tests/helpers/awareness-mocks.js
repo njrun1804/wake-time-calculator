@@ -258,7 +258,7 @@ export async function triggerAwareness(page) {
   // Directly initialize awareness module
   await page.evaluate(async () => {
     // Import and initialize awareness directly
-    const module = await import('./js/app/awareness.js');
+    const module = await import('./js/app/awareness/index.js');
     await module.initializeAwareness();
   });
 
