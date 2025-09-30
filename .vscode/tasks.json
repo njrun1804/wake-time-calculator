@@ -2,18 +2,19 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start Dev Server",
+      "label": "Serve (python http.server)",
       "type": "shell",
       "command": "npm run serve",
       "isBackground": true,
       "problemMatcher": [],
+      "group": "build",
       "presentation": {
         "reveal": "always",
         "panel": "new"
       }
     },
     {
-      "label": "Run All Tests",
+      "label": "Run Playwright tests",
       "type": "shell",
       "command": "npm test",
       "group": {
@@ -26,7 +27,7 @@
       }
     },
     {
-      "label": "Run Unit Tests",
+      "label": "Run unit tests",
       "type": "shell",
       "command": "npm run test:unit",
       "group": "test",
@@ -36,7 +37,7 @@
       }
     },
     {
-      "label": "Run Core Tests",
+      "label": "Run core tests",
       "type": "shell",
       "command": "npm run test:core",
       "group": "test",
@@ -46,7 +47,20 @@
       }
     },
     {
-      "label": "Format Code",
+      "label": "Validate (lint + html)",
+      "type": "shell",
+      "command": "npm run validate:all",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Format code",
       "type": "shell",
       "command": "npm run format",
       "presentation": {
@@ -55,13 +69,9 @@
       }
     },
     {
-      "label": "Validate All",
+      "label": "docker:dev (docker-compose)",
       "type": "shell",
-      "command": "npm run validate:all",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
+      "command": "docker-compose up dev",
       "presentation": {
         "reveal": "always",
         "panel": "shared"
