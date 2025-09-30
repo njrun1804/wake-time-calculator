@@ -28,6 +28,10 @@ docs/API.md
 # Visual test screenshots (keep baselines, ignore current test runs)
 tests/visual/screenshots/current/
 
+# Platform-specific visual test snapshots (macOS)
+# CI uses Linux, so darwin-specific snapshots should not be committed
+*-darwin.png
+
 # macOS optimizations
 .Spotlight-V100
 .Trashes
