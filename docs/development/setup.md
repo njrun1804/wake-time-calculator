@@ -113,10 +113,22 @@ wake-time-calculator/
 ├── css/main.css        # Styles
 ├── js/
 │   ├── app/            # Application modules
+│   │   ├── awareness/  # Weather awareness
+│   │   ├── dawn/       # Dawn calculations
+│   │   ├── location/   # Location services
+│   │   ├── main/       # App orchestration
+│   │   └── weather/    # Weather API & analysis
 │   └── lib/            # Utility libraries
 ├── tests/              # Test suites
+│   ├── integration/    # Integration tests
+│   ├── unit/           # Unit tests
+│   ├── visual/         # Visual regression
+│   └── performance/    # Performance tests
 ├── scripts/            # Helper scripts
 └── docs/               # Documentation
+    ├── architecture/   # Architecture docs
+    ├── development/    # Development guides
+    └── archive/        # Historical docs
 ```
 
 ## API Configuration
@@ -138,11 +150,13 @@ Ensure testing on:
 ## Common Development Tasks
 
 ### Add New Feature
-1. Create module in `js/app/`
-2. Import in `main.js`
-3. Add UI to `index.html`
-4. Write tests in `tests/`
-5. Update documentation
+1. Create module in appropriate `js/app/` subdirectory
+2. Export from subdirectory's `index.js`
+3. Import in `app/main.js`
+4. Add UI to `index.html`
+5. Write unit tests in `tests/unit/`
+6. Add integration tests in `tests/integration/`
+7. Update documentation
 
 ### Debug Issues
 1. Check browser console for errors
@@ -214,8 +228,8 @@ GitHub Actions runs:
 
 ## Resources
 
-- [Project README](../README.md)
-- [CLAUDE.md](../CLAUDE.md) - Detailed architecture docs
-- [Migration Guide](../MIGRATION.md) - Project history
+- [Project README](../../README.md)
+- [CLAUDE.md](../../CLAUDE.md) - Detailed architecture docs
+- [Migration Guide](../archive/MIGRATION.md) - Project history
 - [MDN Web Docs](https://developer.mozilla.org/) - Web standards
 - [Playwright Docs](https://playwright.dev/) - Testing framework

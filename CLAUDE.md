@@ -16,10 +16,11 @@ wake-time-calculator/
 │   ├── app/                  # Application modules
 │   │   ├── main.js          # Entry point and initialization
 │   │   ├── ui.js            # UI components and interactions
-│   │   ├── weather.js       # Weather API integration
-│   │   ├── awareness.js     # Weather awareness logic
-│   │   ├── location.js      # Location services
-│   │   └── dawn.js          # Dawn time calculations
+│   │   ├── awareness/       # Weather awareness logic modules
+│   │   ├── dawn/            # Dawn time calculation modules
+│   │   ├── location/        # Location service modules
+│   │   ├── main/            # Main app orchestration modules
+│   │   └── weather/         # Weather API and analysis modules
 │   └── lib/                  # Utility libraries
 │       ├── constants.js     # Application constants
 │       ├── time.js          # Time manipulation utilities
@@ -49,25 +50,28 @@ wake-time-calculator/
 
 ## Key Components
 
-### 1. Weather Awareness (`js/app/awareness.js`)
+### 1. Weather Awareness (`js/app/awareness/`)
 - Analyzes weather conditions for optimal run timing
 - Considers temperature, precipitation, wind speed, and UV index
 - Provides color-coded recommendations (green/yellow/red)
+- Modular structure: core logic, DOM updates, event handlers, display formatting
 
-### 2. Location Services (`js/app/location.js`)
+### 2. Location Services (`js/app/location/`)
 - Manages user location with fallback options
 - Supports browser geolocation API
-- Provides fallback to IP-based location
+- Provides geocoding and location validation
 - Stores location preferences locally
 
-### 3. Weather Integration (`js/app/weather.js`)
+### 3. Weather Integration (`js/app/weather/`)
 - Integrates with Open-Meteo API for weather data
-- Fetches hourly forecasts
+- Fetches hourly forecasts and historical data
+- Trail wetness analysis and moisture scoring
 - Caches weather data to reduce API calls
 - Handles API errors gracefully
 
-### 4. Dawn Calculations (`js/app/dawn.js`)
-- Calculates sunrise and sunset times
+### 4. Dawn Calculations (`js/app/dawn/`)
+- Calculates sunrise and sunset times via API
+- Astronomical calculations for twilight times
 - Determines civil/nautical/astronomical twilight
 - Uses astronomy formulas for accurate calculations
 
@@ -181,7 +185,6 @@ The project maintains high test coverage (>96%) with comprehensive test suites:
   - Weather wetness calculations (`wetness-compute.test.js`): 18 tests covering precipitation dynamics, snowmelt, evapotranspiration, time decay
   - Weather API integration (`weather-api.test.js`): 16 tests covering fetch operations, caching, data transformation, error handling
   - Storage operations (`storage.test.js`): 16 tests covering localStorage persistence, caching, error handling
-  - Time utilities (`time.test.js`): 4 tests covering time conversions and formatting
   - Calculator logic (`calculator.test.js`): 3 tests covering wake time calculations
   - Wetness interpretation (`wetness.test.js`): 6 tests covering trail condition logic, freeze-thaw detection
 - **Integration Core Tests** (`@core`): Essential user flows
@@ -318,14 +321,15 @@ Excludes unnecessary files from Docker builds
 ## Common Tasks
 
 ### Adding a New Feature
-1. Create feature module in `js/app/`
-2. Import and initialize in `main.js`
-3. Add UI components to `index.html`
-4. Style with CSS in `css/main.css`
-5. Write unit tests in `tests/unit/`
-6. Add integration tests in `tests/integration/`
-7. Add visual tests in `tests/visual/` if UI changes are significant
-8. Update visual baselines with `npm run test:visual:update`
+1. Create feature module in appropriate `js/app/` subdirectory (or create new subdirectory)
+2. Export from subdirectory's `index.js`
+3. Import and initialize in `app/main.js`
+4. Add UI components to `index.html`
+5. Style with CSS in `css/main.css`
+6. Write unit tests in `tests/unit/app/` or `tests/unit/lib/`
+7. Add integration tests in `tests/integration/`
+8. Add visual tests in `tests/visual/` if UI changes are significant
+9. Update visual baselines with `npm run test:visual:update`
 
 ### Debugging
 **Browser DevTools:**

@@ -10,10 +10,11 @@ The single-page application with full calculator and weather awareness functiona
 **Module Dependencies:**
 - `js/app/main.js` - Entry point and orchestration
 - `js/app/ui.js` - UI components and interactions
-- `js/app/awareness.js` - Weather awareness coordination
-- `js/app/weather.js` - Weather API and analysis
-- `js/app/dawn.js` - Dawn time calculations
-- `js/app/location.js` - Geolocation services
+- `js/app/awareness/` - Weather awareness coordination modules
+- `js/app/weather/` - Weather API and analysis modules
+- `js/app/dawn/` - Dawn time calculation modules
+- `js/app/location/` - Geolocation service modules
+- `js/app/main/` - Main app orchestration modules
 - `js/lib/calculator.js` - Core calculation logic
 - `js/lib/storage.js` - Data persistence
 - `js/lib/time.js` - Time utilities
@@ -33,10 +34,11 @@ The single-page application with full calculator and weather awareness functiona
 - Dawn time calculations
 
 **Test Files:**
-- `calculator.test.js` - Core calculation functions
-- `storage.test.js` - LocalStorage operations
-- `time.test.js` - Time utilities
-- `weather.test.js` - Weather processing logic
+- `lib/calculator.test.js` - Core calculation functions
+- `lib/storage.test.js` - LocalStorage operations
+- `app/weather/weather-api.test.js` - Weather API integration
+- `app/weather/wetness-compute.test.js` - Wetness calculation logic
+- `app/weather/wetness.test.js` - Trail wetness interpretation
 
 ### Integration Tests (`tests/integration/`)
 **Purpose:** Test complete user workflows and feature interactions

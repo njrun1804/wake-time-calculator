@@ -48,10 +48,11 @@ python3 -m http.server 8000
 │   ├── app/                 # Application modules
 │   │   ├── main.js          # Entry point & initialization
 │   │   ├── ui.js            # UI components & interactions
-│   │   ├── awareness.js     # Weather awareness logic
-│   │   ├── dawn.js          # Dawn time calculations
-│   │   ├── location.js      # Location services
-│   │   └── weather.js       # Weather API integration
+│   │   ├── awareness/       # Weather awareness modules
+│   │   ├── dawn/            # Dawn time calculation modules
+│   │   ├── location/        # Location service modules
+│   │   ├── main/            # Main orchestration modules
+│   │   └── weather/         # Weather API & analysis modules
 │   └── lib/                 # Utility libraries
 │       ├── calculator.js    # Core wake time calculations
 │       ├── storage.js       # Local storage management
@@ -61,18 +62,23 @@ python3 -m http.server 8000
 ├── tests/                   # Test suites
 │   ├── integration/         # Integration tests
 │   ├── unit/                # Unit tests
+│   ├── visual/              # Visual regression tests
 │   └── performance/         # Performance tests
 └── docs/                    # Documentation
+    ├── architecture/        # Architecture docs
+    ├── development/         # Development guides
+    └── archive/             # Historical docs
 
 ### Module Dependencies
 ```
 app/main.js
-├── lib/ (calculator, storage, constants, schedulers)
-├── app/awareness.js (weather + dawn orchestration)
-├── app/weather.js (forecasts, wetness scoring)
-├── app/dawn.js (dawn lookup & daylight checks)
-├── app/location.js (geocoding & browser location helpers)
-└── app/ui.js (dynamic daylight checks)
+├── lib/ (calculator, storage, constants, schedulers, time)
+├── app/awareness/ (weather awareness orchestration & display)
+├── app/weather/ (API, forecasts, wetness scoring, analysis)
+├── app/dawn/ (API, astronomy, daylight checks)
+├── app/location/ (geocoding, geolocation, validation)
+├── app/main/ (app orchestration, state, persistence)
+└── app/ui.js (UI utilities)
 ```
 
 ## APIs Used
@@ -121,10 +127,10 @@ The application is built with modern ES6 modules requiring no build step. For de
 ## Documentation
 
 - `CLAUDE.md` – Comprehensive developer documentation with architecture details
-- `docs/trail-wetness.md` – Trail condition scoring algorithm and calibration
-- `docs/page-test-coverage.md` – Test coverage mapping for all features
-- `docs/quality-signals.md` – Quality gates and performance budgets
-- `docs/dev-setup.md` – Development environment setup guide
+- `docs/architecture/trail-wetness.md` – Trail condition scoring algorithm and calibration
+- `docs/development/testing.md` – Test coverage mapping for all features
+- `docs/development/quality-standards.md` – Quality gates and performance budgets
+- `docs/development/setup.md` – Development environment setup guide
 
 ## Live Demo
 
