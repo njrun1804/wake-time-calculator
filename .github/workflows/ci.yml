@@ -5,11 +5,17 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:  # Enable manual triggering
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}  # Don't cancel main branch runs
 
 jobs:
   # Sanity check: ensure developer scripts don't mask failures
   script-sanity:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: Check scripts for '|| true'
@@ -28,6 +34,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     needs: script-sanity
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -60,12 +67,14 @@ jobs:
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
+        id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Run visual regression tests
@@ -96,12 +105,14 @@ jobs:
 
       - name: Cache Playwright WebKit
         uses: actions/cache@v4
+        id: playwright-webkit-cache
         with:
           path: ~/Library/Caches/ms-playwright
           key: playwright-webkit-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: playwright-webkit-${{ runner.os }}-
 
       - name: Install Playwright WebKit
+        if: steps.playwright-webkit-cache.outputs.cache-hit != 'true'
         run: npx playwright install webkit
 
       - name: Run Safari tests
@@ -118,7 +129,13 @@ jobs:
   pr-comment:
     runs-on: ubuntu-latest
     needs: [ validate, visual-tests, safari-tests ]
-    if: failure() && github.event_name == 'pull_request'
+    if: |
+      always() &&
+      github.event_name == 'pull_request' &&
+      (needs.validate.result == 'failure' ||
+       needs.visual-tests.result == 'failure' ||
+       needs.safari-tests.result == 'failure')
+    timeout-minutes: 5
     permissions:
       pull-requests: write
     steps:
