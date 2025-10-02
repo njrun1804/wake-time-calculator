@@ -109,16 +109,18 @@ git push origin feature/your-feature
 
 ```
 wake-time-calculator/
-├── index.html           # Main application
-├── css/main.css        # Styles
-├── js/
-│   ├── app/            # Application modules
-│   │   ├── awareness/  # Weather awareness
-│   │   ├── dawn/       # Dawn calculations
-│   │   ├── location/   # Location services
-│   │   ├── main/       # App orchestration
-│   │   └── weather/    # Weather API & analysis
-│   └── lib/            # Utility libraries
+├── src/                # Application source code
+│   ├── index.html      # Main application
+│   ├── css/
+│   │   └── main.css    # Styles
+│   └── js/
+│       ├── app/        # Application modules
+│       │   ├── awareness/  # Weather awareness
+│       │   ├── dawn/       # Dawn calculations
+│       │   ├── location/   # Location services
+│       │   ├── main/       # App orchestration
+│       │   └── weather/    # Weather API & analysis
+│       └── lib/        # Utility libraries
 ├── tests/              # Test suites
 │   ├── integration/    # Integration tests
 │   ├── unit/           # Unit tests
@@ -150,10 +152,10 @@ Ensure testing on:
 ## Common Development Tasks
 
 ### Add New Feature
-1. Create module in appropriate `js/app/` subdirectory
+1. Create module in appropriate `src/js/app/` subdirectory
 2. Export from subdirectory's `index.js`
 3. Import in `app/main.js`
-4. Add UI to `index.html`
+4. Add UI to `src/index.html`
 5. Write unit tests in `tests/unit/`
 6. Add integration tests in `tests/integration/`
 7. Update documentation

@@ -28,12 +28,14 @@ A weather-aware wake time calculator for runners. Calculates optimal wake times 
 ## Usage
 
 ### Default Experience
-Load `index.html` (or visit the published site) for the full weather-aware modular build.
+Load `src/index.html` (or visit the published site) for the full weather-aware modular build.
 
 ### Setup for Development
 ```bash
-# For ES6 module testing
-python3 -m http.server 8000
+# Serve from src/ directory for ES6 module testing
+npm run serve
+# Or manually with Python:
+python3 -m http.server 8000 --directory src
 # Then visit http://localhost:8000/
 ```
 
@@ -41,24 +43,25 @@ python3 -m http.server 8000
 
 ### File Structure
 ```
-├── index.html               # Main application
-├── css/
-│   └── main.css             # Application styles
-├── js/
-│   ├── app/                 # Application modules
-│   │   ├── main.js          # Entry point & initialization
-│   │   ├── ui.js            # UI components & interactions
-│   │   ├── awareness/       # Weather awareness modules
-│   │   ├── dawn/            # Dawn time calculation modules
-│   │   ├── location/        # Location service modules
-│   │   ├── main/            # Main orchestration modules
-│   │   └── weather/         # Weather API & analysis modules
-│   └── lib/                 # Utility libraries
-│       ├── calculator.js    # Core wake time calculations
-│       ├── storage.js       # Local storage management
-│       ├── constants.js     # Application constants
-│       ├── schedulers.js    # Scheduling utilities
-│       └── time.js          # Time manipulation utilities
+├── src/                     # Application source code
+│   ├── index.html           # Main application
+│   ├── css/
+│   │   └── main.css         # Application styles
+│   └── js/
+│       ├── app/             # Application modules
+│       │   ├── main.js      # Entry point & initialization
+│       │   ├── ui.js        # UI components & interactions
+│       │   ├── awareness/   # Weather awareness modules
+│       │   ├── dawn/        # Dawn time calculation modules
+│       │   ├── location/    # Location service modules
+│       │   ├── main/        # Main orchestration modules
+│       │   └── weather/     # Weather API & analysis modules
+│       └── lib/             # Utility libraries
+│           ├── calculator.js    # Core wake time calculations
+│           ├── storage.js       # Local storage management
+│           ├── constants.js     # Application constants
+│           ├── schedulers.js    # Scheduling utilities
+│           └── time.js          # Time manipulation utilities
 ├── tests/                   # Test suites
 │   ├── integration/         # Integration tests
 │   ├── unit/                # Unit tests
@@ -119,8 +122,8 @@ Tests cover:
 
 The application is built with modern ES6 modules requiring no build step. For development:
 
-1. Start a local HTTP server (required for ES6 modules)
-2. Edit modules in the `js/` directory
+1. Start a local HTTP server (required for ES6 modules): `npm run serve`
+2. Edit modules in the `src/js/` directory
 3. Test changes in browser
 4. Run test suite to verify functionality
 

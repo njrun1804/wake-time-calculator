@@ -29,19 +29,24 @@ docker-compose up playwright-visual
 ## Screenshot Organization
 
 ```
-screenshots/
-├── baseline/    # Reference images (committed to git)
-└── current/     # Test run outputs (ignored by git)
+tests/visual/
+├── *-snapshots/           # Screenshot baseline directories
+│   ├── *-chromium-linux.png   # Chromium on Linux (CI)
+│   ├── *-firefox-linux.png    # Firefox on Linux (CI)
+│   ├── *-webkit-linux.png     # WebKit on Linux (CI)
+│   └── *-darwin.png           # macOS baselines (gitignored)
+└── test-results/          # Test run outputs (gitignored)
 ```
 
 ### Baseline Screenshots
-- Committed to version control
+- Committed to version control (Linux versions only)
+- Platform-specific: `*-linux.png` for CI, `*-darwin.png` for local macOS (gitignored)
 - Used as the reference for visual regression tests
 - Should only be updated when UI changes are intentional
-- Updated with `npm run test:visual:update`
+- Updated with `npm run test:visual:update` or Docker
 
-### Current Screenshots
-- Generated during test runs
+### Test Results
+- Generated during test runs in `test-results/`
 - Compared against baselines
 - Ignored by git (see `.gitignore`)
 - Useful for debugging test failures
@@ -62,14 +67,17 @@ Only update baselines when UI changes are **intentional**:
 # Review current UI state in browser first
 npm run serve
 
-# Update baselines for all tests
+# Update baselines for all tests (macOS - local only)
 npm run test:visual:update
 
 # Update baselines for specific test
 npm run test:visual:update -- responsive.spec.js
 
-# Commit updated baselines
-git add tests/visual/screenshots/baseline/
+# Generate Linux baselines for CI (using Docker)
+docker compose run --rm playwright npx playwright test tests/visual --update-snapshots
+
+# Commit updated baselines (Linux only)
+git add tests/visual/*-snapshots/*-linux.png
 git commit -m "Update visual test baselines for [feature]"
 ```
 
@@ -125,10 +133,11 @@ claude
 - Consider increasing `maxDiffPixels` threshold if needed
 
 ### Screenshots look different locally vs CI
-- CI runs in headless mode with specific fonts
-- Local development may use system fonts
-- CI uses Ubuntu, local may be macOS/Windows
-- Use Docker for consistent environment
+- CI runs on Linux (Ubuntu), local may be macOS/Windows
+- Platform rendering differences (fonts, anti-aliasing)
+- Solution: Generate Linux baselines using Docker
+- Use `docker compose run --rm playwright` for CI-matching results
+- macOS baselines (`*-darwin.png`) are gitignored automatically
 
 ### Baselines out of sync
 - Pull latest changes: `git pull`

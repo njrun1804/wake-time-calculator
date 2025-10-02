@@ -4,22 +4,22 @@ This document maps the application components to their test coverage and defines
 
 ## Application Test Coverage
 
-### Entry Point: `index.html`
+### Entry Point: `src/index.html`
 The single-page application with full calculator and weather awareness functionality.
 
 **Module Dependencies:**
-- `js/app/main.js` - Entry point and orchestration
-- `js/app/ui.js` - UI components and interactions
-- `js/app/awareness/` - Weather awareness coordination modules
-- `js/app/weather/` - Weather API and analysis modules
-- `js/app/dawn/` - Dawn time calculation modules
-- `js/app/location/` - Geolocation service modules
-- `js/app/main/` - Main app orchestration modules
-- `js/lib/calculator.js` - Core calculation logic
-- `js/lib/storage.js` - Data persistence
-- `js/lib/time.js` - Time utilities
-- `js/lib/constants.js` - Configuration
-- `js/lib/schedulers.js` - Deferred execution
+- `src/js/app/main.js` - Entry point and orchestration
+- `src/js/app/ui.js` - UI components and interactions
+- `src/js/app/awareness/` - Weather awareness coordination modules
+- `src/js/app/weather/` - Weather API and analysis modules
+- `src/js/app/dawn/` - Dawn time calculation modules
+- `src/js/app/location/` - Geolocation service modules
+- `src/js/app/main/` - Main app orchestration modules
+- `src/js/lib/calculator.js` - Core calculation logic
+- `src/js/lib/storage.js` - Data persistence
+- `src/js/lib/time.js` - Time utilities
+- `src/js/lib/constants.js` - Configuration
+- `src/js/lib/schedulers.js` - Deferred execution
 
 ## Test Suite Organization
 

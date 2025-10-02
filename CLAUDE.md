@@ -9,33 +9,34 @@ Wake Time Calculator is a vanilla JavaScript web application that helps runners 
 ### Project Structure
 ```
 wake-time-calculator/
-├── index.html                # Main application HTML
-├── css/
-│   └── main.css              # Application styles
-├── js/
-│   ├── app/                  # Application modules
-│   │   ├── main.js          # Entry point and initialization
-│   │   ├── ui.js            # UI components and interactions
-│   │   ├── awareness/       # Weather awareness logic modules
-│   │   ├── dawn/            # Dawn time calculation modules
-│   │   ├── location/        # Location service modules
-│   │   ├── main/            # Main app orchestration modules
-│   │   └── weather/         # Weather API and analysis modules
-│   └── lib/                  # Utility libraries
-│       ├── constants.js     # Application constants
-│       ├── time.js          # Time manipulation utilities
-│       ├── schedulers.js    # Scheduling utilities
-│       ├── storage.js       # Local storage management
-│       └── calculator.js    # Core calculation logic
+├── src/                      # Application source code
+│   ├── index.html            # Main application HTML
+│   ├── css/
+│   │   └── main.css          # Application styles
+│   └── js/
+│       ├── app/              # Application modules
+│       │   ├── main.js       # Entry point and initialization
+│       │   ├── ui.js         # UI components and interactions
+│       │   ├── awareness/    # Weather awareness logic modules
+│       │   ├── dawn/         # Dawn time calculation modules
+│       │   ├── location/     # Location service modules
+│       │   ├── main/         # Main app orchestration modules
+│       │   └── weather/      # Weather API and analysis modules
+│       └── lib/              # Utility libraries
+│           ├── constants.js  # Application constants
+│           ├── time.js       # Time manipulation utilities
+│           ├── schedulers.js # Scheduling utilities
+│           ├── storage.js    # Local storage management
+│           └── calculator.js # Core calculation logic
 ├── tests/                    # Test suite
-│   ├── integration/         # Integration tests
-│   ├── unit/                # Unit tests
-│   ├── visual/              # Visual regression tests
-│   │   └── screenshots/     # Screenshot baselines
-│   ├── performance/         # Performance tests
-│   └── helpers/             # Test utilities and mocks
+│   ├── integration/          # Integration tests
+│   ├── unit/                 # Unit tests
+│   ├── visual/               # Visual regression tests
+│   │   └── *-snapshots/      # Screenshot baselines (Linux/macOS)
+│   ├── performance/          # Performance tests
+│   └── helpers/              # Test utilities and mocks
 ├── scripts/                  # Build and utility scripts
-└── docs/                    # Documentation
+└── docs/                     # Documentation
 
 ```
 
@@ -50,37 +51,37 @@ wake-time-calculator/
 
 ## Key Components
 
-### 1. Weather Awareness (`js/app/awareness/`)
+### 1. Weather Awareness (`src/js/app/awareness/`)
 - Analyzes weather conditions for optimal run timing
 - Considers temperature, precipitation, wind speed, and UV index
 - Provides color-coded recommendations (green/yellow/red)
 - Modular structure: core logic, DOM updates, event handlers, display formatting
 
-### 2. Location Services (`js/app/location/`)
+### 2. Location Services (`src/js/app/location/`)
 - Manages user location with fallback options
 - Supports browser geolocation API
 - Provides geocoding and location validation
 - Stores location preferences locally
 
-### 3. Weather Integration (`js/app/weather/`)
+### 3. Weather Integration (`src/js/app/weather/`)
 - Integrates with Open-Meteo API for weather data
 - Fetches hourly forecasts and historical data
 - Trail wetness analysis and moisture scoring
 - Caches weather data to reduce API calls
 - Handles API errors gracefully
 
-### 4. Dawn Calculations (`js/app/dawn/`)
+### 4. Dawn Calculations (`src/js/app/dawn/`)
 - Calculates sunrise and sunset times via API
 - Astronomical calculations for twilight times
 - Determines civil/nautical/astronomical twilight
 - Uses astronomy formulas for accurate calculations
 
-### 5. Time Utilities (`js/lib/time.js`)
+### 5. Time Utilities (`src/js/lib/time.js`)
 - Formats times for display
 - Handles timezone conversions
 - Provides relative time calculations
 
-### 6. Core Calculator (`js/lib/calculator.js`)
+### 6. Core Calculator (`src/js/lib/calculator.js`)
 - Implements sleep cycle calculations (90-minute cycles)
 - Determines optimal wake times
 - Considers preparation time and run duration
