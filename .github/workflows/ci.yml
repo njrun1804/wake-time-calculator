@@ -5,6 +5,11 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.json'
+      - '.github/workflows/**'
   workflow_dispatch:  # Enable manual triggering
 
 concurrency:
@@ -54,6 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v4
 
@@ -77,14 +86,14 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Run visual regression tests
-        run: npm run test:visual
+      - name: Run visual regression tests (shard ${{ matrix.shard }}/2)
+        run: npm run test:visual -- --shard=${{ matrix.shard }}/2
 
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-test-results
+          name: visual-test-results-${{ matrix.shard }}
           path: test-results/
           retention-days: 7
 
