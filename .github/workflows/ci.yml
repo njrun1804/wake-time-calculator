@@ -103,7 +103,7 @@ jobs:
       # No need to install or cache them!
 
       - name: Run visual regression tests (shard ${{ matrix.shard }}/8)
-        run: npm run test:visual -- --shard=${{ matrix.shard }}/8
+        run: npm run test:visual -- --shard=${{ matrix.shard }}/8 --project=chromium --project=webkit
 
       - name: Upload test results
         if: failure()
