@@ -71,6 +71,7 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+      options: --env HOME=/root
     timeout-minutes: 10
     strategy:
       fail-fast: false
