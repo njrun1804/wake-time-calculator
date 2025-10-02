@@ -12,6 +12,10 @@ export default defineConfig({
   timeout: process.env.CI ? 20 * 1000 : 30 * 1000,
   expect: {
     timeout: process.env.CI ? 12000 : 5000,
+    toHaveScreenshot: {
+      // Allow minor rendering differences across platforms (antialiasing, fonts, etc.)
+      maxDiffPixels: 100,
+    },
   },
   use: {
     baseURL: 'http://localhost:8000',
