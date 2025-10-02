@@ -143,7 +143,7 @@ test.describe('Weather Awareness Visual States @visual', () => {
     await page.waitForTimeout(1500);
 
     // Should show warning state from mocked data (Caution or Avoid based on freeze-thaw calc)
-    const decision = await expect
+    await expect
       .poll(
         () =>
           page.evaluate(
