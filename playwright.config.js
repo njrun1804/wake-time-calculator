@@ -42,7 +42,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx http-server -p 8000 --silent -c3600',
+    command: 'npx http-server src -p 8000 --silent -c3600',
     url: 'http://localhost:8000',
     reuseExistingServer: true,
     timeout: 30 * 1000,

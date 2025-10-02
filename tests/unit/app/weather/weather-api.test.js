@@ -38,13 +38,13 @@ globalThis.fetch = async (url, options) => {
 };
 
 // Mock Storage module
-const storageModule = await import('../../../../js/lib/storage.js');
+const storageModule = await import('../../../../src/js/lib/storage.js');
 storageModule.Storage.loadCache = mockStorage.loadCache.bind(mockStorage);
 storageModule.Storage.saveCache = mockStorage.saveCache.bind(mockStorage);
 
 // Import after mocks are set up
 const { fetchWeatherAround, fetchWetnessInputs } = await import(
-  '../../../../js/app/weather/api.js'
+  '../../../../src/js/app/weather/api.js'
 );
 
 // Helper to create mock weather response

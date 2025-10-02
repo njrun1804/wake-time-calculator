@@ -1,5 +1,5 @@
 echo "[husky] running pre-push checks: lint && unit tests"
-npx --no -- prettier --check '*.html' 'js/**/*.js'
+npx --no -- prettier --check 'src/**/*.html' 'src/js/**/*.js'
 
 # Run fast unit tests locally before allowing a push. Keep E2E (Playwright) out of pre-push
 # because it's slow — CI will run full E2E.

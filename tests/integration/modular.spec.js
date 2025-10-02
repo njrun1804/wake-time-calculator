@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { calculateWakeTime } from '../../js/lib/calculator.js';
+import { calculateWakeTime } from '../../src/js/lib/calculator.js';
 
 test.describe('Wake time calculator – core planner @core', () => {
   test('adjusts outputs when itinerary changes', async ({ page }) => {

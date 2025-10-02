@@ -34,7 +34,7 @@ global.Intl = {
 };
 
 // Import after mocking
-const { Storage } = await import('../../../js/lib/storage.js');
+const { Storage } = await import('../../../src/js/lib/storage.js');
 
 describe('Storage.save', () => {
   beforeEach(() => {

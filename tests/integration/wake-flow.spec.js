@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { calculateWakeTime } from '../../js/lib/calculator.js';
-import { defaults } from '../../js/lib/constants.js';
+import { calculateWakeTime } from '../../src/js/lib/calculator.js';
+import { defaults } from '../../src/js/lib/constants.js';
 
 const RUN_MINUTES = 42;
 const BREAKFAST_MINUTES = 30;

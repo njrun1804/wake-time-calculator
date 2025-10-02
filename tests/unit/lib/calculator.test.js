@@ -7,7 +7,7 @@ import {
   format12,
   sanitizeMinutes,
   calculateWakeTime,
-} from '../../../js/lib/calculator.js';
+} from '../../../src/js/lib/calculator.js';
 
 const minutesInDay = 24 * 60;
 
