@@ -38,7 +38,6 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
-    needs: script-sanity
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -57,12 +56,11 @@ jobs:
 
   visual-tests:
     runs-on: ubuntu-latest
-    needs: validate
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
 
@@ -83,10 +81,11 @@ jobs:
           restore-keys: playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Run visual regression tests (shard ${{ matrix.shard }}/2)
-        run: npm run test:visual -- --shard=${{ matrix.shard }}/2
+      - name: Run visual regression tests (shard ${{ matrix.shard }}/4)
+        run: npm run test:visual -- --shard=${{ matrix.shard }}/4
 
       - name: Upload test results
         if: failure()
@@ -98,7 +97,6 @@ jobs:
 
   safari-tests:
     runs-on: macos-latest
-    needs: validate
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
