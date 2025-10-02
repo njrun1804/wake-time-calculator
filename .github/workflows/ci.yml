@@ -66,17 +66,16 @@ jobs:
 
   visual-tests:
     runs-on: ubuntu-latest
-    # TODO: Enable once Docker image is built
-    # container:
-    #   image: ghcr.io/njrun1804/wake-time-calculator-ci:latest
-    #   credentials:
-    #     username: ${{ github.actor }}
-    #     password: ${{ secrets.GITHUB_TOKEN }}
+    container:
+      image: ghcr.io/njrun1804/wake-time-calculator-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v4
 
@@ -98,24 +97,11 @@ jobs:
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline --no-audit
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: playwright-${{ runner.os }}-
+      # Playwright browsers and dependencies are pre-installed in the Docker container
+      # No need to install or cache them!
 
-      - name: Install Playwright browsers and dependencies
-        run: |
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
-            npx playwright install --with-deps chromium firefox webkit
-          else
-            npx playwright install-deps chromium firefox webkit
-          fi
-
-      - name: Run visual regression tests (shard ${{ matrix.shard }}/8)
-        run: npm run test:visual -- --shard=${{ matrix.shard }}/8
+      - name: Run visual regression tests (shard ${{ matrix.shard }}/6)
+        run: npm run test:visual -- --shard=${{ matrix.shard }}/6
 
       - name: Upload test results
         if: failure()
