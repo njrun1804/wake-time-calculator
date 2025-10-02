@@ -1,5 +1,6 @@
 # Dockerfile for CI with pre-installed Playwright dependencies
-FROM mcr.microsoft.com/playwright:v1.48.2-noble
+# Using latest stable version that matches our package.json (^1.55.1)
+FROM mcr.microsoft.com/playwright:v1.49.0-noble
 
 # Install additional tools we might need
 RUN apt-get update && apt-get install -y \
