@@ -4,9 +4,9 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  // Optimize workers: 75% of cores locally, 150% in CI for better parallelization
-  // Visual tests are I/O-bound (waiting for renders) so oversubscription helps
-  workers: process.env.CI ? '150%' : '75%',
+  // Optimize workers: 75% of cores locally, 100% in CI
+  // More sharding (8 instead of 6) provides parallelism without oversubscription
+  workers: process.env.CI ? '100%' : '75%',
   reporter: process.env.CI
     ? [['dot'], ['json', { outputFile: 'test-results.json' }]]
     : [['html', { open: 'never' }]],
