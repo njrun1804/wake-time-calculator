@@ -7,23 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    needs: script-sanity
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci --prefer-offline
-      # Enforce pre-commit parity: run the same validation used by husky/lint-staged
-      # This guarantees CI cannot be bypassed by skipping local hooks.
-      - name: Enforce pre-commit parity (validate:all)
-        run: npm run validate:all
-
-  # Sanity check: ensure developer scripts do not contain accidental failure-suppressors
-  # This job helps prevent helper scripts from being run in CI while silently masking errors
+  # Sanity check: ensure developer scripts don't mask failures
   script-sanity:
     runs-on: ubuntu-latest
     steps:
@@ -36,13 +20,65 @@ jobs:
           if [ -n "$matches" ]; then
             echo "$matches"
             echo "Found '|| true' in scripts/ (excluding setup-dev.sh) — this can mask failures in CI."
-            echo "Please remove or scope these guards."
             exit 1
           fi
 
-          echo "No unexpected '|| true' found in scripts/."
+          echo "✓ No unexpected '|| true' found in scripts/"
 
-  # Consolidated Safari test job - runs all tests in one job to reduce overhead
+  validate:
+    runs-on: ubuntu-latest
+    needs: script-sanity
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      # Enforce pre-commit parity: same validation as husky/lint-staged
+      - name: Lint, validate HTML, and run unit tests
+        run: npm run validate:all
+
+  visual-tests:
+    runs-on: ubuntu-latest
+    needs: validate
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Run visual regression tests
+        run: npm run test:visual
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-results
+          path: test-results/
+          retention-days: 7
+
   safari-tests:
     runs-on: macos-latest
     needs: validate
@@ -58,89 +94,44 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: Cache Playwright browsers
+      - name: Cache Playwright WebKit
         uses: actions/cache@v4
-        id: playwright-cache
         with:
           path: ~/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
+          key: playwright-webkit-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: playwright-webkit-${{ runner.os }}-
 
       - name: Install Playwright WebKit
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install webkit
 
-      # Run all tests in parallel with a single web server instance (WebKit only)
-      - name: Run all Safari tests
+      - name: Run Safari tests
         run: npm run test:ci -- --project=webkit
 
-      - name: Upload Playwright report
-        if: always() && hashFiles('playwright-report/**') != ''
+      - name: Upload test report
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: safari-test-results
           path: playwright-report/
           retention-days: 7
 
-  visual-tests:
+  pr-comment:
     runs-on: ubuntu-latest
-    needs: validate
-    timeout-minutes: 10
-    continue-on-error: false  # Linux baselines now committed - enforce visual tests
+    needs: [ validate, visual-tests, safari-tests ]
+    if: failure() && github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - name: Post PR comment
+        uses: peter-evans/create-or-update-comment@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox webkit
-
-      - name: Run visual regression tests (all browsers in parallel)
-        run: npm run test:visual
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-test-results
-          path: test-results/
-          retention-days: 7
-
-      - name: Upload screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-screenshots
-          path: tests/visual/screenshots/
-          retention-days: 30
-
-  pr-report:
-    runs-on: ubuntu-latest
-    needs: validate
-    if: ${{ failure() && github.event_name == 'pull_request' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Post comment on PR
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            ⚠️ CI validation failed for this pull request. Please run `npm run validate:all` locally and fix formatting/tests.
+            ⚠️ **CI checks failed**
+
+            Please run locally and fix issues:
+            ```bash
+            npm run validate:all
+            npm run test:visual
+            npm run test:ci
+            ```
