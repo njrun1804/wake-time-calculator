@@ -3,6 +3,7 @@ import {
   setupAwarenessMocks,
   resetAwarenessEvents,
   triggerAwareness,
+  awarenessStatePresets,
 } from '../helpers/awareness-mocks.js';
 
 /**
@@ -61,40 +62,49 @@ test.describe('Weather Awareness Visual States @visual', () => {
   // Tests that use mocked data
   test.describe('With mocked weather data', () => {
     test.beforeEach(async ({ page }) => {
-      await setupAwarenessMocks(page);
+      await setupAwarenessMocks(page, {
+        geolocation: {
+          mode: 'success',
+          coords: { latitude: 40.7306, longitude: -73.9866 },
+        },
+      });
       await resetAwarenessEvents(page);
     });
 
-  test('loading state during weather fetch', async ({ page }) => {
-    await page.goto('/index.html');
+    test('loading state during weather fetch', async ({ page }) => {
+      await setupAwarenessMocks(page, {
+        geolocation: {
+          mode: 'success',
+          coords: { latitude: 40.7306, longitude: -73.9866 },
+        },
+        delays: {
+          forecast: 600,
+        },
+      });
+      await resetAwarenessEvents(page);
+      await page.goto('/index.html');
 
-    // Click to trigger loading
-    await page.click('#useMyLocation');
+      // Click to trigger loading
+      await page.click('#useMyLocation');
 
-    // Try to capture loading state quickly (might be fast)
-    await page.waitForTimeout(50);
+      // Allow time for spinner to render before forecast resolves
+      await page.waitForTimeout(350);
 
-    await expect(page).toHaveScreenshot('weather-loading-state.png', {
-      animations: 'disabled',
-      maxDiffPixels: 100, // Allow some variation due to timing
+      await expect(page).toHaveScreenshot('weather-loading-state.png', {
+        animations: 'disabled',
+        maxDiffPixels: 100, // Allow some variation due to timing
+      });
     });
-  });
 
   test('OK state - favorable conditions (green indicators)', async ({
     page,
   }) => {
-    await page.goto('/index.html');
-
-    // Mock favorable weather conditions
-    await page.evaluate(() => {
-      window.__mockWeatherData = {
-        temperature: 65, // °F - comfortable
-        precipitation: 0,
-        windSpeed: 5, // mph - light breeze
-        uvIndex: 3, // moderate
-        wetness: { label: 'Dry', decision: 'OK' },
-      };
+    // Setup mocks with OK preset
+    await setupAwarenessMocks(page, {
+      fixtureOverrides: awarenessStatePresets.ok(),
     });
+    await resetAwarenessEvents(page);
+    await page.goto('/index.html');
 
     await triggerAwareness(page);
     await page.waitForTimeout(1000);
@@ -102,6 +112,17 @@ test.describe('Weather Awareness Visual States @visual', () => {
     // Verify OK state indicators
     const awarenessSection = page.locator('#awareness');
     await expect(awarenessSection).toBeVisible();
+
+    // Verify wetness decision is OK
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => window.__latestWetnessInsight?.decision ?? null
+          ),
+        { timeout: 5000 }
+      )
+      .toBe('OK');
 
     // Screenshot of favorable conditions
     await expect(page).toHaveScreenshot('weather-ok-green.png', {
@@ -112,21 +133,26 @@ test.describe('Weather Awareness Visual States @visual', () => {
   test('Caution state - marginal conditions (yellow indicators)', async ({
     page,
   }) => {
-    await page.goto('/index.html');
-
-    // Mock marginal weather conditions
-    await page.evaluate(() => {
-      window.__mockWeatherData = {
-        temperature: 45, // °F - chilly
-        precipitation: 30, // 30% chance
-        windSpeed: 15, // mph - breezy
-        uvIndex: 7, // high
-        wetness: { label: 'Damp', decision: 'Caution' },
-      };
+    // Setup mocks with Caution preset
+    await setupAwarenessMocks(page, {
+      fixtureOverrides: awarenessStatePresets.caution(),
     });
+    await resetAwarenessEvents(page);
+    await page.goto('/index.html');
 
     await triggerAwareness(page);
     await page.waitForTimeout(1000);
+
+    // Verify Caution state
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () => window.__latestWetnessInsight?.decision ?? null
+          ),
+        { timeout: 5000 }
+      )
+      .toBe('Caution');
 
     // Screenshot of caution state
     await expect(page).toHaveScreenshot('weather-caution-yellow.png', {
@@ -137,34 +163,29 @@ test.describe('Weather Awareness Visual States @visual', () => {
   test('Avoid state - unfavorable conditions (red indicators)', async ({
     page,
   }) => {
+    // Setup mocks with Avoid preset
+    await setupAwarenessMocks(page, {
+      fixtureOverrides: awarenessStatePresets.avoid(),
+    });
+    await resetAwarenessEvents(page);
     await page.goto('/index.html');
 
     await triggerAwareness(page);
     await page.waitForTimeout(1500);
 
-    // Should show warning state from mocked data (Caution or Avoid based on freeze-thaw calc)
+    // Verify Avoid state
     await expect
       .poll(
         () =>
           page.evaluate(
             () => window.__latestWetnessInsight?.decision ?? null
           ),
-        { timeout: 15000 }
+        { timeout: 5000 }
       )
-      .resolves.toMatch(/Caution|Avoid/);
+      .toBe('Avoid');
 
-    // Get the actual decision for the screenshot name
-    const actualDecision = await page.evaluate(
-      () => window.__latestWetnessInsight?.decision
-    );
-
-    // Screenshot of warning state (yellow or red based on wetness calculation)
-    const screenshotName =
-      actualDecision === 'Avoid'
-        ? 'weather-avoid-red.png'
-        : 'weather-caution-freeze.png';
-
-    await expect(page).toHaveScreenshot(screenshotName, {
+    // Screenshot of avoid state
+    await expect(page).toHaveScreenshot('weather-avoid-red.png', {
       animations: 'disabled',
     });
   });
