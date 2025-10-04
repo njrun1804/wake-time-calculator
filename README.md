@@ -30,6 +30,12 @@ A weather-aware wake time calculator for runners. Calculates optimal wake times 
 ### Default Experience
 Load `src/index.html` (or visit the published site) for the full weather-aware modular build.
 
+### Docker
+
+Build the production image with the bundled static assets and SPA routing by running `docker build -t wake-time-calculator .`. Then run it with any standard container runtime.
+
+For a faster local preview that reuses the upstream `nginx:alpine` image, launch `docker-compose up app`. The compose setup now mounts the `src/` directory and the Nginx config read-only so the container starts instantly without a build step while still serving the SPA correctly.
+
 ### Setup for Development
 ```bash
 # Serve from src/ directory for ES6 module testing
