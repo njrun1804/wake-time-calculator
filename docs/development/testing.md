@@ -4,11 +4,11 @@ This document maps the application components to their test coverage and defines
 
 ## Application Test Coverage
 
-### Entry Point: `src/index.html`
-The single-page application with full calculator and weather awareness functionality.
+### Entry Module: `src/js/app/main/index.js`
+Bootstraps the single-page calculator experience and wires together UI composition, state management, and persistence.
 
 **Module Dependencies:**
-- `src/js/app/main.js` - Entry point and orchestration
+- `src/index.html` - Hosts the SPA shell
 - `src/js/app/ui.js` - UI components and interactions
 - `src/js/app/awareness/` - Weather awareness coordination modules
 - `src/js/app/weather/` - Weather API and analysis modules
@@ -26,19 +26,18 @@ The single-page application with full calculator and weather awareness functiona
 ### Unit Tests (`tests/unit/`)
 **Purpose:** Test pure functions and business logic in isolation
 
-**Coverage:**
-- Calculator logic (wake time calculations, sleep cycles)
-- Time formatting and manipulation
-- Storage operations
-- Weather data processing
-- Dawn time calculations
+**Current Coverage:**
+- Calculator logic (wake time calculations, cycle planning)
+- Storage operations (local persistence helpers)
+
+**Planned Additions:**
+- Time utilities and formatting
+- Dawn time computations
+- Weather data normalization
 
 **Test Files:**
-- `lib/calculator.test.js` - Core calculation functions
-- `lib/storage.test.js` - LocalStorage operations
-- `app/weather/weather-api.test.js` - Weather API integration
-- `app/weather/wetness-compute.test.js` - Wetness calculation logic
-- `app/weather/wetness.test.js` - Trail wetness interpretation
+- `lib/calculator.test.js` - Core calculation and planner behaviour
+- `lib/storage.test.js` - LocalStorage interactions and fallbacks
 
 ### Integration Tests (`tests/integration/`)
 **Purpose:** Test complete user workflows and feature interactions
@@ -86,22 +85,18 @@ The single-page application with full calculator and weather awareness functiona
 ## Coverage Requirements
 
 ### Critical Paths (100% Coverage Required)
-1. Wake time calculation
-2. Form submission and validation
-3. Data persistence to LocalStorage
-4. Time zone handling
+1. Wake time calculation pipeline (validated by `npm run test:unit`)
+2. Data persistence helpers and fallbacks (validated by `npm run test:unit`)
 
 ### High Priority (>90% Coverage)
-1. Weather data processing
-2. Location services
-3. Dawn time calculations
-4. UI state management
+1. Time utilities and formatting helpers (planned unit suite)
+2. Dawn time computations (planned unit suite)
+3. Storage rehydration flows across tabs
 
 ### Medium Priority (>80% Coverage)
-1. API error handling
-2. Fallback behaviors
-3. Edge case scenarios
-4. Cross-browser compatibility
+1. Weather enrichment pipeline (future unit + integration coverage)
+2. Location detection fallbacks
+3. UI orchestration and state transitions
 
 ## Test Data Management
 
