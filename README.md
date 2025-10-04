@@ -28,7 +28,7 @@ A weather-aware wake time calculator for runners. Calculates optimal wake times 
 ## Usage
 
 ### Default Experience
-Load `src/index.html` (or visit the published site) for the full weather-aware modular build.
+Load `src/index.html` locally, or visit the published site at https://njrun1804.github.io/wake-time-calculator/ for the full weather-aware modular build.
 
 ### Setup for Development
 ```bash
