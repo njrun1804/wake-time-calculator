@@ -27,6 +27,174 @@ export const awarenessFixtures = {
   hourlyResponse,
 };
 
+const mapDaily = (mapper) => {
+  const { daily } = awarenessFixtures.dailyResponse;
+  return daily.time.map((_, index) => mapper(index, daily.time.length, daily));
+};
+
+const createDailyPreset = (overrides) => {
+  const result = {};
+
+  const applyValue = (value) => {
+    if (typeof value === 'function') {
+      return mapDaily(value);
+    }
+    return mapDaily(() => value);
+  };
+
+  Object.entries(overrides).forEach(([key, value]) => {
+    if (value === undefined) return;
+    result[key] = applyValue(value);
+  });
+
+  // Ensure snowfall stays zero if not explicitly provided
+  if (!('snowfall_sum' in result)) {
+    result.snowfall_sum = mapDaily(() => 0);
+  }
+
+  return result;
+};
+
+const createHourlyPreset = (overrides) => {
+  const { hourly } = awarenessFixtures.hourlyResponse;
+  const fields = [
+    'time',
+    'temperature_2m',
+    'relative_humidity_2m',
+    'wind_speed_10m',
+    'apparent_temperature',
+    'precipitation_probability',
+    'wet_bulb_temperature_2m',
+    'weathercode',
+    'snowfall',
+  ];
+
+  const result = {};
+  fields.forEach((field) => {
+    if (field === 'time') {
+      result[field] = [overrides.time || hourly.time[0]];
+      return;
+    }
+    if (field in overrides) {
+      result[field] = [overrides[field]];
+      return;
+    }
+    if (Array.isArray(hourly[field])) {
+      result[field] = [...hourly[field]];
+    }
+  });
+
+  return result;
+};
+
+export const awarenessStatePresets = {
+  ok() {
+    return {
+      hourlyResponse: {
+        hourly: createHourlyPreset({
+          temperature_2m: 62,
+          apparent_temperature: 61,
+          relative_humidity_2m: 45,
+          wind_speed_10m: 4,
+          precipitation_probability: 5,
+          wet_bulb_temperature_2m: 55,
+          weathercode: 0,
+          snowfall: 0,
+        }),
+      },
+      dailyResponse: {
+        daily: createDailyPreset({
+          precipitation_sum: () => 0,
+          precipitation_hours: () => 0,
+          rain_sum: () => 0,
+          temperature_2m_max: () => 65,
+          temperature_2m_min: () => 48,
+        }),
+      },
+    };
+  },
+  caution() {
+    return {
+      hourlyResponse: {
+        hourly: createHourlyPreset({
+          temperature_2m: 38,
+          apparent_temperature: 32,
+          relative_humidity_2m: 88,
+          wind_speed_10m: 12,
+          precipitation_probability: 55,
+          wet_bulb_temperature_2m: 33,
+          weathercode: 61,
+          snowfall: 0,
+        }),
+      },
+      dailyResponse: {
+        daily: createDailyPreset({
+          precipitation_sum: (index, length) =>
+            index === length - 1
+              ? 0.12
+              : index === length - 2
+                ? 0.08
+                : 0.04,
+          precipitation_hours: (index, length) =>
+            index === length - 1
+              ? 4
+              : index === length - 2
+                ? 3
+                : 1,
+          rain_sum: (index, length) =>
+            index === length - 1
+              ? 0.12
+              : index === length - 2
+                ? 0.08
+                : 0.04,
+          temperature_2m_max: (index, length) =>
+            index === length - 1
+              ? 36
+              : index === length - 2
+                ? 40
+                : 45,
+          temperature_2m_min: (index, length) =>
+            index === length - 1
+              ? 29
+              : index === length - 2
+                ? 33
+                : 34,
+        }),
+      },
+    };
+  },
+  avoid() {
+    return {
+      hourlyResponse: {
+        hourly: createHourlyPreset({
+          temperature_2m: 36,
+          apparent_temperature: 33,
+          relative_humidity_2m: 95,
+          wind_speed_10m: 10,
+          precipitation_probability: 80,
+          wet_bulb_temperature_2m: 34,
+          weathercode: 63,
+          snowfall: 0,
+        }),
+      },
+      dailyResponse: {
+        daily: createDailyPreset({
+          precipitation_sum: (index, length) =>
+            index >= length - 2 ? (index === length - 1 ? 0.7 : 0.5) : 0.05,
+          precipitation_hours: (index, length) =>
+            index >= length - 2 ? 6 : 2,
+          rain_sum: (index, length) =>
+            index >= length - 2 ? (index === length - 1 ? 0.7 : 0.5) : 0.05,
+          temperature_2m_max: (index, length) =>
+            index >= length - 2 ? 55 : 45,
+          temperature_2m_min: (index, length) =>
+            index >= length - 2 ? 45 : 35,
+        }),
+      },
+    };
+  },
+};
+
 const deepClone = (value) =>
   typeof structuredClone === 'function'
     ? structuredClone(value)
@@ -95,13 +263,18 @@ export async function setupAwarenessMocks(page, options = {}) {
     ...(options.geolocation || {}),
   };
 
+  const delays = {
+    forecast: 0,
+    ...(options.delays || {}),
+  };
+
   const fixtures = applyOverrides(
     deepClone(awarenessFixtures),
     options.fixtureOverrides
   );
 
   await page.addInitScript(
-    ({ savedLocation, geoState, fixtures }) => {
+    ({ savedLocation, geoState, fixtures, delays: delayConfig }) => {
       const state = {
         fixtures,
         geolocation: geoState,
@@ -110,6 +283,7 @@ export async function setupAwarenessMocks(page, options = {}) {
           forecast: false,
           reverseGeocode: false,
         },
+        delays: delayConfig,
       };
 
       window.__awarenessMock = state;
@@ -174,17 +348,27 @@ export async function setupAwarenessMocks(page, options = {}) {
           });
         }
 
+        const ensureDelay = async (key) => {
+          const delay =
+            window.__awarenessMock?.delays?.[key] ?? delayConfig?.[key] ?? 0;
+          if (delay > 0) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+        };
+
         if (url.includes('api.open-meteo.com/v1/forecast')) {
           const params = new URL(url).searchParams;
           if (state.failures.forecast) {
             return new Response(null, { status: 500 });
           }
           if (params.get('daily')) {
+            await ensureDelay('forecast');
             return new Response(JSON.stringify(state.fixtures.dailyResponse), {
               headers: { 'Content-Type': 'application/json' },
             });
           }
           if (params.get('hourly')) {
+            await ensureDelay('forecast');
             return new Response(JSON.stringify(state.fixtures.hourlyResponse), {
               headers: { 'Content-Type': 'application/json' },
             });
@@ -223,6 +407,7 @@ export async function setupAwarenessMocks(page, options = {}) {
         reverse: geo.reverse || defaultGeoState.reverse,
       },
       fixtures,
+      delays,
     }
   );
 }
