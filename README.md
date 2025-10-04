@@ -37,6 +37,9 @@ Build the production image with the bundled static assets and SPA routing by run
 For a faster local preview that reuses the upstream `nginx:alpine` image, launch `docker-compose up app`. The compose setup now mounts the `src/` directory and the Nginx config read-only so the container starts instantly without a build step while still serving the SPA correctly.
 
 ### Setup for Development
+
+Automation agents and developers can choose between a local HTTP server or Docker. See the [Docker development guide](docs/development/docker.md) for container workflows (`make docker-run`, `docker-compose up app`, and the `dev` service) plus cleanup commands.
+
 ```bash
 # Serve from src/ directory for ES6 module testing
 npm run serve
