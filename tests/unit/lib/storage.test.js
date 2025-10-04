@@ -342,6 +342,24 @@ describe('Storage.loadCache', () => {
     assert.equal(loaded, null);
   });
 
+  it('returns null when timestamp is missing or not numeric', () => {
+    const key = 'invalid:cache';
+    const maxAge = 3600000;
+
+    localStorage.setItem(key, '{invalid json');
+
+    const missingTimestamp = Storage.loadCache(key, maxAge);
+    assert.equal(missingTimestamp, null);
+
+    localStorage.setItem(key + ':t', null);
+    const nullTimestamp = Storage.loadCache(key, maxAge);
+    assert.equal(nullTimestamp, null);
+
+    localStorage.setItem(key + ':t', 'invalid');
+    const invalidTimestamp = Storage.loadCache(key, maxAge);
+    assert.equal(invalidTimestamp, null);
+  });
+
   it('handles corrupted JSON gracefully', () => {
     localStorage.setItem('corrupt:cache', '{invalid json');
     localStorage.setItem('corrupt:cache:t', String(Date.now()));
