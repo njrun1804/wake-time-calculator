@@ -31,6 +31,9 @@ A weather-aware wake time calculator for runners. Calculates optimal wake times 
 Load `src/index.html` (or visit the published site) for the full weather-aware modular build.
 
 ### Setup for Development
+
+Automation agents and developers can choose between a local HTTP server or Docker. See the [Docker development guide](docs/development/docker.md) for container workflows (`make docker-run`, `docker-compose up app`, and the `dev` service) plus cleanup commands.
+
 ```bash
 # Serve from src/ directory for ES6 module testing
 npm run serve
