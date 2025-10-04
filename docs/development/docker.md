@@ -18,7 +18,7 @@ This target wraps two steps:
 ### Ports and health check
 
 - **Port mapping:** The container listens on port `80` internally and is published to `localhost:8080`.
-- **Health check:** Docker uses `wget --spider http://localhost:80` inside the container to verify readiness every 30 seconds.
+- **Health check:** Docker uses `wget -qO- http://localhost:80 >/dev/null` inside the container to verify readiness every 30 seconds.
 - **Verification:** After the container is healthy, open `http://localhost:8080` in a browser (or forward the port in your workspace) to view the app.
 
 ### Related commands
@@ -35,7 +35,7 @@ docker-compose up app
 ```
 
 - Compose uses the same build context as `make docker-run`, exposing the UI on `localhost:8080`.
-- The `app` service inherits the same health check (`wget --spider http://localhost:80`) that reports status in the Compose output.
+- The `app` service inherits the same health check (`wget -qO- http://localhost:80 >/dev/null`) that reports status in the Compose output.
 - Use `docker-compose logs app` for focused log streaming.
 - Shut everything down with `make docker-stop` or `docker-compose down`.
 
@@ -53,9 +53,30 @@ docker-compose up dev
 - **Working directory:** `/app/src`, mounted from the repository via `.:/app` so local edits appear instantly.
 - **Port mapping:** Internal port `8000` is published to `localhost:8000`.
 - **Command:** `python3 -m http.server 8000` serves the raw ES module files without a build step.
-- **Health check:** Compose polls `http://localhost:8000` with `wget --spider` to confirm the server is serving content.
+- **Health check:** Compose polls `http://localhost:8000` with `wget -qO- http://localhost:8000 >/dev/null` to confirm the server is serving content.
 
 Navigate to `http://localhost:8000` once the service reports `healthy` to load the development version.
+
+## Playwright test containers
+
+The `playwright` and `playwright-visual` services run browser-based tests against the `dev` server in a containerized environment.
+
+### Cross-platform networking
+
+- **Network mode:** The Playwright containers use the default bridge network and connect to the `dev` service via its hostname (`http://dev:8000`).
+- **Environment variable:** The `PLAYWRIGHT_BASE_URL` environment variable is set to `http://dev:8000` in docker-compose.yml.
+- **Configuration:** playwright.config.js respects `PLAYWRIGHT_BASE_URL` and falls back to `http://localhost:8000` for local development outside of Docker.
+- **Compatibility:** This approach works on Linux, macOS, and Windows, replacing the previous Linux-only `network_mode: "host"` configuration.
+
+### Running Playwright in Docker
+
+```bash
+docker-compose up playwright
+# or
+docker-compose up playwright-visual
+```
+
+The Playwright services wait for the `dev` service to become healthy before starting tests.
 
 ## Codex-specific notes
 
