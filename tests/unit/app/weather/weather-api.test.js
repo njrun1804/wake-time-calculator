@@ -39,6 +39,9 @@ globalThis.fetch = async (url, options) => {
 
 // Mock Storage module
 const storageModule = await import('../../../../src/js/lib/storage.js');
+const originalLoadCache = storageModule.Storage.loadCache;
+const originalSaveCache = storageModule.Storage.saveCache;
+
 storageModule.Storage.loadCache = mockStorage.loadCache.bind(mockStorage);
 storageModule.Storage.saveCache = mockStorage.saveCache.bind(mockStorage);
 
@@ -446,6 +449,11 @@ test('fetchWetnessInputs processes snowfall data correctly', async () => {
 
 // Cleanup
 test.after(() => {
+  storageModule.Storage.loadCache = originalLoadCache;
+  storageModule.Storage.saveCache = originalSaveCache;
+  assert.strictEqual(storageModule.Storage.loadCache, originalLoadCache);
+  assert.strictEqual(storageModule.Storage.saveCache, originalSaveCache);
+
   globalThis.fetch = originalFetch;
   mockStorage.clear();
 });
