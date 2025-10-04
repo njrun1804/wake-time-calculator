@@ -27,6 +27,41 @@ export const awarenessFixtures = {
   hourlyResponse,
 };
 
+const deepClone = (value) =>
+  typeof structuredClone === 'function'
+    ? structuredClone(value)
+    : JSON.parse(JSON.stringify(value));
+
+const isPlainObject = (value) =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const applyOverrides = (target, overrides) => {
+  if (!isPlainObject(overrides)) return target;
+
+  Object.entries(overrides).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      target[key] = value.map((entry) =>
+        isPlainObject(entry)
+          ? applyOverrides({}, entry)
+          : Array.isArray(entry)
+            ? [...entry]
+            : entry
+      );
+      return;
+    }
+
+    if (isPlainObject(value)) {
+      const base = isPlainObject(target[key]) ? { ...target[key] } : {};
+      target[key] = applyOverrides(base, value);
+      return;
+    }
+
+    target[key] = value;
+  });
+
+  return target;
+};
+
 const defaultSavedLocation = {
   lat: dailyResponse.latitude,
   lon: dailyResponse.longitude,
@@ -60,6 +95,10 @@ export async function setupAwarenessMocks(page, options = {}) {
     ...(options.geolocation || {}),
   };
 
+  const fixtures = applyOverrides(
+    deepClone(awarenessFixtures),
+    options.fixtureOverrides
+  );
 
   await page.addInitScript(
     ({ savedLocation, geoState, fixtures }) => {
@@ -183,7 +222,7 @@ export async function setupAwarenessMocks(page, options = {}) {
         ...geo,
         reverse: geo.reverse || defaultGeoState.reverse,
       },
-      fixtures: awarenessFixtures,
+      fixtures,
     }
   );
 }
