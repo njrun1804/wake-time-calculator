@@ -133,7 +133,16 @@ export const Storage = {
    */
   loadCache(key, maxAge) {
     try {
-      const timestamp = Number(localStorage.getItem(key + ':t'));
+      const rawTimestamp = localStorage.getItem(key + ':t');
+      if (rawTimestamp === null) {
+        return null;
+      }
+
+      const timestamp = Number(rawTimestamp);
+      if (!Number.isFinite(timestamp)) {
+        return null;
+      }
+
       if (Date.now() - timestamp > maxAge) {
         return null;
       }
