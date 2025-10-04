@@ -1,13 +1,27 @@
-node_modules
+# High-volume directories not needed in the runtime image
+node_modules/
+docs/
+tests/
+scripts/
+playwright-report/
+test-results/
+coverage/
+
+# Editor, VCS, and local environment files
 npm-debug.log
 .git
 .gitignore
 .vscode
 .DS_Store
-playwright-report
-test-results
 .history
 .env
 *.log
-coverage
-.husky
+.husky/
+
+# Ignore everything by default and explicitly allow what the container build needs
+**
+!Dockerfile
+!.dockerignore
+!docker-compose.yml
+!src/
+!src/**
