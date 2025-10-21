@@ -38,9 +38,19 @@ For a faster local preview that reuses the upstream `nginx:alpine` image, launch
 
 ### Setup for Development
 
+**Prerequisites:**
+- Node.js >= 20.19.0 (use `nvm use` to automatically switch to the correct version)
+- npm >= 10.0.0
+
 Automation agents and developers can choose between a local HTTP server or Docker. See the [Docker development guide](docs/development/docker.md) for container workflows (`make docker-run`, `docker-compose up app`, and the `dev` service) plus cleanup commands.
 
 ```bash
+# Use correct Node version (if using nvm)
+nvm use
+
+# Install dependencies
+npm install
+
 # Serve from src/ directory for ES6 module testing
 npm run serve
 # Or manually with Python:

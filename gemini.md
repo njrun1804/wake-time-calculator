@@ -54,6 +54,17 @@ The Wake Time Calculator is a weather-aware utility for runners. It calculates o
 
 ## Development Workflow
 
+### Prerequisites
+
+This project requires:
+- **Node.js** >= 20.19.0 (managed via `.nvmrc`)
+- **npm** >= 10.0.0
+
+If using nvm (recommended):
+```bash
+nvm use
+```
+
 ### Installation
 
 ```bash

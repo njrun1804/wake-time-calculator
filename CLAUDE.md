@@ -88,6 +88,17 @@ wake-time-calculator/
 
 ## Development Workflow
 
+### Prerequisites
+
+This project requires:
+- **Node.js** >= 20.19.0 (managed via `.nvmrc`)
+- **npm** >= 10.0.0
+
+If using nvm (recommended):
+```bash
+nvm use
+```
+
 ### Setup Commands
 ```bash
 # Install dependencies
