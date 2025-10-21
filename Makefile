@@ -80,9 +80,6 @@ deps-audit: ## Check for security vulnerabilities
 	@echo "🔒 Checking for security vulnerabilities..."
 	@npm audit
 
-# docs: ## Generate API documentation (jsdoc dependencies removed)
-#	@echo "⚠️  API documentation generation has been removed"
-
 ci: ## Run full CI suite locally
 	@echo "🔄 Running full CI pipeline..."
 	@npm run validate:all

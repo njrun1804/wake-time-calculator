@@ -129,7 +129,6 @@
 
   // Thunder Client
   "rest-client.saveResponseInHistory": true,
-  "thunder-client.workspacePath": "${workspaceFolder}/.thunder-client"
 }
 
 

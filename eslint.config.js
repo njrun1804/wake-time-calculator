@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import html from 'eslint-plugin-html';
 
 export default [
   js.configs.recommended,
@@ -37,6 +38,17 @@ export default [
     languageOptions: {
       globals: {
         ...globals.node,
+      },
+    },
+  },
+  {
+    files: ['**/*.html'],
+    plugins: {
+      html: html,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
       },
     },
   },

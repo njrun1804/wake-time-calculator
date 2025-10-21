@@ -7,11 +7,13 @@
     "mhutchie.git-graph",
     "dbaeumer.vscode-eslint",
     "christian-kohler.path-intellisense",
-    "usernamehw.errorlens"
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "wix.vscode-import-cost",
+    "github.vscode-pull-request-github"
   ],
   "unwantedRecommendations": [
     "genieai.chatgpt-vscode",
-    "rangav.vscode-thunder-client",
-    "ryanrosello-og.playwright-vscode-trace-viewer"
+    "rangav.vscode-thunder-client"
   ]
 }
