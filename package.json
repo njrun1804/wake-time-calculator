@@ -26,6 +26,8 @@
     "validate:html": "html-validate src/index.html",
     "validate:all": "npm run lint && npm run validate:html && npm run test:unit",
     "clean:cache": "rm -rf playwright-report test-results coverage",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && mkdir -p dist && cp -r src/* dist/",
     "prepare": "husky"
   },
   "devDependencies": {
