@@ -74,13 +74,14 @@ Bootstraps the single-page calculator experience and wires together UI compositi
 
 ## Test Execution Matrix
 
-| Test Type | Command | When to Run | CI/CD |
-|-----------|---------|-------------|-------|
-| Unit | `npm run test:unit` | Every code change | Pre-push hook |
-| Core Integration | `npm run test:core` | Feature changes | PR validation |
-| Full Integration | `npm run test:awareness` | Weather/API changes | PR validation |
-| Performance | `npm run test:performance` | Before release | Nightly builds |
-| All Tests | `npm test` | Before merge | Required |
+| Test Type | Command | When to Run | CI/CD | Browsers |
+|-----------|---------|-------------|-------|----------|
+| Unit | `npm run test:unit` | Every code change | Pre-push hook | Node.js (no browser) |
+| Core Integration | `npm run test:core` | Feature changes | PR validation | WebKit, Chromium, Firefox |
+| Full Integration | `npm run test:awareness` | Weather/API changes | PR validation | WebKit, Chromium, Firefox |
+| Performance | `npm run test:performance` | Before release | CI only | WebKit, Chromium, Firefox |
+| Visual Regression | `npm run test:visual` | UI changes | CI only | Chromium, Firefox, WebKit |
+| All Tests | `npm test` | Before merge | Required | All 3 browsers |
 
 ## Coverage Requirements
 

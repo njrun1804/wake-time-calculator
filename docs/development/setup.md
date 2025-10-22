@@ -4,8 +4,8 @@ This document explains how to set up your development environment for the Wake T
 
 ## Prerequisites
 
-- Node.js 18+ (for development tools)
-- Python 3+ (for development server)
+- Node.js >= 20.19.0 (for development tools and server)
+- npm >= 10.0.0 (comes with Node.js)
 - Git (for version control)
 - Modern browser (Chrome, Firefox, Safari, or Edge)
 
@@ -48,7 +48,7 @@ npm run serve
 
 ```bash
 # Development server (required for ES6 modules)
-npm run serve              # Python HTTP server on port 8000
+npm run serve              # http-server on port 8000
 
 # Testing
 npm test                   # Run all Playwright tests
@@ -179,7 +179,7 @@ Ensure testing on:
 ### ES6 Module Errors
 - **Problem**: "Failed to load module script"
 - **Solution**: Use HTTP server, not file:// URLs
-- **Run**: `npm run serve` or `python3 -m http.server 8000`
+- **Run**: `npm run serve`
 
 ### CORS Issues
 - **Problem**: "CORS policy blocked"

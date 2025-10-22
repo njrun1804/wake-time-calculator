@@ -28,7 +28,9 @@ A weather-aware wake time calculator for runners. Calculates optimal wake times 
 ## Usage
 
 ### Default Experience
-Load `src/index.html` locally, or visit the published site at https://njrun1804.github.io/wake-time-calculator/ for the full weather-aware modular build.
+Visit the published site at https://njrun1804.github.io/wake-time-calculator/ for the full weather-aware application.
+
+For local development, use `npm run serve` (requires Node.js >= 20.19.0) and navigate to http://localhost:8000/
 
 ### Docker
 
@@ -53,8 +55,6 @@ npm install
 
 # Serve from src/ directory for ES6 module testing
 npm run serve
-# Or manually with Python:
-python3 -m http.server 8000 --directory src
 # Then visit http://localhost:8000/
 ```
 

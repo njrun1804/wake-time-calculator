@@ -17,7 +17,7 @@ The Wake Time Calculator is a weather-aware utility for runners. It calculates o
     -   **Formatting**: Prettier
     -   **Linting**: ESLint
     -   **HTML Validation**: `html-validate`
--   **Development Server**: `http-server`
+-   **Development Server**: `http-server` (npm package)
 -   **Package Manager**: npm
 -   **CI/CD**: GitHub Actions
 -   **Containerization**: Docker and Docker Compose
@@ -58,12 +58,14 @@ The Wake Time Calculator is a weather-aware utility for runners. It calculates o
 
 This project requires:
 - **Node.js** >= 20.19.0 (managed via `.nvmrc`)
-- **npm** >= 10.0.0
+- **npm** >= 10.0.0 (comes with Node.js)
 
 If using nvm (recommended):
 ```bash
 nvm use
 ```
+
+**Note**: Python is NOT required. The development server uses the http-server npm package.
 
 ### Installation
 
@@ -73,13 +75,13 @@ npm install
 
 ### Running Locally
 
-A local server is required to handle ES6 module imports.
+A local HTTP server is required to handle ES6 module imports. The `http-server` npm package is used (not Python).
 
 ```bash
 npm run serve
 ```
 
-The application will be available at `http://localhost:8000/`.
+The application will be available at `http://localhost:8000/` (serves from the `src/` directory).
 
 ### Testing
 

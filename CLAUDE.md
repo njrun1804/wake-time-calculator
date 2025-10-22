@@ -44,7 +44,7 @@ wake-time-calculator/
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
 - **Testing**: Playwright (integration + visual), Node.js test runner (unit)
 - **Code Quality**: Prettier, ESLint, HTML Validator, Husky (pre-commit/pre-push)
-- **Development Server**: Python HTTP server (local), Docker (containerized)
+- **Development Server**: http-server (npm package), Docker (containerized)
 - **Package Manager**: npm
 - **Containerization**: Docker and Docker Compose
 - **Build Automation**: Makefile for common tasks
@@ -82,9 +82,9 @@ wake-time-calculator/
 - Provides relative time calculations
 
 ### 6. Core Calculator (`src/js/lib/calculator.js`)
-- Implements sleep cycle calculations (90-minute cycles)
-- Determines optimal wake times
-- Considers preparation time and run duration
+- Calculates wake times based on meeting time and activity durations
+- Simple time subtraction algorithm (no sleep cycle calculations)
+- Considers preparation time (45 minutes), run duration, travel time, and breakfast time
 
 ## Development Workflow
 
@@ -105,7 +105,7 @@ nvm use
 npm install
 
 # Start development server
-npm run serve              # Python server on port 8000
+npm run serve              # http-server on port 8000
 make serve                 # Same via Makefile
 
 # Run all tests
@@ -183,7 +183,7 @@ The project includes VS Code configuration for enhanced development:
 - Error Lens (inline error display)
 
 ### Key Scripts
-- `serve`: Starts Python HTTP server on port 8000
+- `serve`: Starts http-server (npm package) on port 8000 serving from src/ directory
 - `test:ci`: Runs CI test suite with specific tags
 - `prepare`: Installs Husky hooks
 - Makefile targets available via `make help`
@@ -253,9 +253,10 @@ HTML validation rules ensuring accessibility and standards compliance
 
 ### `playwright.config.js`
 Integration test configuration with browser settings and test patterns. Configured for multi-browser testing:
-- **WebKit** (Safari): Default for local development
-- **Chromium** (Chrome/Edge): Used in CI visual tests
-- **Firefox**: Used in CI visual tests
+- **WebKit** (Safari): Runs alongside other browsers
+- **Chromium** (Chrome/Edge): Runs alongside other browsers
+- **Firefox**: Runs alongside other browsers
+- All three browsers run by default unless a specific project is selected with `--project=<name>`
 
 ### `.env.example`
 Environment variables template (if using API keys)
@@ -300,7 +301,7 @@ Excludes unnecessary files from Docker builds
 - Direct ES6 module imports (no bundling)
 - Vanilla JavaScript only
 - Local storage for persistence
-- Simple Python HTTP server for development
+- http-server (npm package) for development
 - No external runtime dependencies
 
 ## Best Practices
