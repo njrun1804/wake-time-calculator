@@ -99,6 +99,16 @@ export const validateCoordinates = (lat, lon) => {
   );
 };
 
+/**
+ * Format coordinates as string for display
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {string} Formatted coordinates (e.g., "40.0150, -105.2700")
+ */
+export const formatCoordinates = (lat, lon) => {
+  return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+};
+
 // ============================================================================
 // GEOLOCATION
 // ============================================================================
@@ -335,5 +345,5 @@ export const reverseGeocode = async (lat, lon) => {
   if (nominatimResult) return nominatimResult;
 
   // Ultimate fallback: return coordinates as string
-  return { city: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+  return { city: formatCoordinates(lat, lon) };
 };

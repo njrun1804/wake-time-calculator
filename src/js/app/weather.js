@@ -27,7 +27,7 @@
  */
 
 // External dependencies
-import { CACHE_DURATION } from "../lib/constants.js";
+import { CACHE_DURATION, MS_PER_HOUR } from "../lib/constants.js";
 import { Storage } from "../lib/storage.js";
 
 // ============================================================================
@@ -840,7 +840,7 @@ const fetchWithCache = async (key, fetcher, signal = null) => {
  * @returns {Promise<object>} Weather data with tempF, windMph, windChillF, pop, wetBulbF, isSnow
  */
 export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
-  const hrKey = `hourly_${lat}_${lon}_${Math.floor(whenLocal.getTime() / 3600000)}`;
+  const hrKey = `hourly_${lat}_${lon}_${Math.floor(whenLocal.getTime() / MS_PER_HOUR)}`;
 
   return fetchWithCache(hrKey, async (signal) => {
     const ymd = whenLocal.toLocaleDateString("en-CA");

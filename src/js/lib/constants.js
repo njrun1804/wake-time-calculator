@@ -8,6 +8,7 @@ export const PREP_BEFORE_RUN = 20; // Portion of prep before leaving for run
 export const MINUTES_PER_DAY = 1440;
 export const MINUTES_PER_HOUR = 60;
 export const MM_TO_INCHES = 25.4;
+export const MS_PER_HOUR = 3600000; // Milliseconds per hour (for cache keys)
 export const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 export const defaults = {

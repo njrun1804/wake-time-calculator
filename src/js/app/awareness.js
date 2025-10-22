@@ -49,6 +49,7 @@ import {
   reverseGeocode,
   geocodePlace,
   validateCoordinates,
+  formatCoordinates,
 } from "./location.js";
 
 // ============================================================================
@@ -469,13 +470,13 @@ export const setCurrentDawn = (date) => {
  * @param {string} tz - Timezone (optional)
  */
 export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  // Timeout after 10 seconds
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
   try {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    // Timeout after 10 seconds
-    setTimeout(() => controller.abort(), 10000);
-
     // Fetch dawn first
     const dawnDate = await fetchDawn(lat, lon, tz, signal);
 
@@ -538,7 +539,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
 
     // Update display with all data (handles null values gracefully)
     const displayResult = updateAwarenessDisplay({
-      city: displayCity || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+      city: displayCity || formatCoordinates(lat, lon),
       dawn: dawnDate,
       windChillF: weather.windChillF,
       pop: weather.pop,
@@ -554,9 +555,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
 
     emitAwarenessEvent("ready", {
       city:
-        displayResult?.city ||
-        displayCity ||
-        `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+        displayResult?.city || displayCity || formatCoordinates(lat, lon),
       label: displayResult?.wetnessInsight?.label ?? null,
       decision: displayResult?.decision ?? null,
       dawn: dawnDate?.toISOString?.() ?? null,
@@ -569,6 +568,9 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       console.error("Awareness refresh failed:", error);
       showAwarenessError("Unable to load weather data");
     }
+  } finally {
+    // Clean up timeout whether request succeeds or fails
+    clearTimeout(timeoutId);
   }
 };
 
@@ -608,7 +610,7 @@ export const handleUseMyLocation = async () => {
     try {
       const info = await reverseGeocode(coords.lat, coords.lon);
       const label =
-        info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        info.city || formatCoordinates(coords.lat, coords.lon);
 
       Storage.saveWeatherLocation({
         lat: coords.lat,
@@ -624,7 +626,7 @@ export const handleUseMyLocation = async () => {
       });
     } catch (error) {
       console.warn("Reverse geocoding failed:", error);
-      const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+      const fallback = formatCoordinates(coords.lat, coords.lon);
       Storage.saveWeatherLocation({
         lat: coords.lat,
         lon: coords.lon,
@@ -733,8 +735,7 @@ export const initializeAwareness = async () => {
 
       try {
         const info = await reverseGeocode(coords.lat, coords.lon);
-        const label =
-          info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        const label = info.city || formatCoordinates(coords.lat, coords.lon);
 
         Storage.saveWeatherLocation({
           lat: coords.lat,
@@ -747,7 +748,7 @@ export const initializeAwareness = async () => {
         emitAwarenessEvent("ready", { source: "geolocation" });
       } catch (error) {
         console.warn("Silent reverse geocoding failed:", error);
-        const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        const fallback = formatCoordinates(coords.lat, coords.lon);
         Storage.saveWeatherLocation({
           lat: coords.lat,
           lon: coords.lon,
@@ -760,7 +761,7 @@ export const initializeAwareness = async () => {
       }
     } catch (error) {
       // Silent failure - don't show error message on startup
-      console.log("Silent location detection failed:", error);
+      console.warn("Silent location detection failed:", error);
       emitAwarenessEvent("init", { source: "geolocation-failed" });
     }
   } else {
