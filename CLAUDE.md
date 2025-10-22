@@ -132,27 +132,44 @@ make validate              # Validate via Makefile
 ```
 
 ### Docker Commands
+
+**Production Container:**
 ```bash
-# Development with Docker
-docker-compose up dev      # Dev server in container (port 8000)
-make docker-dev            # Same via Makefile
+# Build and run production image (Nginx-based)
+make docker-run            # Builds image and runs on port 8080
+# Or manually:
+docker build -t wake-time-calculator:latest .
+docker run -d -p 8080:80 --name wake-time-calculator wake-time-calculator:latest
 
-# Testing with Docker
-docker-compose up playwright        # Run all Playwright tests
-docker-compose up playwright-visual # Run visual regression tests only
-
-# Production build
-docker build -t wake-time-calculator .
-docker run -p 8080:80 wake-time-calculator
-# Or use Makefile
-make docker-build          # Build production image
-make docker-run            # Build and run production container (port 8080)
+# Using docker-compose
+docker-compose up app      # Port 8080
 
 # Cleanup
+make docker-stop           # Stops and removes containers
 docker-compose down
-make docker-stop           # Stop all containers
-make clean                 # Remove all temporary files
 ```
+
+**Development Container:**
+```bash
+# Live-reload dev server (Python-based, mounts src/)
+make docker-dev            # Port 8000
+docker-compose up dev      # Same
+
+# Local edits appear instantly (volume mounted)
+```
+
+**Testing Containers:**
+```bash
+docker-compose up playwright        # All Playwright tests
+docker-compose up playwright-visual # Visual regression only
+```
+
+**Container Details:**
+- Production: Nginx serving static files from `/usr/share/nginx/html`
+- Development: Python 3.11-alpine serving from `/app/src` (live reload)
+- Health checks: `wget --spider` on ports 80/8000
+- Logs: `docker-compose logs -f <service>`
+
 
 ### VS Code Integration
 The project includes VS Code configuration for enhanced development:
