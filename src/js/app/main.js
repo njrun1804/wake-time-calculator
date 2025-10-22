@@ -13,6 +13,24 @@
  * 2. User input → updates state → saveAndRecalculate
  * 3. recalculate → calculateWakeTime → updateDisplay
  * 4. Awareness ready → updateLocationHeadlamp → dawn warning badges
+ *
+ * Application Lifecycle:
+ * 1. DOM ready → WakeTimeApp constructor
+ * 2. init() → cache elements, load saved values, attach listeners
+ * 3. recalculate() → initial wake time display
+ * 4. runWhenIdle → initializeAwareness (deferred for fast first paint)
+ * 5. awarenessReady = true → enable dawn warnings
+ *
+ * State Management:
+ * - State is immutable (new objects created on updates)
+ * - Changes trigger saveAndRecalculate → persist + recalculate
+ * - Debounced recalculation (150ms) for smooth UX during typing
+ *
+ * Module Responsibilities:
+ * - main.js: App orchestration, state, lifecycle
+ * - calculator.js (lib): Pure wake time calculations
+ * - awareness.js: Weather data fetching and display
+ * - ui.js: UI utilities (debounce, location badges)
  */
 
 // External dependencies

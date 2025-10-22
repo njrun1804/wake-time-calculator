@@ -13,6 +13,22 @@
  * 2. refreshAwareness → fetches dawn, weather, wetness data
  * 3. updateAwarenessDisplay → updates UI with status icons
  * 4. Event system → tracks state changes for testing/debugging
+ *
+ * Status Icon Logic (3 states):
+ * - OK (✅): Conditions are favorable
+ * - Yield (⚠): Caution advised
+ * - Warning (⛔): Avoid or take precautions
+ *
+ * Initialization Fallback Chain:
+ * 1. Try saved location from localStorage
+ * 2. Try browser geolocation (silent, no prompt)
+ * 3. Wait for user to click "Use my location"
+ *
+ * Cross-module Dependencies:
+ * - weather.js: fetchWeatherAround, fetchWetnessInputs, interpretWetness
+ * - location.js: getCurrentLocation, reverseGeocode, geocodePlace
+ * - dawn.js: fetchDawn (for dawn time)
+ * - main.js: calls updateLocationHeadlamp when awareness ready
  */
 
 // External dependencies

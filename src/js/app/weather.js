@@ -12,6 +12,18 @@
  * 2. computeWetness → processes daily precipitation records
  * 3. interpretWetness → converts wetness data to trail conditions
  * 4. Format functions → display-ready strings
+ *
+ * Key Algorithms:
+ * - Wetness Scoring: Precipitation + snowmelt - evapotranspiration, with time decay
+ * - Trail Condition Mapping: Moisture thresholds → labels (Dry, Moist, Slick, Muddy, Soaked)
+ * - Intensity Boost: Fast/heavy events weighted more than slow drizzle
+ * - Seasonal Drying: Winter evapotranspiration 50% of summer (dormant vegetation)
+ *
+ * External APIs:
+ * - Open-Meteo Forecast: https://api.open-meteo.com/v1/forecast
+ *   - Hourly weather (temp, wind, precipitation probability)
+ *   - Daily precipitation (rain, snow, ET₀)
+ * - Cache duration: 1 hour (CACHE_DURATION constant)
  */
 
 // External dependencies
@@ -308,15 +320,22 @@ export const computeWetness = (
       minTempF,
     } = entry;
 
+    // === STEP 1: Parse precipitation inputs ===
+    // Some API responses have separate rain/snow, others just precipitation total
     const precipTotal = coerceNumber(precipitation);
     const rainIn = numberOrNull(rain) ?? precipTotal;
     const snowDepthIn = Math.max(0, numberOrNull(snowfall) ?? 0);
-    const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO;
+    const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO; // Convert depth to water equivalent (10:1 ratio)
     const et0In = Math.max(0, numberOrNull(et0) ?? 0);
     totalEt0 += et0In;
 
+    // === STEP 2: Accumulate snowpack ===
+    // Snow accumulates until temperatures warm enough to melt it
     runningSnowpack += snowSwe;
 
+    // === STEP 3: Calculate snowmelt ===
+    // Snow melts when daily high exceeds 34°F (freezing point + margin)
+    // Melt rate increases with temperature: 10% at 34°F, up to 100% at 42°F+
     let melt = 0;
     const thawTemp = numberOrNull(maxTempF);
     if (
@@ -324,55 +343,79 @@ export const computeWetness = (
       thawTemp !== null &&
       thawTemp >= SNOW_MELT_THRESHOLD_F
     ) {
+      // thawFactor: 0.0 at 32°F → 1.0 at 42°F
+      // Example: 37°F → (37-32)/10 = 0.5 → 50% of snowpack melts
       const thawFactor = Math.min(1, (thawTemp - 32) / 10);
       melt = Math.min(
         runningSnowpack,
-        runningSnowpack * Math.max(0.1, thawFactor),
+        runningSnowpack * Math.max(0.1, thawFactor), // Min 10% melt when above threshold
       );
       runningSnowpack = Math.max(0, runningSnowpack - melt);
     }
 
     totalMelt += melt;
 
+    // === STEP 4: Compute total liquid contribution ===
+    // Liquid = rain + snowmelt (both contribute to trail wetness)
     const rainContribution = Math.max(0, rainIn);
     const liquid = rainContribution + melt;
     totalRain += rainContribution;
     totalLiquid += liquid;
 
+    // === STEP 5: Apply intensity boost ===
+    // Fast/heavy events saturate trails more than slow drizzle
+    // Rationale: 1" in 1 hour creates more runoff/pooling than 1" over 24 hours
     const intensityBoost = (() => {
       const hours = numberOrNull(precipHours);
       if (!hours || hours <= 0) {
+        // No duration data: boost if large total (likely intense)
         return liquid > 0.35 ? MAX_INTENSITY_BOOST : 1.15;
       }
-      const rate = liquid / hours;
-      if (rate >= 0.35) return MAX_INTENSITY_BOOST;
+      const rate = liquid / hours; // inches per hour
+      // Thresholds based on NWS intensity classifications:
+      // - Heavy: ≥0.3"/hr → 1.35x boost
+      // - Moderate: 0.1-0.3"/hr → 1.1-1.2x boost
+      // - Light: <0.1"/hr → 1.0x (no boost)
+      if (rate >= 0.35) return MAX_INTENSITY_BOOST; // 1.35
       if (rate >= 0.2) return 1.2;
       if (rate >= 0.1) return 1.1;
       return 1;
     })();
 
+    // === STEP 6: Calculate seasonal drying ===
+    // Evapotranspiration (ET₀) varies by season due to vegetation
     const entryDate = date ? new Date(date) : null;
     const month = entryDate
       ? entryDate.getMonth()
       : refDate
         ? refDate.getMonth()
         : new Date().getMonth();
-    const leafOn = month >= 3 && month <= 9; // Apr–Oct
-    const warmSeasonCoefficient = dryingCoefficient;
-    const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5);
+    const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
+    const warmSeasonCoefficient = dryingCoefficient; // Default 0.6
+    const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants)
+    // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
     const seasonalDryingCoefficient = leafOn
       ? warmSeasonCoefficient
       : coolSeasonCoefficient;
     const drying = seasonalDryingCoefficient * et0In;
     totalDrying += drying;
 
+    // === STEP 7: Compute daily moisture balance ===
+    // dailyBalance = net moisture added to trails
+    // Positive = wetter, Negative = drier
     const dailyBalance = (liquid - drying) * intensityBoost;
     peakDailyBalance = Math.max(peakDailyBalance, dailyBalance);
 
     if (liquid > 0.05) {
-      recentWetDays += 1;
+      recentWetDays += 1; // Count as "wet day" if ≥0.05" liquid
     }
 
+    // === STEP 8: Apply time decay ===
+    // Older events matter less (trails dry over time)
+    // Example with decayBase=0.85:
+    // - 1 day old: 0.85^1 = 85% weight
+    // - 3 days old: 0.85^3 = 61% weight
+    // - 7 days old: 0.85^7 = 32% weight
     const ageDays = (() => {
       if (referenceMidnight && date) {
         const dayStart = new Date(date);
@@ -380,6 +423,7 @@ export const computeWetness = (
         const diff = (referenceMidnight - dayStart) / MS_PER_DAY;
         return Number.isFinite(diff) && diff > 0 ? diff : 0;
       }
+      // Fallback: use index offset if no date
       const offset = sorted.length - 1 - index;
       return offset < 0 ? 0 : offset;
     })();
