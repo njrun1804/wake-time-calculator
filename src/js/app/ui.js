@@ -3,20 +3,20 @@
  * UI utilities, form helpers, and display functions
  */
 
-import { checkDaylightNeeded } from './dawn/index.js';
+import { checkDaylightNeeded } from "./dawn.js";
 
 /**
  * Explicit list of dirt locations (robust across browsers)
  */
 const DIRT_LOCATIONS = new Set([
-  'figure8',
-  'huber',
-  'tatum',
-  'holmdel',
-  'shark-river',
-  'allaire',
-  'rez',
-  'battlefield',
+  "figure8",
+  "huber",
+  "tatum",
+  "holmdel",
+  "shark-river",
+  "allaire",
+  "rez",
+  "battlefield",
 ]);
 
 /**
@@ -35,16 +35,16 @@ export const isDirtLocation = (location) => {
  * @param {Date} dawnDate - Dawn date object
  */
 export const updateLocationBadge = (location, runStartMinutes, dawnDate) => {
-  const badge = document.getElementById('daylightWarning');
+  const badge = document.getElementById("daylightWarning");
   if (!badge) return;
 
   const daylightCheck = checkDaylightNeeded(runStartMinutes, dawnDate);
 
   if (daylightCheck.needed) {
     badge.textContent = daylightCheck.message;
-    badge.classList.remove('hidden');
+    badge.classList.remove("hidden");
   } else {
-    badge.classList.add('hidden');
+    badge.classList.add("hidden");
   }
 };
 

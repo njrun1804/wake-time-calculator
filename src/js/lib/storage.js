@@ -3,7 +3,7 @@
  * Manages localStorage persistence
  */
 
-import { storageKeys, weatherStorage, defaults } from './constants.js';
+import { storageKeys, weatherStorage, defaults } from "./constants.js";
 
 /**
  * Storage manager for wake time calculator data
@@ -18,7 +18,7 @@ export const Storage = {
     try {
       localStorage.setItem(key, String(value));
     } catch (error) {
-      console.error('Failed to save to localStorage:', error);
+      console.error("Failed to save to localStorage:", error);
     }
   },
 
@@ -33,7 +33,7 @@ export const Storage = {
       const value = localStorage.getItem(key);
       return value !== null ? value : defaultValue;
     } catch (error) {
-      console.error('Failed to load from localStorage:', error);
+      console.error("Failed to load from localStorage:", error);
       return defaultValue;
     }
   },
@@ -89,10 +89,10 @@ export const Storage = {
     return {
       lat,
       lon,
-      city: this.load(weatherStorage.city, ''),
+      city: this.load(weatherStorage.city, ""),
       tz: this.load(
         weatherStorage.tz,
-        Intl.DateTimeFormat().resolvedOptions().timeZone
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
       ),
     };
   },
@@ -104,10 +104,10 @@ export const Storage = {
     try {
       Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
       Object.values(weatherStorage).forEach((key) =>
-        localStorage.removeItem(key)
+        localStorage.removeItem(key),
       );
     } catch (error) {
-      console.error('Failed to clear localStorage:', error);
+      console.error("Failed to clear localStorage:", error);
     }
   },
 
@@ -119,9 +119,9 @@ export const Storage = {
   saveCache(key, data) {
     try {
       localStorage.setItem(key, JSON.stringify(data));
-      localStorage.setItem(key + ':t', String(Date.now()));
+      localStorage.setItem(key + ":t", String(Date.now()));
     } catch (error) {
-      console.error('Failed to save cache:', error);
+      console.error("Failed to save cache:", error);
     }
   },
 
@@ -133,7 +133,7 @@ export const Storage = {
    */
   loadCache(key, maxAge) {
     try {
-      const rawTimestamp = localStorage.getItem(key + ':t');
+      const rawTimestamp = localStorage.getItem(key + ":t");
       if (rawTimestamp === null) {
         return null;
       }
@@ -149,7 +149,7 @@ export const Storage = {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error('Failed to load cache:', error);
+      console.error("Failed to load cache:", error);
       return null;
     }
   },

@@ -20,15 +20,15 @@ export function runWhenIdle(callback, options = {}) {
   const timeout = options.timeout ?? defaultTimeout;
 
   if (
-    typeof window !== 'undefined' &&
-    typeof window.requestIdleCallback === 'function'
+    typeof window !== "undefined" &&
+    typeof window.requestIdleCallback === "function"
   ) {
     return window.requestIdleCallback(callback, { timeout });
   }
 
   if (
-    typeof window !== 'undefined' &&
-    typeof window.setTimeout === 'function'
+    typeof window !== "undefined" &&
+    typeof window.setTimeout === "function"
   ) {
     return window.setTimeout(() => {
       callback(createIdleDeadline());
@@ -46,13 +46,13 @@ export function runWhenIdle(callback, options = {}) {
  */
 export function cancelWhenIdle(handle) {
   if (
-    typeof window !== 'undefined' &&
-    typeof window.cancelIdleCallback === 'function'
+    typeof window !== "undefined" &&
+    typeof window.cancelIdleCallback === "function"
   ) {
     window.cancelIdleCallback(handle);
   } else if (
-    typeof window !== 'undefined' &&
-    typeof window.clearTimeout === 'function'
+    typeof window !== "undefined" &&
+    typeof window.clearTimeout === "function"
   ) {
     window.clearTimeout(handle);
   } else {

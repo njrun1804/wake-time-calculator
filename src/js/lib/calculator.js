@@ -8,7 +8,7 @@ import {
   MINUTES_PER_HOUR,
   PREP_MINUTES,
   PREP_BEFORE_RUN,
-} from './constants.js';
+} from "./constants.js";
 
 /**
  * Convert time string to minutes since midnight
@@ -16,7 +16,7 @@ import {
  * @returns {number} Minutes since midnight
  */
 export const toMinutes = (time) => {
-  const [h, m] = time.split(':').map((s) => Number.parseInt(s, 10));
+  const [h, m] = time.split(":").map((s) => Number.parseInt(s, 10));
   return h * MINUTES_PER_HOUR + m;
 };
 
@@ -30,7 +30,7 @@ export const fromMinutes = (total) => {
     ((total % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
   const h = Math.floor(minutes / MINUTES_PER_HOUR);
   const m = minutes % MINUTES_PER_HOUR;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 };
 
 /**
@@ -39,9 +39,9 @@ export const fromMinutes = (total) => {
  * @returns {string} Time in h:mm AM/PM format
  */
 export const format12 = (time24) => {
-  const [h, m] = time24.split(':');
+  const [h, m] = time24.split(":");
   const hour = Number.parseInt(h, 10);
-  const period = hour >= 12 ? 'PM' : 'AM';
+  const period = hour >= 12 ? "PM" : "AM";
   const hour12 = hour % 12 === 0 ? 12 : hour % 12;
   return `${hour12}:${m} ${period}`;
 };
