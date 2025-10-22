@@ -6,29 +6,6 @@
 import { checkDaylightNeeded } from "./dawn.js";
 
 /**
- * Explicit list of dirt locations (robust across browsers)
- */
-const DIRT_LOCATIONS = new Set([
-  "figure8",
-  "huber",
-  "tatum",
-  "holmdel",
-  "shark-river",
-  "allaire",
-  "rez",
-  "battlefield",
-]);
-
-/**
- * Check if a location requires dirt/trail conditions
- * @param {string} location - Location value
- * @returns {boolean} True if location involves dirt trails
- */
-export const isDirtLocation = (location) => {
-  return DIRT_LOCATIONS.has(location);
-};
-
-/**
  * Update location badge with daylight warning if needed
  * @param {string} location - Current location
  * @param {number} runStartMinutes - Run start time in minutes

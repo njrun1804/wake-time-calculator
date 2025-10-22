@@ -374,11 +374,6 @@ export const updateAwarenessDisplay = (data) => {
     // Surface latest insight for quick console inspection
     window.__latestWetnessInsight = wetnessInsight;
     window.__latestWetnessRaw = wetnessData;
-
-    // Log for test debugging
-    if (typeof window !== "undefined" && window.__awarenessMock) {
-      console.log("[Awareness] Wetness insight calculated:", wetnessInsight);
-    }
   }
 
   const schedule = window.__latestSchedule;
@@ -518,8 +513,16 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       console.warn("Wetness fetch failed:", wetnessResult.reason);
     }
 
+    // Only refine city name if it looks incomplete (no comma = single component)
+    // Skip refinement if city is already formatted (e.g., "Boulder, CO, US")
     let displayCity = city;
-    if (displayCity && !displayCity.includes(",")) {
+    const needsRefinement =
+      displayCity &&
+      !displayCity.includes(",") &&
+      displayCity.length > 0 &&
+      !displayCity.match(/^\d+\.\d+,\s*-?\d+\.\d+$/); // Skip if it's coordinates
+
+    if (needsRefinement) {
       try {
         const refined = await reverseGeocode(lat, lon);
         if (refined?.city) {
