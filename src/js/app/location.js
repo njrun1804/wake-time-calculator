@@ -107,8 +107,8 @@ export const validateCoordinates = (lat, lon) => {
  * Get current location using browser geolocation
  *
  * Wraps the browser's Geolocation API in a Promise.
- * Uses medium accuracy to balance speed and precision.
- * Caches position for up to 5 minutes.
+ * Uses low accuracy for faster results (enableHighAccuracy: false).
+ * Caches position for up to 1 minute (user shouldn't travel far in that time).
  *
  * @returns {Promise<object>} Location data with lat, lon
  * @throws {Error} If geolocation is unsupported or permission denied
@@ -149,9 +149,9 @@ export const getCurrentLocation = () => {
         reject(new Error(message));
       },
       {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutes
+        enableHighAccuracy: false, // Low accuracy for faster results
+        timeout: 10000, // 10 second timeout
+        maximumAge: 60000, // 1 minute cache (was 5 min - too long)
       },
     );
   });

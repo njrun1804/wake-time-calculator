@@ -33,4 +33,16 @@ export const weatherStorage = {
   tz: "wake:weatherTz",
 };
 
-export const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+/**
+ * Get the default timezone from browser settings
+ * Returns current timezone, which updates if user changes system timezone
+ * @returns {string} IANA timezone identifier (e.g., "America/New_York")
+ */
+export const getDefaultTz = () =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * Default timezone constant (cached at module load)
+ * @deprecated Use getDefaultTz() for up-to-date timezone
+ */
+export const defaultTz = getDefaultTz();

@@ -24,14 +24,12 @@ export const fmtTime12InZone = (date, tz) =>
  * @returns {string} Formatted date
  */
 export const fmtYMDInZone = (date, tz) =>
-  date
-    .toLocaleDateString("en-CA", {
-      timeZone: tz,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-    .replace(/\//g, "-");
+  date.toLocaleDateString("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
 /**
  * Get tomorrow's date in YYYY-MM-DD format

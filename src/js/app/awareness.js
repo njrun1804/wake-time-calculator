@@ -246,15 +246,12 @@ const isElementStale = (el) => {
  *
  * Re-queries DOM if cache is empty or elements are disconnected.
  * This handles cases where DOM is rebuilt (e.g., hot reload).
+ * Checks awMsg as representative element - if it's stale, all elements are.
  *
  * @returns {object} Cached elements
  */
 export const cacheAwarenessElements = () => {
-  if (
-    !awarenessElements ||
-    isElementStale(awarenessElements.awMsg) ||
-    isElementStale(awarenessElements.awCity)
-  ) {
+  if (!awarenessElements || isElementStale(awarenessElements.awMsg)) {
     awarenessElements = buildAwarenessElements();
   }
   return awarenessElements;

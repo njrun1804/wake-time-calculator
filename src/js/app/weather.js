@@ -338,7 +338,7 @@ export const computeWetness = (
   let cumulativeScore = 0;
   let runningSnowpack = 0;
   let totalRain = 0;
-  let totalLiquid = 0; // eslint-disable-line no-unused-vars -- used later in weekly metrics
+  let totalLiquid = 0;
   let totalMelt = 0;
   let totalDrying = 0;
   let totalEt0 = 0;
@@ -969,7 +969,10 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     } = data.daily;
 
     days.forEach((dayStr, index) => {
-      if (typeof dayStr !== "string" || dayStr >= dawnYMD) return;
+      // Filter out days on or after dawn day (we want only prior days)
+      // Use date comparison instead of string comparison for robustness
+      if (typeof dayStr !== "string") return;
+      if (new Date(dayStr) >= new Date(dawnYMD)) return;
 
       dailyRecords.push({
         date: dayStr,
