@@ -14,27 +14,23 @@ wake-time-calculator/
 │   ├── css/
 │   │   └── main.css          # Application styles
 │   └── js/
-│       ├── app/              # Application modules
-│       │   ├── main.js       # Entry point and initialization
-│       │   ├── ui.js         # UI components and interactions
-│       │   ├── awareness/    # Weather awareness logic modules
-│       │   ├── dawn/         # Dawn time calculation modules
-│       │   ├── location/     # Location service modules
-│       │   ├── main/         # Main app orchestration modules
-│       │   └── weather/      # Weather API and analysis modules
+│       ├── app/              # Application modules (AI-first consolidated)
+│       │   ├── awareness.js  # Weather awareness (708 lines)
+│       │   ├── dawn.js       # Dawn time calculations (156 lines)
+│       │   ├── location.js   # Location services (316 lines)
+│       │   ├── main.js       # App orchestration (476 lines)
+│       │   ├── ui.js         # UI utilities (68 lines)
+│       │   └── weather.js    # Weather API and wetness (948 lines)
 │       └── lib/              # Utility libraries
 │           ├── constants.js  # Application constants
 │           ├── time.js       # Time manipulation utilities
 │           ├── schedulers.js # Scheduling utilities
 │           ├── storage.js    # Local storage management
 │           └── calculator.js # Core calculation logic
-├── tests/                    # Test suite
-│   ├── integration/          # Integration tests
-│   ├── unit/                 # Unit tests
-│   ├── visual/               # Visual regression tests
-│   │   └── *-snapshots/      # Screenshot baselines (Linux/macOS)
-│   ├── performance/          # Performance tests
-│   └── helpers/              # Test utilities and mocks
+├── tests/                    # Test suite (minimal for solo dev)
+│   └── unit/                 # Unit tests
+│       └── lib/              # Library tests only
+│           └── calculator.test.js  # Wake time calculations
 ├── scripts/                  # Build and utility scripts
 └── docs/                     # Documentation
 
@@ -42,49 +38,64 @@ wake-time-calculator/
 
 ### Technology Stack
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Testing**: Playwright (integration + visual), Node.js test runner (unit)
-- **Code Quality**: Prettier, ESLint, HTML Validator, Husky (pre-commit/pre-push)
-- **Development Server**: Python HTTP server (local), Docker (containerized)
+- **Testing**: Node.js test runner (unit tests only - minimal for solo dev)
+- **Code Quality**: Prettier (formatting only)
+- **Development Server**: http-server (npm package)
 - **Package Manager**: npm
-- **Containerization**: Docker and Docker Compose
-- **Build Automation**: Makefile for common tasks
+- **Architecture**: AI-first consolidated modules (6 files vs 29 previously)
 
 ## Key Components
 
-### 1. Weather Awareness (`src/js/app/awareness/`)
-- Analyzes weather conditions for optimal run timing
-- Considers temperature, precipitation, wind speed, and UV index
-- Provides color-coded recommendations (green/yellow/red)
-- Modular structure: core logic, DOM updates, event handlers, display formatting
+All components are now consolidated single-file modules for AI-first development.
 
-### 2. Location Services (`src/js/app/location/`)
-- Manages user location with fallback options
-- Supports browser geolocation API
-- Provides geocoding and location validation
-- Stores location preferences locally
+### 1. Weather Module (`src/js/app/weather.js` - 948 lines)
+- **API Integration**: Open-Meteo forecast API with 1-hour caching
+- **Wetness Algorithm**: 8-step moisture scoring (precipitation + snowmelt - evapotranspiration)
+- **Trail Analysis**: Interprets wetness data into 7 condition states (Dry → Soaked)
+- **Formatting**: Temperature, wind, precipitation display utilities
+- **Key Features**: Intensity boost for heavy rain, seasonal ET₀ adjustment, time decay
 
-### 3. Weather Integration (`src/js/app/weather/`)
-- Integrates with Open-Meteo API for weather data
-- Fetches hourly forecasts and historical data
-- Trail wetness analysis and moisture scoring
-- Caches weather data to reduce API calls
-- Handles API errors gracefully
+### 2. Awareness Module (`src/js/app/awareness.js` - 708 lines)
+- **Weather Display**: Updates UI with dawn, wind chill, PoP, wet bulb, trail conditions
+- **Status Icons**: 3-state system (OK ✅ / Yield ⚠ / Warning ⛔) for all factors
+- **Location Management**: Geolocation, geocoding, city name resolution
+- **Event System**: Tracks state changes for debugging (init, ready, error, etc.)
+- **Initialization**: 3-tier fallback (localStorage → geolocation → manual)
 
-### 4. Dawn Calculations (`src/js/app/dawn/`)
-- Calculates sunrise and sunset times via API
-- Astronomical calculations for twilight times
-- Determines civil/nautical/astronomical twilight
-- Uses astronomy formulas for accurate calculations
+### 3. Location Module (`src/js/app/location.js` - 316 lines)
+- **Geolocation**: Browser API wrapper with error handling
+- **Geocoding**: Forward search (place name → coords) via Open-Meteo
+- **Reverse Geocoding**: Coords → place name with Open-Meteo + Nominatim fallback
+- **Formatting**: US state abbreviations, duplicate removal, smart city labels
 
-### 5. Time Utilities (`src/js/lib/time.js`)
-- Formats times for display
-- Handles timezone conversions
-- Provides relative time calculations
+### 4. Dawn Module (`src/js/app/dawn.js` - 156 lines)
+- **API Integration**: SunriseSunset.io for civil dawn times
+- **Daylight Checks**: Determines if run starts before dawn (headlamp warning)
+- **Caching**: In-memory cache to reduce API calls
+- **Testing Utilities**: setTestDawn for development
 
-### 6. Core Calculator (`src/js/lib/calculator.js`)
-- Implements sleep cycle calculations (90-minute cycles)
-- Determines optimal wake times
-- Considers preparation time and run duration
+### 5. Main App Module (`src/js/app/main.js` - 476 lines)
+- **Orchestration**: WakeTimeApp class coordinates all modules
+- **State Management**: Immutable state with debounced recalculation (150ms)
+- **Lifecycle**: Element caching → load saved values → attach listeners → init awareness
+- **Persistence**: Auto-save to localStorage on every change
+- **Performance**: Lazy awareness init via runWhenIdle for fast first paint
+
+### 6. UI Utilities (`src/js/app/ui.js` - 68 lines)
+- **Debounce**: Rate-limiting for input handlers
+- **Location Badges**: Daylight warning display logic
+- **Dirt Detection**: Identifies trail locations requiring wetness checks
+
+### 7. Calculator Library (`src/js/lib/calculator.js`)
+- Pure wake time calculations (no side effects)
+- Simple time subtraction: meeting time - (prep + run + travel + breakfast)
+- Handles previous day rollover when wake time < midnight
+
+### 8. Support Libraries (`src/js/lib/`)
+- **time.js**: Time formatting, timezone conversions
+- **storage.js**: localStorage wrappers with JSON serialization
+- **constants.js**: Default values, cache duration, timezone
+- **schedulers.js**: runWhenIdle for deferred execution
 
 ## Development Workflow
 
@@ -105,7 +116,7 @@ nvm use
 npm install
 
 # Start development server
-npm run serve              # Python server on port 8000
+npm run serve              # http-server on port 8000
 make serve                 # Same via Makefile
 
 # Run all tests
@@ -132,27 +143,44 @@ make validate              # Validate via Makefile
 ```
 
 ### Docker Commands
+
+**Production Container:**
 ```bash
-# Development with Docker
-docker-compose up dev      # Dev server in container (port 8000)
-make docker-dev            # Same via Makefile
+# Build and run production image (Nginx-based)
+make docker-run            # Builds image and runs on port 8080
+# Or manually:
+docker build -t wake-time-calculator:latest .
+docker run -d -p 8080:80 --name wake-time-calculator wake-time-calculator:latest
 
-# Testing with Docker
-docker-compose up playwright        # Run all Playwright tests
-docker-compose up playwright-visual # Run visual regression tests only
-
-# Production build
-docker build -t wake-time-calculator .
-docker run -p 8080:80 wake-time-calculator
-# Or use Makefile
-make docker-build          # Build production image
-make docker-run            # Build and run production container (port 8080)
+# Using docker-compose
+docker-compose up app      # Port 8080
 
 # Cleanup
+make docker-stop           # Stops and removes containers
 docker-compose down
-make docker-stop           # Stop all containers
-make clean                 # Remove all temporary files
 ```
+
+**Development Container:**
+```bash
+# Live-reload dev server (Python-based, mounts src/)
+make docker-dev            # Port 8000
+docker-compose up dev      # Same
+
+# Local edits appear instantly (volume mounted)
+```
+
+**Testing Containers:**
+```bash
+docker-compose up playwright        # All Playwright tests
+docker-compose up playwright-visual # Visual regression only
+```
+
+**Container Details:**
+- Production: Nginx serving static files from `/usr/share/nginx/html`
+- Development: Python 3.11-alpine serving from `/app/src` (live reload)
+- Health checks: `wget --spider` on ports 80/8000
+- Logs: `docker-compose logs -f <service>`
+
 
 ### VS Code Integration
 The project includes VS Code configuration for enhanced development:
@@ -183,7 +211,7 @@ The project includes VS Code configuration for enhanced development:
 - Error Lens (inline error display)
 
 ### Key Scripts
-- `serve`: Starts Python HTTP server on port 8000
+- `serve`: Starts http-server (npm package) on port 8000 serving from src/ directory
 - `test:ci`: Runs CI test suite with specific tags
 - `prepare`: Installs Husky hooks
 - Makefile targets available via `make help`
@@ -191,99 +219,61 @@ The project includes VS Code configuration for enhanced development:
 ## Testing Strategy
 
 ### Test Coverage
-The project maintains high test coverage (>96%) with comprehensive test suites:
+The project uses **minimal testing** optimized for solo development:
 
-- **Unit Tests**: Core calculations, utilities, and data transformations
-  - Weather wetness calculations (`wetness-compute.test.js`): 18 tests covering precipitation dynamics, snowmelt, evapotranspiration, time decay
-  - Weather API integration (`weather-api.test.js`): 16 tests covering fetch operations, caching, data transformation, error handling
-  - Storage operations (`storage.test.js`): 16 tests covering localStorage persistence, caching, error handling
-  - Calculator logic (`calculator.test.js`): 3 tests covering wake time calculations
-  - Wetness interpretation (`wetness.test.js`): 6 tests covering trail condition logic, freeze-thaw detection
-- **Integration Core Tests** (`@core`): Essential user flows
-- **Integration Full Tests** (`@full`): Complete feature coverage including weather awareness
-- **Visual Regression Tests** (`@visual`): UI appearance, responsive design, accessibility
-- **Performance Tests**: Load times, API response handling
-- **Regression Tests** (`@regression`): Previously fixed bugs
+- **Unit Tests**: Calculator logic only (7 tests)
+  - `tests/unit/lib/calculator.test.js`: Wake time calculations
+  - Tests core math functions: toMinutes, fromMinutes, format12, calculateWakeTime
+  - All tests passing (100% coverage of calculator.js)
 
-### Current Coverage Metrics
-- **Overall**: 96.78% statement coverage
-- **weather/api.js**: 99.02% (API integration and caching)
-- **weather/wetness.js**: 97.83% (core moisture scoring algorithm)
-- **weather/analysis.js**: 91.19% (trail condition analysis)
-- **weather/formatting.js**: 88.70% (display formatting)
-- **lib/storage.js**: 100% (persistence layer)
-- **lib/calculator.js**: 100% (wake time calculations)
+**Removed for Solo Dev:**
+- ❌ Integration tests (manual testing preferred)
+- ❌ Visual regression tests (Claude can verify UI visually)
+- ❌ Performance tests (not needed for single user)
+- ❌ Complex test infrastructure (Playwright, fixtures, mocks)
 
-### Visual Testing
-The project includes comprehensive visual regression testing:
-- **Responsive Design Tests**: Multiple viewport sizes (mobile, tablet, desktop, wide)
-- **Weather State Tests**: Color-coded UI states (OK/green, Caution/yellow, Avoid/red)
-- **Accessibility Tests**: Focus states, keyboard navigation, WCAG compliance, touch targets
-- **Cross-Browser Testing**: Chromium, Firefox, and WebKit in CI
-
-**Visual Test Files:**
-- `tests/visual/responsive.spec.js`: Viewport and layout testing
-- `tests/visual/weather-states.spec.js`: Weather awareness UI states
-- `tests/visual/accessibility.spec.js`: Focus rings, contrast, screen reader support
-
-**Interactive Visual Testing with Puppeteer MCP:**
-For development and debugging, Puppeteer MCP can be used interactively via Claude Code CLI:
-- Capture screenshots at any viewport size
-- Test form interactions visually
-- Generate documentation screenshots
-- Debug UI issues in real-time
-- No code changes required - works directly through Claude Code
-
-### Test Organization
-Tests are tagged for selective execution:
-- `@core`: Essential functionality
-- `@full`: Complete feature set
-- `@visual`: Visual regression tests
-- `@a11y`: Accessibility tests
-- `@performance`: Performance metrics
-- `@regression`: Bug fix validation
+**Testing Philosophy:**
+- Manual testing by user for features/UI
+- Automated tests only for pure math (calculator)
+- Claude verifies code correctness through reading/analysis
+- Fast iteration > comprehensive automation
 
 ## Configuration Files
 
 ### `.prettierrc`
-Code formatting configuration for consistent style
-
-### `.htmlvalidate.json`
-HTML validation rules ensuring accessibility and standards compliance
-
-### `playwright.config.js`
-Integration test configuration with browser settings and test patterns. Configured for multi-browser testing:
-- **WebKit** (Safari): Default for local development
-- **Chromium** (Chrome/Edge): Used in CI visual tests
-- **Firefox**: Used in CI visual tests
-
-### `.env.example`
-Environment variables template (if using API keys)
+Code formatting configuration (only remaining quality tool)
 
 ### `.vscode/`
 VS Code workspace configuration:
 - `settings.json`: Editor settings optimized for Claude Code CLI
-- `tasks.json`: Quick access to dev server, tests, validation
-- `launch.json`: Debug configurations for tests and Chrome
-- `extensions.json`: Recommended extensions
-
-### `Makefile`
-Build automation with common development tasks. Run `make help` to see all targets.
-
-### `Dockerfile` & `docker-compose.yml`
-Container configuration for development and production environments
-
-### `.dockerignore`
-Excludes unnecessary files from Docker builds
+- `tasks.json`: Quick access to dev server and formatting
+- `extensions.json`: Recommended extensions (Prettier only)
 
 ## Recent Major Changes
 
-### Added (2024-2025)
-- **Visual Regression Testing Suite** (Sept 2024): Comprehensive UI testing across multiple viewports and browsers
-- **ESLint Configuration** (Sept 2024): Modern flat config for JavaScript linting
-- **Multi-Browser CI Pipeline** (Sept 2024): Chromium, Firefox, and WebKit testing
-- **Docker Containerization** (Sept 2024): Development and production containers with healthchecks
-- **VS Code Integration** (Sept 2024): Enhanced debugging, tasks, and extension recommendations
+### AI-First Consolidation (Oct 2024)
+- **Phase 1: File Consolidation**: Merged 29 files → 6 modules for easier AI navigation
+  - `weather/` (7 files) → `weather.js` (948 lines)
+  - `location/` (4 files) → `location.js` (316 lines)
+  - `awareness/` (7 files) → `awareness.js` (708 lines)
+  - `dawn/` (3 files) → `dawn.js` (156 lines)
+  - `main/` (6 files) → `main.js` (476 lines)
+  - Benefits: All related code visible in single file, clear section markers
+- **Phase 2: Enhanced Documentation**: Added step-by-step algorithm walkthroughs
+  - Wetness calculation: 8 steps with examples and thresholds
+  - Cross-module dependency maps
+  - Lifecycle and initialization flow diagrams
+  - "Why" comments for non-obvious decisions
+- **Testing Reduction**: Removed 99% of tests (152 files → 1 file)
+  - Kept only `calculator.test.js` (pure math functions)
+  - Deleted: Playwright, visual regression, integration, performance tests
+  - Rationale: Solo dev, manual testing, Claude verification
+
+### Added (2024)
+- **Extreme Minimization** (Sept 2024): Removed enterprise tooling for solo dev
+  - Deleted: Docker, Makefile, ESLint, html-validate, git hooks, CI/CD
+  - Kept: Prettier (formatting), http-server (dev server), GitHub Pages (deployment)
+- **Documentation Harmonization** (Sept 2024): Fixed inaccuracies across 11 markdown files
 
 ### Removed Components (Migration from TypeScript)
 - TypeScript compilation (migrated to vanilla JS)
@@ -300,7 +290,7 @@ Excludes unnecessary files from Docker builds
 - Direct ES6 module imports (no bundling)
 - Vanilla JavaScript only
 - Local storage for persistence
-- Simple Python HTTP server for development
+- http-server (npm package) for development
 - No external runtime dependencies
 
 ## Best Practices
@@ -333,15 +323,21 @@ Excludes unnecessary files from Docker builds
 ## Common Tasks
 
 ### Adding a New Feature
-1. Create feature module in appropriate `js/app/` subdirectory (or create new subdirectory)
-2. Export from subdirectory's `index.js`
-3. Import and initialize in `app/main.js`
-4. Add UI components to `index.html`
-5. Style with CSS in `css/main.css`
-6. Write unit tests in `tests/unit/app/` or `tests/unit/lib/`
-7. Add integration tests in `tests/integration/`
-8. Add visual tests in `tests/visual/` if UI changes are significant
-9. Update visual baselines with `npm run test:visual:update`
+1. **Choose the right module**: Add to existing module (weather.js, awareness.js, etc.) or create new .js file
+2. **Add section marker**: Use `// === SECTION NAME ===` for navigation
+3. **Document inline**: Add JSDoc with examples, data flow, cross-references
+4. **Import/Export**: Add to module exports, import in main.js or other consumers
+5. **Update UI**: Add HTML in `index.html`, styles in `css/main.css`
+6. **Manual test**: Load app, verify functionality works
+7. **Add unit test**: Only if pure math/logic (like calculator.js)
+8. **Update CLAUDE.md**: Add to Key Components section if significant
+
+**AI-First Guidelines:**
+- Keep related code together in one file (not scattered across subdirectories)
+- Add step-by-step comments for complex algorithms
+- Include concrete examples in JSDoc (input → output)
+- Explain "why" for non-obvious decisions
+- Use section markers instead of file boundaries
 
 ### Debugging
 **Browser DevTools:**
@@ -351,37 +347,20 @@ Excludes unnecessary files from Docker builds
 - Review test outputs for failures
 
 **VS Code Debugging:**
-- Set breakpoints in test files
 - Use F5 to start "Server + Chrome" debug configuration
-- Debug Playwright tests with built-in debugger
+- Set breakpoints in source files
 - Debug unit tests with Node.js debugger
 
-**Docker Debugging:**
-- Check container logs: `docker-compose logs dev`
-- Shell into container: `docker exec -it wake-time-calculator-dev sh`
-- Verify container status: `docker ps`
-
 ### Deployment
-**Static Hosting:**
-- No build step required
-- Serve static files directly
-- Configure web server for SPA routing if needed
-- Ensure CORS headers for API access
+**GitHub Pages (Current):**
+- Automatic deployment from `.github/workflows/pages.yml`
+- No build step required - serves `src/` directory directly
+- Live at: https://[username].github.io/wake-time-calculator/
 
-**Docker Deployment:**
-```bash
-# Production deployment
-docker build -t wake-time-calculator:latest .
-docker run -d -p 80:80 wake-time-calculator:latest
-
-# Or with docker-compose
-docker-compose up -d app
-```
-
-**Files:**
-- `Dockerfile`: Nginx-based production image (~10MB)
-- `docker-compose.yml`: Multi-environment container configs
-- `.dockerignore`: Optimized image builds
+**Static Hosting (Alternative):**
+- Serve `src/` directory directly (no build needed)
+- Any static host works (Netlify, Vercel, Cloudflare Pages)
+- Ensure CORS headers for external API access
 
 ## API Integration
 

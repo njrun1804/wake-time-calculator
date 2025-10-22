@@ -11,26 +11,26 @@ export const MM_TO_INCHES = 25.4;
 export const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 export const defaults = {
-  firstMeeting: '08:30',
+  firstMeeting: "08:30",
   run: 0,
   travel: 0,
   breakfast: 0,
-  location: 'round-town',
+  location: "round-town",
 };
 
 export const storageKeys = {
-  firstMeeting: 'wake:meeting', // Fixed to match test expectations
-  run: 'wake:run',
-  travel: 'wake:travel',
-  breakfast: 'wake:breakfast',
-  location: 'wake:location',
+  firstMeeting: "wake:meeting", // Fixed to match test expectations
+  run: "wake:run",
+  travel: "wake:travel",
+  breakfast: "wake:breakfast",
+  location: "wake:location",
 };
 
 export const weatherStorage = {
-  lat: 'wake:weatherLat',
-  lon: 'wake:weatherLon',
-  city: 'wake:weatherCity',
-  tz: 'wake:weatherTz',
+  lat: "wake:weatherLat",
+  lon: "wake:weatherLon",
+  city: "wake:weatherCity",
+  tz: "wake:weatherTz",
 };
 
 export const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;

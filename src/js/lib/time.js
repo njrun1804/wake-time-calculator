@@ -10,9 +10,9 @@
  * @returns {string} Formatted time
  */
 export const fmtTime12InZone = (date, tz) =>
-  date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
+  date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
     hour12: true,
     timeZone: tz,
   });
@@ -25,13 +25,13 @@ export const fmtTime12InZone = (date, tz) =>
  */
 export const fmtYMDInZone = (date, tz) =>
   date
-    .toLocaleDateString('en-CA', {
+    .toLocaleDateString("en-CA", {
       timeZone: tz,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     })
-    .replace(/\//g, '-');
+    .replace(/\//g, "-");
 
 /**
  * Get tomorrow's date in YYYY-MM-DD format
