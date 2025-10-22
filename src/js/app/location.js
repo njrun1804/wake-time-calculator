@@ -99,6 +99,16 @@ export const validateCoordinates = (lat, lon) => {
   );
 };
 
+/**
+ * Format coordinates as string for display
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {string} Formatted coordinates (e.g., "40.0150, -105.2700")
+ */
+export const formatCoordinates = (lat, lon) => {
+  return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+};
+
 // ============================================================================
 // GEOLOCATION
 // ============================================================================
@@ -107,8 +117,8 @@ export const validateCoordinates = (lat, lon) => {
  * Get current location using browser geolocation
  *
  * Wraps the browser's Geolocation API in a Promise.
- * Uses medium accuracy to balance speed and precision.
- * Caches position for up to 5 minutes.
+ * Uses low accuracy for faster results (enableHighAccuracy: false).
+ * Caches position for up to 1 minute (user shouldn't travel far in that time).
  *
  * @returns {Promise<object>} Location data with lat, lon
  * @throws {Error} If geolocation is unsupported or permission denied
@@ -149,9 +159,9 @@ export const getCurrentLocation = () => {
         reject(new Error(message));
       },
       {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutes
+        enableHighAccuracy: false, // Low accuracy for faster results
+        timeout: 10000, // 10 second timeout
+        maximumAge: 60000, // 1 minute cache (was 5 min - too long)
       },
     );
   });
@@ -242,10 +252,10 @@ const formatPlaceName = (place = {}) => {
 export const geocodePlace = async (name) => {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error("geocoding failed");
+  if (!res.ok) throw new Error("Failed to geocode location");
 
   const data = await res.json();
-  if (!data.results?.[0]) throw new Error("no results");
+  if (!data.results?.[0]) throw new Error("No results found for location");
 
   const place = data.results[0];
   return {
@@ -254,6 +264,60 @@ export const geocodePlace = async (name) => {
     city: formatPlaceName(place),
     tz: place.timezone || defaultTz,
   };
+};
+
+/**
+ * Try Open-Meteo reverse geocoding
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {Promise<object|null>} Location data or null if failed
+ */
+const tryOpenMeteoReverse = async (lat, lon) => {
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&count=1&format=json`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (!data.results?.[0]) return null;
+
+    const place = data.results[0];
+    return {
+      city: formatPlaceName(place),
+      tz: place.timezone || defaultTz,
+    };
+  } catch (error) {
+    console.warn("Open-Meteo reverse geocoding failed:", error);
+    return null;
+  }
+};
+
+/**
+ * Try Nominatim reverse geocoding
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {Promise<object|null>} Location data or null if failed
+ */
+const tryNominatimReverse = async (lat, lon) => {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const address = data.address || {};
+    const formatted = formatPlaceName({
+      name: address.city || address.town || address.village || data.name,
+      admin1: address.state,
+      admin2: address.county,
+      country: address.country,
+      country_code: address.country_code,
+    });
+    return { city: formatted, tz: defaultTz };
+  } catch (error) {
+    console.warn("Nominatim reverse geocoding failed:", error);
+    return null;
+  }
 };
 
 /**
@@ -272,48 +336,14 @@ export const geocodePlace = async (name) => {
  * // Returns: { city: "Boulder, CO, US", tz: "America/Denver" }
  */
 export const reverseGeocode = async (lat, lon) => {
-  try {
-    // Try Open-Meteo reverse geocoding first
-    try {
-      const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&count=1&format=json`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.results?.[0]) {
-          const place = data.results[0];
-          return {
-            city: formatPlaceName(place),
-            tz: place.timezone || defaultTz,
-          };
-        }
-      }
-    } catch (error) {
-      console.warn("Open-Meteo reverse geocoding failed:", error);
-    }
+  // Try Open-Meteo first
+  const openMeteoResult = await tryOpenMeteoReverse(lat, lon);
+  if (openMeteoResult) return openMeteoResult;
 
-    // Fallback to Nominatim
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        const address = data.address || {};
-        const formatted = formatPlaceName({
-          name: address.city || address.town || address.village || data.name,
-          admin1: address.state,
-          admin2: address.county,
-          country: address.country,
-          country_code: address.country_code,
-        });
-        return { city: formatted, tz: defaultTz };
-      }
-    } catch (error) {
-      console.warn("Nominatim reverse geocoding failed:", error);
-    }
-  } catch (error) {
-    console.warn("All reverse geocoding methods failed:", error);
-  }
+  // Fallback to Nominatim
+  const nominatimResult = await tryNominatimReverse(lat, lon);
+  if (nominatimResult) return nominatimResult;
 
-  // Ultimate fallback
-  return { city: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+  // Ultimate fallback: return coordinates as string
+  return { city: formatCoordinates(lat, lon) };
 };

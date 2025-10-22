@@ -380,15 +380,8 @@ export class WakeTimeApp {
     setupAwarenessListeners();
 
     // Setup daylight check function for global access
+    // Called by awareness module when dawn data updates
     window.updateLocationHeadlamp = () => {
-      this.updateLocationHeadlamp();
-    };
-
-    // Add test dawn function for debugging
-    window.setTestDawn = (hours, minutes) => {
-      const date = new Date();
-      date.setHours(hours, minutes, 0, 0);
-      window.currentDawnDate = date;
       this.updateLocationHeadlamp();
     };
   }
@@ -465,8 +458,6 @@ export class WakeTimeApp {
    */
   handleAwarenessError(error) {
     console.error("Failed to initialize awareness module", error);
-
-    this.awarenessReady = true;
 
     const status = document.getElementById("awMsg");
     if (status && status.textContent?.trim() === "—") {

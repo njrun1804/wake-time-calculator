@@ -27,7 +27,7 @@
  */
 
 // External dependencies
-import { CACHE_DURATION } from "../lib/constants.js";
+import { CACHE_DURATION, MS_PER_HOUR } from "../lib/constants.js";
 import { Storage } from "../lib/storage.js";
 
 // ============================================================================
@@ -104,6 +104,43 @@ export const sortByDate = (records) =>
     if (a.date === b.date) return 0;
     return a.date < b.date ? -1 : 1;
   });
+
+/**
+ * Find the index of the time entry closest to target hour
+ *
+ * Tries exact hour match first, then finds closest match if exact not found.
+ *
+ * @param {Array<string>} times - Array of ISO time strings
+ * @param {number} targetHour - Target hour (0-23)
+ * @returns {number} Index of closest time, or -1 if times array is empty
+ *
+ * @example
+ * findClosestHourIndex(['2024-01-01T05:00', '2024-01-01T06:00'], 6) // Returns 1
+ * findClosestHourIndex(['2024-01-01T05:00', '2024-01-01T07:00'], 6) // Returns 1 (closer to 7 than 5)
+ */
+export const findClosestHourIndex = (times, targetHour) => {
+  if (!Array.isArray(times) || times.length === 0) return -1;
+
+  // First try exact match
+  const exactIndex = times.findIndex(
+    (t) => new Date(t).getHours() === targetHour,
+  );
+  if (exactIndex !== -1) return exactIndex;
+
+  // Find closest hour
+  let closestIndex = 0;
+  let smallestDiff = Math.abs(new Date(times[0]).getHours() - targetHour);
+
+  for (let i = 1; i < times.length; i++) {
+    const hourDiff = Math.abs(new Date(times[i]).getHours() - targetHour);
+    if (hourDiff < smallestDiff) {
+      smallestDiff = hourDiff;
+      closestIndex = i;
+    }
+  }
+
+  return closestIndex;
+};
 
 // ============================================================================
 // FORMATTING
@@ -301,7 +338,7 @@ export const computeWetness = (
   let cumulativeScore = 0;
   let runningSnowpack = 0;
   let totalRain = 0;
-  let totalLiquid = 0; // eslint-disable-line no-unused-vars -- used later in weekly metrics
+  let totalLiquid = 0;
   let totalMelt = 0;
   let totalDrying = 0;
   let totalEt0 = 0;
@@ -451,6 +488,11 @@ export const computeWetness = (
     };
   });
 
+  // Normalize score by adding 5% of peak daily balance
+  // Why 5%? This provides a small boost when there was a single intense event,
+  // preventing the score from being too low when time decay reduces impact
+  // but trail conditions remain affected by the peak moisture event.
+  // Example: Heavy rain 3 days ago may be 61% decayed, but trails still muddy.
   const normalizedScore =
     cumulativeScore + Math.max(0, peakDailyBalance * 0.05);
 
@@ -780,15 +822,9 @@ const fetchWithCache = async (key, fetcher, signal = null) => {
   const cached = Storage.loadCache(key, CACHE_DURATION);
   if (cached) return cached;
 
-  try {
-    const data = await fetcher(signal);
-    Storage.saveCache(key, data);
-    return data;
-  } catch (error) {
-    if (signal?.aborted) throw error;
-    console.warn(`Fetch failed for ${key}:`, error);
-    throw error;
-  }
+  const data = await fetcher(signal);
+  Storage.saveCache(key, data);
+  return data;
 };
 
 /**
@@ -804,7 +840,7 @@ const fetchWithCache = async (key, fetcher, signal = null) => {
  * @returns {Promise<object>} Weather data with tempF, windMph, windChillF, pop, wetBulbF, isSnow
  */
 export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
-  const hrKey = `hourly_${lat}_${lon}_${Math.floor(whenLocal.getTime() / 3600000)}`;
+  const hrKey = `hourly_${lat}_${lon}_${Math.floor(whenLocal.getTime() / MS_PER_HOUR)}`;
 
   return fetchWithCache(hrKey, async (signal) => {
     const ymd = whenLocal.toLocaleDateString("en-CA");
@@ -823,34 +859,17 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
     const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error("weather fetch failed");
+    if (!res.ok) throw new Error("Failed to fetch weather data");
 
     const data = await res.json();
-    if (!data.hourly) throw new Error("no hourly data");
+    if (!data.hourly) throw new Error("No hourly weather data available");
 
     // Find closest hour to the target time
     const targetHour = whenLocal.getHours();
     const times = data.hourly.time;
+    const index = findClosestHourIndex(times, targetHour);
 
-    // First try exact match
-    let index = times.findIndex((t) => new Date(t).getHours() === targetHour);
-
-    // If no exact match, find the closest hour
-    if (index === -1 && times.length > 0) {
-      let closestIndex = 0;
-      let smallestDiff = Math.abs(new Date(times[0]).getHours() - targetHour);
-
-      for (let i = 1; i < times.length; i++) {
-        const hourDiff = Math.abs(new Date(times[i]).getHours() - targetHour);
-        if (hourDiff < smallestDiff) {
-          smallestDiff = hourDiff;
-          closestIndex = i;
-        }
-      }
-      index = closestIndex;
-    }
-
-    if (index === -1) throw new Error("no hourly data available");
+    if (index === -1) throw new Error("No hourly data available for target time");
 
     const weatherCode = data.hourly.weathercode?.[index];
     const tempF = data.hourly.temperature_2m?.[index] ?? null;
@@ -929,7 +948,7 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
     const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error("wetness fetch failed");
+    if (!res.ok) throw new Error("Failed to fetch wetness data");
 
     const data = await res.json();
     if (!data.daily) {
@@ -950,7 +969,10 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     } = data.daily;
 
     days.forEach((dayStr, index) => {
-      if (typeof dayStr !== "string" || dayStr >= dawnYMD) return;
+      // Filter out days on or after dawn day (we want only prior days)
+      // Use date comparison instead of string comparison for robustness
+      if (typeof dayStr !== "string") return;
+      if (new Date(dayStr) >= new Date(dawnYMD)) return;
 
       dailyRecords.push({
         date: dayStr,

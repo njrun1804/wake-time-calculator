@@ -8,6 +8,7 @@ export const PREP_BEFORE_RUN = 20; // Portion of prep before leaving for run
 export const MINUTES_PER_DAY = 1440;
 export const MINUTES_PER_HOUR = 60;
 export const MM_TO_INCHES = 25.4;
+export const MS_PER_HOUR = 3600000; // Milliseconds per hour (for cache keys)
 export const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 export const defaults = {
@@ -33,4 +34,16 @@ export const weatherStorage = {
   tz: "wake:weatherTz",
 };
 
-export const defaultTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+/**
+ * Get the default timezone from browser settings
+ * Returns current timezone, which updates if user changes system timezone
+ * @returns {string} IANA timezone identifier (e.g., "America/New_York")
+ */
+export const getDefaultTz = () =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * Default timezone constant (cached at module load)
+ * @deprecated Use getDefaultTz() for up-to-date timezone
+ */
+export const defaultTz = getDefaultTz();

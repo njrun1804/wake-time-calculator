@@ -49,6 +49,7 @@ import {
   reverseGeocode,
   geocodePlace,
   validateCoordinates,
+  formatCoordinates,
 } from "./location.js";
 
 // ============================================================================
@@ -246,15 +247,12 @@ const isElementStale = (el) => {
  *
  * Re-queries DOM if cache is empty or elements are disconnected.
  * This handles cases where DOM is rebuilt (e.g., hot reload).
+ * Checks awMsg as representative element - if it's stale, all elements are.
  *
  * @returns {object} Cached elements
  */
 export const cacheAwarenessElements = () => {
-  if (
-    !awarenessElements ||
-    isElementStale(awarenessElements.awMsg) ||
-    isElementStale(awarenessElements.awCity)
-  ) {
+  if (!awarenessElements || isElementStale(awarenessElements.awMsg)) {
     awarenessElements = buildAwarenessElements();
   }
   return awarenessElements;
@@ -374,11 +372,6 @@ export const updateAwarenessDisplay = (data) => {
     // Surface latest insight for quick console inspection
     window.__latestWetnessInsight = wetnessInsight;
     window.__latestWetnessRaw = wetnessData;
-
-    // Log for test debugging
-    if (typeof window !== "undefined" && window.__awarenessMock) {
-      console.log("[Awareness] Wetness insight calculated:", wetnessInsight);
-    }
   }
 
   const schedule = window.__latestSchedule;
@@ -477,24 +470,57 @@ export const setCurrentDawn = (date) => {
  * @param {string} tz - Timezone (optional)
  */
 export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  // Timeout after 10 seconds to prevent hanging requests
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
   try {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    // Timeout after 10 seconds
-    setTimeout(() => controller.abort(), 10000);
-
     // Fetch dawn first
     const dawnDate = await fetchDawn(lat, lon, tz, signal);
 
-    // Parallel fetch weather & wetness
-    const [weather, wetnessInfo] = await Promise.all([
+    // Parallel fetch weather & wetness with graceful degradation
+    const [weatherResult, wetnessResult] = await Promise.allSettled([
       fetchWeatherAround(lat, lon, dawnDate, tz),
       fetchWetnessInputs(lat, lon, dawnDate, tz),
     ]);
 
+    const weather =
+      weatherResult.status === "fulfilled"
+        ? weatherResult.value
+        : {
+            windChillF: null,
+            pop: null,
+            wetBulbF: null,
+            tempF: null,
+            windMph: null,
+            weatherCode: null,
+            snowfall: null,
+            isSnow: false,
+          };
+
+    const wetnessInfo =
+      wetnessResult.status === "fulfilled" ? wetnessResult.value : null;
+
+    // Log any partial failures
+    if (weatherResult.status === "rejected") {
+      console.warn("Weather fetch failed:", weatherResult.reason);
+    }
+    if (wetnessResult.status === "rejected") {
+      console.warn("Wetness fetch failed:", wetnessResult.reason);
+    }
+
+    // Only refine city name if it looks incomplete (no comma = single component)
+    // Skip refinement if city is already formatted (e.g., "Boulder, CO, US")
     let displayCity = city;
-    if (displayCity && !displayCity.includes(",")) {
+    const needsRefinement =
+      displayCity &&
+      !displayCity.includes(",") &&
+      displayCity.length > 0 &&
+      !displayCity.match(/^\d+\.\d+,\s*-?\d+\.\d+$/); // Skip if it's coordinates
+
+    if (needsRefinement) {
       try {
         const refined = await reverseGeocode(lat, lon);
         if (refined?.city) {
@@ -511,9 +537,9 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       }
     }
 
-    // Update display with all data
+    // Update display with all data (handles null values gracefully)
     const displayResult = updateAwarenessDisplay({
-      city: displayCity || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+      city: displayCity || formatCoordinates(lat, lon),
       dawn: dawnDate,
       windChillF: weather.windChillF,
       pop: weather.pop,
@@ -529,9 +555,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
 
     emitAwarenessEvent("ready", {
       city:
-        displayResult?.city ||
-        displayCity ||
-        `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+        displayResult?.city || displayCity || formatCoordinates(lat, lon),
       label: displayResult?.wetnessInsight?.label ?? null,
       decision: displayResult?.decision ?? null,
       dawn: dawnDate?.toISOString?.() ?? null,
@@ -544,6 +568,9 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       console.error("Awareness refresh failed:", error);
       showAwarenessError("Unable to load weather data");
     }
+  } finally {
+    // Clean up timeout whether request succeeds or fails
+    clearTimeout(timeoutId);
   }
 };
 
@@ -583,7 +610,7 @@ export const handleUseMyLocation = async () => {
     try {
       const info = await reverseGeocode(coords.lat, coords.lon);
       const label =
-        info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        info.city || formatCoordinates(coords.lat, coords.lon);
 
       Storage.saveWeatherLocation({
         lat: coords.lat,
@@ -599,7 +626,7 @@ export const handleUseMyLocation = async () => {
       });
     } catch (error) {
       console.warn("Reverse geocoding failed:", error);
-      const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+      const fallback = formatCoordinates(coords.lat, coords.lon);
       Storage.saveWeatherLocation({
         lat: coords.lat,
         lon: coords.lon,
@@ -708,8 +735,7 @@ export const initializeAwareness = async () => {
 
       try {
         const info = await reverseGeocode(coords.lat, coords.lon);
-        const label =
-          info.city || `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        const label = info.city || formatCoordinates(coords.lat, coords.lon);
 
         Storage.saveWeatherLocation({
           lat: coords.lat,
@@ -722,7 +748,7 @@ export const initializeAwareness = async () => {
         emitAwarenessEvent("ready", { source: "geolocation" });
       } catch (error) {
         console.warn("Silent reverse geocoding failed:", error);
-        const fallback = `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+        const fallback = formatCoordinates(coords.lat, coords.lon);
         Storage.saveWeatherLocation({
           lat: coords.lat,
           lon: coords.lon,
@@ -735,7 +761,7 @@ export const initializeAwareness = async () => {
       }
     } catch (error) {
       // Silent failure - don't show error message on startup
-      console.log("Silent location detection failed:", error);
+      console.warn("Silent location detection failed:", error);
       emitAwarenessEvent("init", { source: "geolocation-failed" });
     }
   } else {
