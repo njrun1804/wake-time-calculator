@@ -15,12 +15,12 @@ wake-time-calculator/
 │   │   └── main.css          # Application styles
 │   └── js/
 │       ├── app/              # Application modules (AI-first consolidated)
-│       │   ├── awareness.js  # Weather awareness (708 lines)
-│       │   ├── dawn.js       # Dawn time calculations (156 lines)
-│       │   ├── location.js   # Location services (316 lines)
-│       │   ├── main.js       # App orchestration (476 lines)
-│       │   ├── ui.js         # UI utilities (68 lines)
-│       │   └── weather.js    # Weather API and wetness (948 lines)
+│       │   ├── awareness.js  # Weather awareness (805 lines)
+│       │   ├── dawn.js       # Dawn time calculations (211 lines)
+│       │   ├── location.js   # Location services (349 lines)
+│       │   ├── main.js       # App orchestration (486 lines)
+│       │   ├── ui.js         # UI utilities (44 lines)
+│       │   └── weather.js    # Weather API and wetness (996 lines)
 │       └── lib/              # Utility libraries
 │           ├── constants.js  # Application constants
 │           ├── time.js       # Time manipulation utilities
@@ -48,54 +48,58 @@ wake-time-calculator/
 
 All components are now consolidated single-file modules for AI-first development.
 
-### 1. Weather Module (`src/js/app/weather.js` - 948 lines)
+### 1. Weather Module (`src/js/app/weather.js` - 996 lines)
 - **API Integration**: Open-Meteo forecast API with 1-hour caching
 - **Wetness Algorithm**: 8-step moisture scoring (precipitation + snowmelt - evapotranspiration)
 - **Trail Analysis**: Interprets wetness data into 7 condition states (Dry → Soaked)
 - **Formatting**: Temperature, wind, precipitation display utilities
 - **Key Features**: Intensity boost for heavy rain, seasonal ET₀ adjustment, time decay
+- **Quality**: Extracted helper functions, standardized error messages, clear constants
 
-### 2. Awareness Module (`src/js/app/awareness.js` - 708 lines)
+### 2. Awareness Module (`src/js/app/awareness.js` - 805 lines)
 - **Weather Display**: Updates UI with dawn, wind chill, PoP, wet bulb, trail conditions
 - **Status Icons**: 3-state system (OK ✅ / Yield ⚠ / Warning ⛔) for all factors
 - **Location Management**: Geolocation, geocoding, city name resolution
 - **Event System**: Tracks state changes for debugging (init, ready, error, etc.)
 - **Initialization**: 3-tier fallback (localStorage → geolocation → manual)
+- **Reliability**: Graceful degradation with Promise.allSettled, proper timeout cleanup
 
-### 3. Location Module (`src/js/app/location.js` - 316 lines)
-- **Geolocation**: Browser API wrapper with error handling
+### 3. Location Module (`src/js/app/location.js` - 349 lines)
+- **Geolocation**: Browser API wrapper with error handling (1-min cache)
 - **Geocoding**: Forward search (place name → coords) via Open-Meteo
 - **Reverse Geocoding**: Coords → place name with Open-Meteo + Nominatim fallback
-- **Formatting**: US state abbreviations, duplicate removal, smart city labels
+- **Formatting**: US state abbreviations, duplicate removal, coordinate formatter utility
+- **Architecture**: Flattened nesting, extracted helper functions for clarity
 
-### 4. Dawn Module (`src/js/app/dawn.js` - 156 lines)
+### 4. Dawn Module (`src/js/app/dawn.js` - 211 lines)
 - **API Integration**: SunriseSunset.io for civil dawn times
 - **Daylight Checks**: Determines if run starts before dawn (headlamp warning)
-- **Caching**: In-memory cache to reduce API calls
+- **Caching**: In-memory cache with LRU eviction (50-entry limit)
 - **Testing Utilities**: setTestDawn for development
+- **Performance**: Probabilistic cache cleanup prevents memory leaks
 
-### 5. Main App Module (`src/js/app/main.js` - 476 lines)
+### 5. Main App Module (`src/js/app/main.js` - 486 lines)
 - **Orchestration**: WakeTimeApp class coordinates all modules
 - **State Management**: Immutable state with debounced recalculation (150ms)
 - **Lifecycle**: Element caching → load saved values → attach listeners → init awareness
 - **Persistence**: Auto-save to localStorage on every change
 - **Performance**: Lazy awareness init via runWhenIdle for fast first paint
 
-### 6. UI Utilities (`src/js/app/ui.js` - 68 lines)
+### 6. UI Utilities (`src/js/app/ui.js` - 44 lines)
 - **Debounce**: Rate-limiting for input handlers
 - **Location Badges**: Daylight warning display logic
-- **Dirt Detection**: Identifies trail locations requiring wetness checks
 
-### 7. Calculator Library (`src/js/lib/calculator.js`)
+### 7. Calculator Library (`src/js/lib/calculator.js` - 132 lines)
 - Pure wake time calculations (no side effects)
 - Simple time subtraction: meeting time - (prep + run + travel + breakfast)
 - Handles previous day rollover when wake time < midnight
+- **Quality**: Comprehensive input validation with descriptive error messages
 
 ### 8. Support Libraries (`src/js/lib/`)
-- **time.js**: Time formatting, timezone conversions
-- **storage.js**: localStorage wrappers with JSON serialization
-- **constants.js**: Default values, cache duration, timezone
-- **schedulers.js**: runWhenIdle for deferred execution
+- **time.js** (47 lines): Time formatting, timezone conversions (removed redundant code)
+- **storage.js** (215 lines): localStorage wrappers with JSON serialization, user-facing error alerts
+- **constants.js** (49 lines): Default values, cache duration, timezone getter, MS_PER_HOUR constant
+- **schedulers.js** (61 lines): runWhenIdle for deferred execution
 
 ## Development Workflow
 
@@ -251,13 +255,24 @@ VS Code workspace configuration:
 
 ## Recent Major Changes
 
+### Code Quality Review (Oct 2024)
+- **Comprehensive Quality Improvements**: Fixed 28 issues across all priority levels
+  - **Critical (1)**: Fixed broken module import path that prevented app from loading
+  - **High Priority (6)**: Bug fixes including error handling, validation, memory leaks, storage alerts
+  - **Medium Priority (11)**: Code quality improvements including DRY violations, deep nesting, magic numbers
+  - **Low Priority (10)**: Polish including error messages, animations, test code cleanup
+  - **Result**: More reliable, maintainable, and consistent codebase
+  - **Files Modified**: 12 total across 5 commits
+  - **Changes**: ~50 lines removed, added comprehensive error handling and validation
+
 ### AI-First Consolidation (Oct 2024)
 - **Phase 1: File Consolidation**: Merged 29 files → 6 modules for easier AI navigation
-  - `weather/` (7 files) → `weather.js` (948 lines)
-  - `location/` (4 files) → `location.js` (316 lines)
-  - `awareness/` (7 files) → `awareness.js` (708 lines)
-  - `dawn/` (3 files) → `dawn.js` (156 lines)
-  - `main/` (6 files) → `main.js` (476 lines)
+  - `weather/` (7 files) → `weather.js` (996 lines, +48 from quality improvements)
+  - `location/` (4 files) → `location.js` (349 lines, +33 from improvements)
+  - `awareness/` (7 files) → `awareness.js` (805 lines, +97 from improvements)
+  - `dawn/` (3 files) → `dawn.js` (211 lines, +55 from cache management)
+  - `main/` (6 files) → `main.js` (486 lines, +10 from cleanup)
+  - `ui.js` simplified to 44 lines (-24 from dead code removal)
   - Benefits: All related code visible in single file, clear section markers
 - **Phase 2: Enhanced Documentation**: Added step-by-step algorithm walkthroughs
   - Wetness calculation: 8 steps with examples and thresholds
