@@ -487,11 +487,36 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
     // Fetch dawn first
     const dawnDate = await fetchDawn(lat, lon, tz, signal);
 
-    // Parallel fetch weather & wetness
-    const [weather, wetnessInfo] = await Promise.all([
+    // Parallel fetch weather & wetness with graceful degradation
+    const [weatherResult, wetnessResult] = await Promise.allSettled([
       fetchWeatherAround(lat, lon, dawnDate, tz),
       fetchWetnessInputs(lat, lon, dawnDate, tz),
     ]);
+
+    const weather =
+      weatherResult.status === "fulfilled"
+        ? weatherResult.value
+        : {
+            windChillF: null,
+            pop: null,
+            wetBulbF: null,
+            tempF: null,
+            windMph: null,
+            weatherCode: null,
+            snowfall: null,
+            isSnow: false,
+          };
+
+    const wetnessInfo =
+      wetnessResult.status === "fulfilled" ? wetnessResult.value : null;
+
+    // Log any partial failures
+    if (weatherResult.status === "rejected") {
+      console.warn("Weather fetch failed:", weatherResult.reason);
+    }
+    if (wetnessResult.status === "rejected") {
+      console.warn("Wetness fetch failed:", wetnessResult.reason);
+    }
 
     let displayCity = city;
     if (displayCity && !displayCity.includes(",")) {
@@ -511,7 +536,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       }
     }
 
-    // Update display with all data
+    // Update display with all data (handles null values gracefully)
     const displayResult = updateAwarenessDisplay({
       city: displayCity || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
       dawn: dawnDate,

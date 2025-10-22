@@ -466,8 +466,6 @@ export class WakeTimeApp {
   handleAwarenessError(error) {
     console.error("Failed to initialize awareness module", error);
 
-    this.awarenessReady = true;
-
     const status = document.getElementById("awMsg");
     if (status && status.textContent?.trim() === "—") {
       status.textContent = "Weather data unavailable";

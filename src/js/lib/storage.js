@@ -6,6 +6,45 @@
 import { storageKeys, weatherStorage, defaults } from "./constants.js";
 
 /**
+ * Show a simple toast notification to the user
+ * @param {string} message - Message to display
+ * @param {string} type - Type: 'error', 'warning', 'info'
+ */
+const showToast = (message, type = "error") => {
+  // Check if toast container exists, create if not
+  let container = document.getElementById("storage-toast");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "storage-toast";
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === "error" ? "#d32f2f" : "#ff9800"};
+      color: white;
+      padding: 16px 24px;
+      border-radius: 4px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      z-index: 10000;
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    `;
+    document.body.appendChild(container);
+  }
+
+  container.textContent = message;
+  container.style.display = "block";
+
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    if (container) {
+      container.style.display = "none";
+    }
+  }, 5000);
+};
+
+/**
  * Storage manager for wake time calculator data
  */
 export const Storage = {
@@ -13,12 +52,19 @@ export const Storage = {
    * Save a value to localStorage
    * @param {string} key - Storage key
    * @param {any} value - Value to store
+   * @returns {boolean} True if successful, false otherwise
    */
   save(key, value) {
     try {
       localStorage.setItem(key, String(value));
+      return true;
     } catch (error) {
       console.error("Failed to save to localStorage:", error);
+      showToast(
+        "Unable to save preferences. Browser storage may be full or disabled.",
+        "error",
+      );
+      return false;
     }
   },
 
@@ -115,13 +161,18 @@ export const Storage = {
    * Save cached data with timestamp
    * @param {string} key - Cache key
    * @param {any} data - Data to cache
+   * @returns {boolean} True if successful, false otherwise
    */
   saveCache(key, data) {
     try {
       localStorage.setItem(key, JSON.stringify(data));
       localStorage.setItem(key + ":t", String(Date.now()));
+      return true;
     } catch (error) {
       console.error("Failed to save cache:", error);
+      // Don't show toast for cache failures - less critical than user preferences
+      // Cache will just be refetched from API on next request
+      return false;
     }
   },
 

@@ -14,9 +14,28 @@ import {
  * Convert time string to minutes since midnight
  * @param {string} time - Time in HH:MM format
  * @returns {number} Minutes since midnight
+ * @throws {Error} If time format is invalid
  */
 export const toMinutes = (time) => {
+  if (typeof time !== "string" || !time.includes(":")) {
+    throw new Error(`Invalid time format: expected HH:MM, got "${time}"`);
+  }
+
   const [h, m] = time.split(":").map((s) => Number.parseInt(s, 10));
+
+  if (
+    !Number.isFinite(h) ||
+    !Number.isFinite(m) ||
+    h < 0 ||
+    h > 23 ||
+    m < 0 ||
+    m > 59
+  ) {
+    throw new Error(
+      `Invalid time values: hours must be 0-23, minutes must be 0-59. Got "${time}"`,
+    );
+  }
+
   return h * MINUTES_PER_HOUR + m;
 };
 

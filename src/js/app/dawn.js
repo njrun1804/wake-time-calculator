@@ -30,12 +30,54 @@ import { fmtYMDInZone } from "../lib/time.js";
 const dawnCache = {};
 
 /**
+ * Maximum number of entries to keep in cache
+ */
+const MAX_CACHE_ENTRIES = 50;
+
+/**
+ * Clean up expired cache entries
+ * Removes entries older than maxAge and limits total cache size
+ * @param {number} maxAge - Maximum age in milliseconds
+ */
+const cleanupDawnCache = (maxAge = CACHE_DURATION) => {
+  const now = Date.now();
+  const keys = Object.keys(dawnCache);
+
+  // Remove expired entries
+  for (const key of keys) {
+    if (now - dawnCache[key].time > maxAge) {
+      delete dawnCache[key];
+    }
+  }
+
+  // If still over limit, remove oldest entries
+  const remainingKeys = Object.keys(dawnCache);
+  if (remainingKeys.length > MAX_CACHE_ENTRIES) {
+    const sorted = remainingKeys.sort(
+      (a, b) => dawnCache[a].time - dawnCache[b].time,
+    );
+    const toRemove = sorted.slice(
+      0,
+      remainingKeys.length - MAX_CACHE_ENTRIES,
+    );
+    for (const key of toRemove) {
+      delete dawnCache[key];
+    }
+  }
+};
+
+/**
  * Cache dawn data with timestamp
  * @param {string} key - Cache key
  * @param {Date} data - Dawn date to cache
  */
 const cacheDawn = (key, data) => {
   dawnCache[key] = { data, time: Date.now() };
+
+  // Cleanup cache periodically (10% chance on each cache write)
+  if (Math.random() < 0.1) {
+    cleanupDawnCache();
+  }
 };
 
 /**
