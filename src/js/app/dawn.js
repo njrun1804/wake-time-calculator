@@ -121,11 +121,11 @@ export const fetchDawn = async (lat, lon, tz = defaultTz, signal = null) => {
   try {
     const url = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lon}&date=tomorrow&time_format=unix`;
     const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error("dawn fetch failed");
+    if (!res.ok) throw new Error("Failed to fetch dawn time");
 
     const data = await res.json();
     if (!data.results || data.status !== "OK") {
-      throw new Error("no dawn results");
+      throw new Error("No dawn data available");
     }
 
     const dawnEpoch = data.results.dawn;

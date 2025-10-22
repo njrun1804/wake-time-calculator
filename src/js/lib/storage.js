@@ -28,18 +28,26 @@ const showToast = (message, type = "error") => {
       z-index: 10000;
       font-family: system-ui, -apple-system, sans-serif;
       max-width: 300px;
-      animation: slideIn 0.3s ease-out;
+      transition: opacity 0.3s ease-out;
+      opacity: 1;
     `;
     document.body.appendChild(container);
   }
 
   container.textContent = message;
   container.style.display = "block";
+  container.style.opacity = "1";
 
-  // Auto-hide after 5 seconds
+  // Auto-hide after 5 seconds with fade-out
   setTimeout(() => {
     if (container) {
-      container.style.display = "none";
+      container.style.opacity = "0";
+      // Remove from view after fade completes
+      setTimeout(() => {
+        if (container) {
+          container.style.display = "none";
+        }
+      }, 300);
     }
   }, 5000);
 };

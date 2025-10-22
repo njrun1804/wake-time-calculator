@@ -859,17 +859,17 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
     const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error("weather fetch failed");
+    if (!res.ok) throw new Error("Failed to fetch weather data");
 
     const data = await res.json();
-    if (!data.hourly) throw new Error("no hourly data");
+    if (!data.hourly) throw new Error("No hourly weather data available");
 
     // Find closest hour to the target time
     const targetHour = whenLocal.getHours();
     const times = data.hourly.time;
     const index = findClosestHourIndex(times, targetHour);
 
-    if (index === -1) throw new Error("no hourly data available");
+    if (index === -1) throw new Error("No hourly data available for target time");
 
     const weatherCode = data.hourly.weathercode?.[index];
     const tempF = data.hourly.temperature_2m?.[index] ?? null;
@@ -948,7 +948,7 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
 
     const url = `https://api.open-meteo.com/v1/forecast?${params}`;
     const res = await fetch(url, { signal });
-    if (!res.ok) throw new Error("wetness fetch failed");
+    if (!res.ok) throw new Error("Failed to fetch wetness data");
 
     const data = await res.json();
     if (!data.daily) {

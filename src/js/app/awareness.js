@@ -473,8 +473,8 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
   const controller = new AbortController();
   const signal = controller.signal;
 
-  // Timeout after 10 seconds
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  // Timeout after 10 seconds to prevent hanging requests
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   try {
     // Fetch dawn first

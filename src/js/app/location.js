@@ -252,10 +252,10 @@ const formatPlaceName = (place = {}) => {
 export const geocodePlace = async (name) => {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error("geocoding failed");
+  if (!res.ok) throw new Error("Failed to geocode location");
 
   const data = await res.json();
-  if (!data.results?.[0]) throw new Error("no results");
+  if (!data.results?.[0]) throw new Error("No results found for location");
 
   const place = data.results[0];
   return {
