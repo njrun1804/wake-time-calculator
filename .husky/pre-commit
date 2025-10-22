@@ -1,1 +1,1 @@
-npx --no -- lint-staged
+npx prettier --write --list-different 'src/**/*.html' 'src/js/**/*.js'
