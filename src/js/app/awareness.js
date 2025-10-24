@@ -370,11 +370,14 @@ export const updateAwarenessDisplay = (data) => {
     }
 
     // Surface latest insight for quick console inspection
-    window.__latestWetnessInsight = wetnessInsight;
-    window.__latestWetnessRaw = wetnessData;
+    if (typeof window !== "undefined") {
+      window.__latestWetnessInsight = wetnessInsight;
+      window.__latestWetnessRaw = wetnessData;
+    }
   }
 
-  const schedule = window.__latestSchedule;
+  const schedule =
+    typeof window !== "undefined" ? window.__latestSchedule : null;
   const scheduleStart = schedule
     ? (schedule.runStartMinutes ?? toMinutes(schedule.runStartTime))
     : null;
@@ -518,7 +521,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       displayCity &&
       !displayCity.includes(",") &&
       displayCity.length > 0 &&
-      !displayCity.match(/^\d+\.\d+,\s*-?\d+\.\d+$/); // Skip if it's coordinates
+      !displayCity.match(/^-?\d+\.\d+,\s*-?\d+\.\d+$/); // Skip if it's coordinates (handles southern hemisphere)
 
     if (needsRefinement) {
       try {
