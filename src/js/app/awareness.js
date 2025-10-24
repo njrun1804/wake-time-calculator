@@ -554,8 +554,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
     });
 
     emitAwarenessEvent("ready", {
-      city:
-        displayResult?.city || displayCity || formatCoordinates(lat, lon),
+      city: displayResult?.city || displayCity || formatCoordinates(lat, lon),
       label: displayResult?.wetnessInsight?.label ?? null,
       decision: displayResult?.decision ?? null,
       dawn: dawnDate?.toISOString?.() ?? null,
@@ -609,8 +608,7 @@ export const handleUseMyLocation = async () => {
 
     try {
       const info = await reverseGeocode(coords.lat, coords.lon);
-      const label =
-        info.city || formatCoordinates(coords.lat, coords.lon);
+      const label = info.city || formatCoordinates(coords.lat, coords.lon);
 
       Storage.saveWeatherLocation({
         lat: coords.lat,

@@ -532,21 +532,22 @@ export const computeWetness = (
         : (() => {
             // Extract month directly from YYYY-MM-DD string to avoid timezone parsing issues
             // (new Date("2024-10-23") is parsed as UTC, which becomes wrong local date in negative UTC offsets)
-            const month = (() => {
-              if (date && typeof date === "string") {
-                const parts = date.split("-");
-                if (parts.length >= 2) {
-                  const monthNum = parseInt(parts[1], 10);
-                  // Convert to 0-indexed (1 = Jan -> 0)
-                  return Number.isFinite(monthNum) &&
-                    monthNum >= 1 &&
-                    monthNum <= 12
-                    ? monthNum - 1
-                    : null;
+            const month =
+              (() => {
+                if (date && typeof date === "string") {
+                  const parts = date.split("-");
+                  if (parts.length >= 2) {
+                    const monthNum = parseInt(parts[1], 10);
+                    // Convert to 0-indexed (1 = Jan -> 0)
+                    return Number.isFinite(monthNum) &&
+                      monthNum >= 1 &&
+                      monthNum <= 12
+                      ? monthNum - 1
+                      : null;
+                  }
                 }
-              }
-              return null;
-            })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
+                return null;
+              })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
 
             const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
             const warmSeasonCoefficient = dryingCoefficient; // Default 0.6
@@ -990,7 +991,8 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
     const times = data.hourly.time;
     const index = findClosestHourIndex(times, targetHour);
 
-    if (index === -1) throw new Error("No hourly data available for target time");
+    if (index === -1)
+      throw new Error("No hourly data available for target time");
 
     const weatherCode = data.hourly.weathercode?.[index];
     const tempF = data.hourly.temperature_2m?.[index] ?? null;

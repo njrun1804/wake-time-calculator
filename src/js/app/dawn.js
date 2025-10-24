@@ -56,10 +56,7 @@ const cleanupDawnCache = (maxAge = CACHE_DURATION) => {
     const sorted = remainingKeys.sort(
       (a, b) => dawnCache[a].time - dawnCache[b].time,
     );
-    const toRemove = sorted.slice(
-      0,
-      remainingKeys.length - MAX_CACHE_ENTRIES,
-    );
+    const toRemove = sorted.slice(0, remainingKeys.length - MAX_CACHE_ENTRIES);
     for (const key of toRemove) {
       delete dawnCache[key];
     }
