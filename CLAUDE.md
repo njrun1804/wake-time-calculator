@@ -20,19 +20,20 @@ wake-time-calculator/
 │       │   ├── location.js   # Location services (349 lines)
 │       │   ├── main.js       # App orchestration (486 lines)
 │       │   ├── ui.js         # UI utilities (44 lines)
-│       │   └── weather.js    # Weather API and wetness (996 lines)
+│       │   └── weather.js    # Weather API and wetness (1117 lines - includes NJ calibration)
 │       └── lib/              # Utility libraries
-│           ├── constants.js  # Application constants
-│           ├── time.js       # Time manipulation utilities
-│           ├── schedulers.js # Scheduling utilities
-│           ├── storage.js    # Local storage management
-│           └── calculator.js # Core calculation logic
+│           ├── constants.js  # Application constants (49 lines)
+│           ├── time.js       # Time manipulation utilities (47 lines)
+│           ├── schedulers.js # Scheduling utilities (61 lines)
+│           ├── storage.js    # Local storage management (215 lines)
+│           └── calculator.js # Core calculation logic (132 lines)
 ├── tests/                    # Test suite (minimal for solo dev)
 │   └── unit/                 # Unit tests
 │       └── lib/              # Library tests only
 │           └── calculator.test.js  # Wake time calculations
-├── scripts/                  # Build and utility scripts
-└── docs/                     # Documentation
+├── docs/                     # Documentation
+└── docker/                   # Docker configuration (legacy, not in use)
+    └── nginx/                # Nginx config (legacy)
 
 ```
 
@@ -48,12 +49,13 @@ wake-time-calculator/
 
 All components are now consolidated single-file modules for AI-first development.
 
-### 1. Weather Module (`src/js/app/weather.js` - 996 lines)
+### 1. Weather Module (`src/js/app/weather.js` - 1117 lines)
 - **API Integration**: Open-Meteo forecast API with 1-hour caching
 - **Wetness Algorithm**: 8-step moisture scoring (precipitation + snowmelt - evapotranspiration)
 - **Trail Analysis**: Interprets wetness data into 7 condition states (Dry → Soaked)
 - **Formatting**: Temperature, wind, precipitation display utilities
 - **Key Features**: Intensity boost for heavy rain, seasonal ET₀ adjustment, time decay
+- **NJ Coastal Calibration**: Tuned for Rumson, NJ climate (7:1 snow ratio, seasonal drying rates)
 - **Quality**: Extracted helper functions, standardized error messages, clear constants
 
 ### 2. Awareness Module (`src/js/app/awareness.js` - 805 lines)
@@ -121,69 +123,17 @@ npm install
 
 # Start development server
 npm run serve              # http-server on port 8000
-make serve                 # Same via Makefile
 
-# Run all tests
-npm test
-make test
+# Run tests (unit tests only)
+npm test                   # Runs calculator.test.js
 
-# Run specific test suites
-npm run test:unit          # Unit tests
-npm run test:core          # Core integration tests
-npm run test:awareness     # Full integration tests with awareness features
-npm run test:performance   # Performance tests
-npm run test:visual        # Visual regression tests
-npm run test:visual:update # Update visual test baselines
-make test-unit             # Unit tests via Makefile
-make test-core             # Core tests via Makefile
+# Code formatting
+npm run format             # Auto-format with Prettier
 
-# Code quality checks
-npm run lint               # Check formatting
-npm run format             # Auto-format code
-npm run validate:html      # Validate HTML
-npm run validate:all       # Run all validations
-make format                # Format via Makefile
-make validate              # Validate via Makefile
+# Build for production
+npm run build              # Copies src/ to dist/
 ```
 
-### Docker Commands
-
-**Production Container:**
-```bash
-# Build and run production image (Nginx-based)
-make docker-run            # Builds image and runs on port 8080
-# Or manually:
-docker build -t wake-time-calculator:latest .
-docker run -d -p 8080:80 --name wake-time-calculator wake-time-calculator:latest
-
-# Using docker-compose
-docker-compose up app      # Port 8080
-
-# Cleanup
-make docker-stop           # Stops and removes containers
-docker-compose down
-```
-
-**Development Container:**
-```bash
-# Live-reload dev server (Python-based, mounts src/)
-make docker-dev            # Port 8000
-docker-compose up dev      # Same
-
-# Local edits appear instantly (volume mounted)
-```
-
-**Testing Containers:**
-```bash
-docker-compose up playwright        # All Playwright tests
-docker-compose up playwright-visual # Visual regression only
-```
-
-**Container Details:**
-- Production: Nginx serving static files from `/usr/share/nginx/html`
-- Development: Python 3.11-alpine serving from `/app/src` (live reload)
-- Health checks: `wget --spider` on ports 80/8000
-- Logs: `docker-compose logs -f <service>`
 
 
 ### VS Code Integration
@@ -204,21 +154,17 @@ The project includes VS Code configuration for enhanced development:
 - Launch Chrome (with debugger)
 - Server + Chrome (compound - starts server then debugger)
 
-**Extensions**:
-- Prettier (auto-formatting)
-- ESLint (JavaScript linting)
-- Playwright (test runner integration)
-- HTML Validate (real-time validation)
-- Docker (container management)
-- Git Graph (visual git history)
-- Path Intellisense (file path autocomplete)
-- Error Lens (inline error display)
+**Recommended Extensions** (in .vscode/extensions.json):
+- Prettier (auto-formatting) - Active
+- ESLint, Playwright, HTML Validate, Docker - Legacy recommendations, not in use
+- Git Graph, Path Intellisense, Error Lens - Development aids
+- Note: Only Prettier is actively used; others are legacy from pre-minimization
 
 ### Key Scripts
 - `serve`: Starts http-server (npm package) on port 8000 serving from src/ directory
-- `test:ci`: Runs CI test suite with specific tags
-- `prepare`: Installs Husky hooks
-- Makefile targets available via `make help`
+- `test`: Runs unit tests for calculator.js
+- `format`: Formats code with Prettier
+- `build`: Creates dist/ directory with production files
 
 ## Testing Strategy
 
@@ -244,16 +190,32 @@ The project uses **minimal testing** optimized for solo development:
 
 ## Configuration Files
 
-### `.prettierrc`
-Code formatting configuration (only remaining quality tool)
-
 ### `.vscode/`
 VS Code workspace configuration:
-- `settings.json`: Editor settings optimized for Claude Code CLI
+- `settings.json`: Editor settings
 - `tasks.json`: Quick access to dev server and formatting
-- `extensions.json`: Recommended extensions (Prettier only)
+- `extensions.json`: Extension recommendations (many legacy, only Prettier actively used)
+- `launch.json`: Debug configurations
 
 ## Recent Major Changes
+
+### NJ Coastal Climate Calibration (Oct 2024)
+- **Regional Wetness Tuning**: Calibrated algorithm for Rumson, NJ coastal conditions
+  - **Snow modeling**: 7:1 ratio for heavy maritime snow (vs 10:1 powder)
+  - **Melt dynamics**: Snow melts at 32°F, full melt at 38°F (2-3 day persistence)
+  - **Seasonal drying**: Summer 0.75/day, Winter 0.92/day, Spring/Fall 0.85/day
+  - **Evapotranspiration**: Reduced coefficients for high coastal humidity
+  - **Result**: More accurate trail condition predictions for NJ coastal climate
+
+### Wetness Algorithm Fixes (Oct 2024)
+- **7 Critical Improvements**: Fixed calculation bugs and improved robustness (#56)
+  - **Timezone bug**: Fixed seasonal coefficient calculation for negative UTC offsets
+  - **Snowmelt handling**: Added fallback when maxTempF missing from API
+  - **Rain clarity**: Prevented double-counting snow in precipitation totals
+  - **Magic numbers**: Extracted snowmelt curve constants for clarity
+  - **Intensity heuristic**: Improved precipitation intensity estimation
+  - **Performance**: Optimized seasonal coefficient calculation
+  - **Debugging**: Added warnings for missing reference dates
 
 ### Code Quality Review (Oct 2024)
 - **Comprehensive Quality Improvements**: Fixed 28 issues across all priority levels
@@ -284,10 +246,11 @@ VS Code workspace configuration:
   - Deleted: Playwright, visual regression, integration, performance tests
   - Rationale: Solo dev, manual testing, Claude verification
 
-### Added (2024)
-- **Extreme Minimization** (Sept 2024): Removed enterprise tooling for solo dev
-  - Deleted: Docker, Makefile, ESLint, html-validate, git hooks, CI/CD
-  - Kept: Prettier (formatting), http-server (dev server), GitHub Pages (deployment)
+### Simplification Efforts (2024)
+- **Partial Minimization** (Sept 2024): Reduced enterprise tooling for solo dev
+  - Removed from active use: ESLint, html-validate, git hooks, complex CI/CD
+  - Legacy artifacts remain: docker/ directory, VS Code config references
+  - Active tools: Prettier (formatting), http-server (dev server), GitHub Pages (deployment)
 - **Documentation Harmonization** (Sept 2024): Fixed inaccuracies across 11 markdown files
 
 ### Removed Components (Migration from TypeScript)
