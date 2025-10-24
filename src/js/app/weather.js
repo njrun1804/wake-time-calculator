@@ -314,17 +314,12 @@ const createWetnessSummary = (wetness) => {
  * @param {Array<object>} dailyRecords - Daily precipitation records
  * @param {object} [options] - Calculation options
  * @param {Date} [options.referenceDate] - Date to calculate relative to
- * @param {number} [options.decayBase] - Time decay factor (default 0.85)
  * @param {number} [options.dryingCoefficient] - Drying rate coefficient (default 0.5)
  * @returns {object} Wetness analysis with score, events, totals
  */
 export const computeWetness = (
   dailyRecords = [],
-  {
-    referenceDate = null,
-    decayBase = DEFAULT_DECAY_BASE,
-    dryingCoefficient = DEFAULT_DRYING_COEFFICIENT,
-  } = {},
+  { referenceDate = null, dryingCoefficient = DEFAULT_DRYING_COEFFICIENT } = {},
 ) => {
   if (!Array.isArray(dailyRecords) || dailyRecords.length === 0) {
     const base = {
@@ -415,7 +410,6 @@ export const computeWetness = (
   let cumulativeScore = 0;
   let runningSnowpack = 0;
   let totalRain = 0;
-  let totalLiquid = 0;
   let totalMelt = 0;
   let totalDrying = 0;
   let totalEt0 = 0;
@@ -492,7 +486,6 @@ export const computeWetness = (
     const rainContribution = Math.max(0, rainIn);
     const liquid = rainContribution + melt;
     totalRain += rainContribution;
-    totalLiquid += liquid;
 
     // === STEP 5: Apply intensity boost ===
     // Fast/heavy events saturate trails more than slow drizzle
