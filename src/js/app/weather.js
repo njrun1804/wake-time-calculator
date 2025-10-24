@@ -875,10 +875,13 @@ export const interpretWetness = (wetnessData = null) => {
   }
 
   const decision = (() => {
-    if (label === "Muddy" || label === "Soaked" || label === "Snowbound") {
-      return "Avoid";
+    // Only Soaked/Snowbound are hazardous from runner perspective
+    if (label === "Soaked" || label === "Snowbound") {
+      return "Hazard";
     }
+    // Muddy/Slick/Packed Snow need caution but are runnable with prep
     if (
+      label === "Muddy" ||
       label === "Slick" ||
       label === "Slick/Icy" ||
       label === "Packed Snow" ||
