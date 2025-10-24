@@ -248,17 +248,12 @@ const createWetnessSummary = (wetness) => {
     snowpackRemaining = 0,
   } = wetness;
 
-  const totalRainfall = (() => {
-    const explicit =
-      numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? null;
-    if (explicit !== null) return Math.max(0, explicit);
-    const precip = numberOrNull(totals.precipitation);
-    const melt = numberOrNull(totals.melt);
-    if (precip !== null && melt !== null) {
-      return Math.max(0, precip - melt);
-    }
-    return Math.max(0, precip ?? 0);
-  })();
+  // computeWetness only populates rainfall, not precipitation
+  // Use explicit rainfall value (already excludes snowfall)
+  const totalRainfall = Math.max(
+    0,
+    numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? 0,
+  );
 
   const totalMelt = Math.max(0, numberOrNull(totals.melt) ?? 0);
   const totalLiquid = totalRainfall + totalMelt;
@@ -320,7 +315,7 @@ const createWetnessSummary = (wetness) => {
  * @param {object} [options] - Calculation options
  * @param {Date} [options.referenceDate] - Date to calculate relative to
  * @param {number} [options.decayBase] - Time decay factor (default 0.85)
- * @param {number} [options.dryingCoefficient] - Drying rate coefficient (default 0.6)
+ * @param {number} [options.dryingCoefficient] - Drying rate coefficient (default 0.5)
  * @returns {object} Wetness analysis with score, events, totals
  */
 export const computeWetness = (
@@ -443,7 +438,7 @@ export const computeWetness = (
     // Some API responses have separate rain/snow, others just precipitation total
     const precipTotal = coerceNumber(precipitation);
     const snowDepthIn = Math.max(0, numberOrNull(snowfall) ?? 0);
-    const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO; // Convert depth to water equivalent (10:1 ratio)
+    const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO; // Convert depth to water equivalent (7:1 ratio for NJ maritime snow)
 
     // Determine rain contribution, avoiding double-counting of snow
     // - If rain_sum is available, use it (explicit rain only)
@@ -552,8 +547,8 @@ export const computeWetness = (
               })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
 
             const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
-            const warmSeasonCoefficient = dryingCoefficient; // Default 0.6
-            const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants)
+            const warmSeasonCoefficient = dryingCoefficient; // Default 0.5
+            const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants = 0.25)
             // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
             return leafOn ? warmSeasonCoefficient : coolSeasonCoefficient;
           })();
@@ -564,7 +559,8 @@ export const computeWetness = (
     // === STEP 7: Compute daily moisture balance ===
     // dailyBalance = net moisture added to trails
     // Positive = wetter, Negative = drier
-    const dailyBalance = (liquid - drying) * intensityBoost;
+    // Apply intensity boost only to liquid contribution, not to drying
+    const dailyBalance = (liquid * intensityBoost) - drying;
     peakDailyBalance = Math.max(peakDailyBalance, dailyBalance);
 
     if (liquid > 0.05) {
@@ -714,17 +710,11 @@ export const interpretWetness = (wetnessData = null) => {
   );
 
   const totals = wetnessData.totals ?? {};
-  const totalRainfall = (() => {
-    const explicit =
-      numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? null;
-    if (explicit !== null) return Math.max(0, explicit);
-    const precip = numberOrNull(totals.precipitation);
-    const melt = numberOrNull(totals.melt);
-    if (precip !== null && melt !== null) {
-      return Math.max(0, precip - melt);
-    }
-    return Math.max(0, precip ?? 0);
-  })();
+  // computeWetness only populates rainfall, not precipitation
+  const totalRainfall = Math.max(
+    0,
+    numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? 0,
+  );
 
   const totalMelt = Math.max(0, numberOrNull(totals.melt) ?? 0);
   const totalLiquid = totalRainfall + totalMelt;
