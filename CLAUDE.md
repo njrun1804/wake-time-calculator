@@ -165,12 +165,17 @@ The project uses **minimal testing** optimized for solo development:
 ## Recent Major Changes
 
 ### NJ Coastal Climate Calibration (Oct 2024)
-- **Regional Wetness Tuning**: Calibrated algorithm for Rumson, NJ coastal conditions
+- **Regional Wetness Tuning**: Calibrated algorithm for Monmouth County, NJ trail conditions
   - **Snow modeling**: 7:1 ratio for heavy maritime snow (vs 10:1 powder)
   - **Melt dynamics**: Snow melts at 32°F, full melt at 38°F (2-3 day persistence)
   - **Seasonal drying**: Summer 0.75/day, Winter 0.92/day, Spring/Fall 0.85/day
   - **Evapotranspiration**: Reduced coefficients for high coastal humidity
-  - **Result**: More accurate trail condition predictions for NJ coastal climate
+  - **Soil-specific thresholds**: Lower thresholds for clay-rich soil with moderate drainage
+    - Soaked: 0.5" in 24h (vs 0.6" generic)
+    - Muddy: 0.35" in 48h (vs 0.45" generic)
+    - Slick: 0.20" in 72h (vs 0.25" generic)
+    - Heavy event: 1.0" (vs 1.2" sandy/rocky terrain)
+  - **Result**: More accurate trail condition predictions for Monmouth County trails (Hartshorne Woods, Huber Woods, Clayton Park, etc.)
 
 ### Wetness Algorithm Fixes (Oct 2024)
 - **7 Critical Improvements**: Fixed calculation bugs and improved robustness (#56)
