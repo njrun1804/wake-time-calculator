@@ -16,8 +16,8 @@
  *
  * Status Icon Logic (3 states):
  * - OK (✅): Conditions are favorable
- * - Yield (⚠): Caution advised
- * - Warning (⛔): Avoid or take precautions
+ * - Yield (⚠): Caution advised (runnable with prep/gear)
+ * - Warning (⛔): Hazard (unsafe or extremely unpleasant)
  *
  * Initialization Fallback Chain:
  * 1. Try saved location from localStorage
@@ -356,7 +356,7 @@ export const updateAwarenessDisplay = (data) => {
     }
     if (els.awDecisionIcon) {
       const decisionStatus =
-        decision === "Avoid"
+        decision === "Hazard"
           ? "warning"
           : decision === "Caution"
             ? "yield"
