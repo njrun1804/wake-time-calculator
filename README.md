@@ -32,19 +32,11 @@ Visit the published site at https://njrun1804.github.io/wake-time-calculator/ fo
 
 For local development, use `npm run serve` (requires Node.js >= 20.19.0) and navigate to http://localhost:8000/
 
-### Docker
-
-Build the production image with the bundled static assets and SPA routing by running `docker build -t wake-time-calculator .`. Then run it with any standard container runtime.
-
-For a faster local preview that reuses the upstream `nginx:alpine` image, launch `docker-compose up app`. The compose setup now mounts the `src/` directory and the Nginx config read-only so the container starts instantly without a build step while still serving the SPA correctly.
-
 ### Setup for Development
 
 **Prerequisites:**
 - Node.js >= 20.19.0 (use `nvm use` to automatically switch to the correct version)
 - npm >= 10.0.0
-
-Automation agents and developers can choose between a local HTTP server or Docker. See the [Docker development guide](docs/development/docker.md) for container workflows (`make docker-run`, `docker-compose up app`, and the `dev` service) plus cleanup commands.
 
 ```bash
 # Use correct Node version (if using nvm)
@@ -67,39 +59,33 @@ npm run serve
 │   ├── css/
 │   │   └── main.css         # Application styles
 │   └── js/
-│       ├── app/             # Application modules
-│       │   ├── main.js      # Entry point & initialization
-│       │   ├── ui.js        # UI components & interactions
-│       │   ├── awareness/   # Weather awareness modules
-│       │   ├── dawn/        # Dawn time calculation modules
-│       │   ├── location/    # Location service modules
-│       │   ├── main/        # Main orchestration modules
-│       │   └── weather/     # Weather API & analysis modules
+│       ├── app/             # Application modules (AI-first consolidated)
+│       │   ├── awareness.js # Weather awareness (805 lines)
+│       │   ├── dawn.js      # Dawn time calculations (211 lines)
+│       │   ├── location.js  # Location services (349 lines)
+│       │   ├── main.js      # App orchestration (486 lines)
+│       │   ├── ui.js        # UI utilities (44 lines)
+│       │   └── weather.js   # Weather API and wetness (1117 lines)
 │       └── lib/             # Utility libraries
 │           ├── calculator.js    # Core wake time calculations
 │           ├── storage.js       # Local storage management
 │           ├── constants.js     # Application constants
 │           ├── schedulers.js    # Scheduling utilities
 │           └── time.js          # Time manipulation utilities
-├── tests/                   # Test suites
-│   ├── integration/         # Integration tests
-│   ├── unit/                # Unit tests
-│   ├── visual/              # Visual regression tests
-│   └── performance/         # Performance tests
+├── tests/                   # Test suite (minimal for solo dev)
+│   └── unit/                # Unit tests
+│       └── lib/             # Library tests only
+│           └── calculator.test.js
 └── docs/                    # Documentation
-    ├── architecture/        # Architecture docs
-    ├── development/         # Development guides
-    └── archive/             # Historical docs
 
 ### Module Dependencies
 ```
 app/main.js
 ├── lib/ (calculator, storage, constants, schedulers, time)
-├── app/awareness/ (weather awareness orchestration & display)
-├── app/weather/ (API, forecasts, wetness scoring, analysis)
-├── app/dawn/ (API, astronomy, daylight checks)
-├── app/location/ (geocoding, geolocation, validation)
-├── app/main/ (app orchestration, state, persistence)
+├── app/awareness.js (weather awareness orchestration & display)
+├── app/weather.js (API, forecasts, wetness scoring, analysis)
+├── app/dawn.js (API, astronomy, daylight checks)
+├── app/location.js (geocoding, geolocation, validation)
 └── app/ui.js (UI utilities)
 ```
 
@@ -111,31 +97,21 @@ app/main.js
 
 ## Testing
 
-Quick setup (clones or Codex web workspaces):
+The project uses **minimal testing** optimized for solo development:
 
 ```bash
-./scripts/setup.sh
+npm test  # Runs unit tests for calculator.js
 ```
 
-```bash
-npm run test            # Safari end-to-end suite (all flows)
-npm run test:core       # Core planner regression
-npm run test:awareness  # Weather awareness regression
-npm run test:unit       # Node-based unit tests
-npm run test:performance
-npm run validate:all
-```
+- **Unit Tests**: Calculator logic only (7 tests)
+  - `tests/unit/lib/calculator.test.js`: Wake time calculations
+  - Tests core math functions: toMinutes, fromMinutes, format12, calculateWakeTime
 
-Tests cover:
-- Unit tests for calculator logic
-- Integration tests for the modular UI flow (Safari desktop)
-- Performance guardrails for the modular entry point
-
-### Local hooks & CI parity
-
-- **Pre-commit**: Husky + lint-staged run Prettier on staged HTML/JS before every commit.
-- **Pre-push**: Husky checks formatting (`prettier --check`) and runs `npm run test:unit` before allowing pushes.
-- **CI**: GitHub Actions enforces `npm run validate:all`, the WebKit Playwright suite (`npm test -- --grep "@core|@full|@performance"`), and a `script-sanity` guard that fails if helper scripts (other than `setup-dev.sh`) hide errors with `|| true`.
+**Testing Philosophy:**
+- Manual testing by user for features/UI
+- Automated tests only for pure math (calculator)
+- Claude verifies code correctness through reading/analysis
+- Fast iteration > comprehensive automation
 
 ## Development
 

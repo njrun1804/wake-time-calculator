@@ -31,9 +31,7 @@ wake-time-calculator/
 │   └── unit/                 # Unit tests
 │       └── lib/              # Library tests only
 │           └── calculator.test.js  # Wake time calculations
-├── docs/                     # Documentation
-└── docker/                   # Docker configuration (legacy, not in use)
-    └── nginx/                # Nginx config (legacy)
+└── docs/                     # Documentation
 
 ```
 
@@ -136,30 +134,6 @@ npm run build              # Copies src/ to dist/
 
 
 
-### VS Code Integration
-The project includes VS Code configuration for enhanced development:
-
-**Tasks** (⌘+Shift+B):
-- Start Dev Server
-- Run All Tests
-- Run Unit Tests
-- Run Core Tests
-- Format Code
-- Validate All
-
-**Debug Configurations** (F5):
-- Debug Playwright Tests
-- Debug Current Playwright Test
-- Debug Unit Tests
-- Launch Chrome (with debugger)
-- Server + Chrome (compound - starts server then debugger)
-
-**Recommended Extensions** (in .vscode/extensions.json):
-- Prettier (auto-formatting) - Active
-- ESLint, Playwright, HTML Validate, Docker - Legacy recommendations, not in use
-- Git Graph, Path Intellisense, Error Lens - Development aids
-- Note: Only Prettier is actively used; others are legacy from pre-minimization
-
 ### Key Scripts
 - `serve`: Starts http-server (npm package) on port 8000 serving from src/ directory
 - `test`: Runs unit tests for calculator.js
@@ -187,15 +161,6 @@ The project uses **minimal testing** optimized for solo development:
 - Automated tests only for pure math (calculator)
 - Claude verifies code correctness through reading/analysis
 - Fast iteration > comprehensive automation
-
-## Configuration Files
-
-### `.vscode/`
-VS Code workspace configuration:
-- `settings.json`: Editor settings
-- `tasks.json`: Quick access to dev server and formatting
-- `extensions.json`: Extension recommendations (many legacy, only Prettier actively used)
-- `launch.json`: Debug configurations
 
 ## Recent Major Changes
 
@@ -247,9 +212,13 @@ VS Code workspace configuration:
   - Rationale: Solo dev, manual testing, Claude verification
 
 ### Simplification Efforts (2024)
+- **Aggressive Minimization** (Oct 2024): Removed all legacy config files and tooling
+  - **Deleted**: docker/, .vscode/, .env.example, .editorconfig, .prettierignore, wake-time-calculator.code-workspace
+  - **Removed**: 9 files totaling 403 lines of misleading/legacy configuration
+  - **Result**: Repository now contains only essential files (source, tests, docs, package.json, .gitignore, .nvmrc)
+  - **Active tools**: Prettier (formatting), http-server (dev server), GitHub Pages (deployment)
 - **Partial Minimization** (Sept 2024): Reduced enterprise tooling for solo dev
   - Removed from active use: ESLint, html-validate, git hooks, complex CI/CD
-  - Legacy artifacts remain: docker/ directory, VS Code config references
   - Active tools: Prettier (formatting), http-server (dev server), GitHub Pages (deployment)
 - **Documentation Harmonization** (Sept 2024): Fixed inaccuracies across 11 markdown files
 
@@ -323,11 +292,6 @@ VS Code workspace configuration:
 - Check Network tab for API calls
 - Inspect Local Storage for saved data
 - Review test outputs for failures
-
-**VS Code Debugging:**
-- Use F5 to start "Server + Chrome" debug configuration
-- Set breakpoints in source files
-- Debug unit tests with Node.js debugger
 
 ### Deployment
 **GitHub Pages (Current):**
