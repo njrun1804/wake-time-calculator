@@ -41,18 +41,25 @@ export const MS_PER_DAY = 86400000;
 
 /**
  * Default coefficient for drying rate calculation
+ * Calibrated for Rumson, NJ (humid coastal climate)
+ * Lower than arid regions due to high humidity
  */
-export const DEFAULT_DRYING_COEFFICIENT = 0.6;
+export const DEFAULT_DRYING_COEFFICIENT = 0.5;
 
 /**
  * Default decay base for wetness score over time
+ * Note: Overridden seasonally in computeWetness for Rumson, NJ climate
+ * - Summer: 0.75 (faster drying, warm)
+ * - Spring/Fall: 0.85 (moderate)
+ * - Winter: 0.92 (slow drying, cloudy/humid)
  */
 export const DEFAULT_DECAY_BASE = 0.85;
 
 /**
  * Temperature threshold (°F) above which snow begins to melt
+ * Calibrated for Rumson, NJ: Maritime snow melts quickly due to temp fluctuations
  */
-export const SNOW_MELT_THRESHOLD_F = 34;
+export const SNOW_MELT_THRESHOLD_F = 32;
 
 /**
  * Base temperature (°F) for snowmelt curve calculation
@@ -62,9 +69,10 @@ export const SNOW_MELT_CURVE_BASE_F = 32;
 
 /**
  * Temperature range (°F) for snowmelt curve
- * Full melt occurs at BASE + RANGE (42°F)
+ * Calibrated for Rumson, NJ: Full melt at 38°F (maritime snow melts faster)
+ * NJ snow rarely persists >2-3 days due to temp fluctuations and high melt rate
  */
-export const SNOW_MELT_CURVE_RANGE_F = 10;
+export const SNOW_MELT_CURVE_RANGE_F = 6;
 
 /**
  * Maximum intensity boost factor for precipitation events
@@ -73,8 +81,10 @@ export const MAX_INTENSITY_BOOST = 1.35;
 
 /**
  * Ratio for converting snow depth to snow water equivalent
+ * Calibrated for Rumson, NJ maritime snow (heavy, wet)
+ * NJ coastal snow: ~7:1 ratio (heavier than Rocky Mountain 10:1 powder)
  */
-export const SNOW_TO_WATER_RATIO = 0.1;
+export const SNOW_TO_WATER_RATIO = 0.143; // 1/7 ratio
 
 /**
  * Threshold (inches) for heavy precipitation event
@@ -353,6 +363,20 @@ export const computeWetness = (
   }
   const sorted = sortByDate(dailyRecords);
 
+  // Determine seasonal decay rate for Rumson, NJ climate
+  // NJ has very different drying rates by season due to sun angle, humidity, day length
+  const seasonalDecayBase = (() => {
+    const month = refDate ? refDate.getMonth() : new Date().getMonth();
+    // Summer (Jun-Aug): Fast drying due to warmth, longer days
+    if (month >= 5 && month <= 7) return 0.75; // 3 days to mostly dry
+    // Winter (Nov-Mar): Very slow drying - cloudy, humid, short days
+    if (month >= 10 || month <= 2) return 0.92; // ~13 days to mostly dry
+    // Spring/Fall (Apr-May, Sep-Oct): Moderate drying
+    return 0.85; // 5 days to mostly dry (default)
+  })();
+  // Use seasonal rate instead of parameter (parameter kept for API compatibility)
+  const effectiveDecayBase = seasonalDecayBase;
+
   // Optimization: Check if all records are in the same season (growing/dormant)
   // If so, we can calculate seasonal coefficient once instead of per-record
   const singleSeasonCoefficient = (() => {
@@ -546,10 +570,10 @@ export const computeWetness = (
 
     // === STEP 8: Apply time decay ===
     // Older events matter less (trails dry over time)
-    // Example with decayBase=0.85:
-    // - 1 day old: 0.85^1 = 85% weight
-    // - 3 days old: 0.85^3 = 61% weight
-    // - 7 days old: 0.85^7 = 32% weight
+    // Uses seasonal decay rate for Rumson, NJ:
+    // - Summer (0.75/day): 1d=75%, 3d=42%, 7d=13%
+    // - Spring/Fall (0.85/day): 1d=85%, 3d=61%, 7d=32%
+    // - Winter (0.92/day): 1d=92%, 3d=78%, 7d=55%
     const ageDays = (() => {
       if (referenceMidnight && date) {
         const dayStart = new Date(date);
@@ -562,7 +586,7 @@ export const computeWetness = (
       return offset < 0 ? 0 : offset;
     })();
 
-    const decay = Math.pow(decayBase, ageDays);
+    const decay = Math.pow(effectiveDecayBase, ageDays);
     const decayedBalance = dailyBalance * decay;
     cumulativeScore += decayedBalance;
 
