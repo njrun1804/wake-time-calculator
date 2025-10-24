@@ -41,8 +41,8 @@ export const MS_PER_DAY = 86400000;
 
 /**
  * Default coefficient for drying rate calculation
- * Calibrated for Rumson, NJ (humid coastal climate)
- * Lower than arid regions due to high humidity
+ * Calibrated for Monmouth County, NJ (humid coastal climate, clay-rich soil)
+ * Lower than arid regions due to high humidity and moderate drainage
  */
 export const DEFAULT_DRYING_COEFFICIENT = 0.5;
 
@@ -88,8 +88,10 @@ export const SNOW_TO_WATER_RATIO = 0.143; // 1/7 ratio
 
 /**
  * Threshold (inches) for heavy precipitation event
+ * Calibrated for Monmouth County clay-rich soil (moderate drainage)
+ * Lower than sandy/rocky terrain due to saturation characteristics
  */
-export const HEAVY_EVENT_THRESHOLD = 1.2;
+export const HEAVY_EVENT_THRESHOLD = 1.0;
 
 /**
  * Weather codes that indicate snow conditions
@@ -672,14 +674,17 @@ const confidenceForWindow = (analysisDays = 0) => {
 /**
  * Interpret wetness data into trail condition assessment
  *
- * Decision Logic:
+ * Decision Logic (calibrated for Monmouth County clay-rich soil w/ moderate drainage):
  * - Snowbound (rating 5): >1" snow depth remaining
  * - Packed Snow (rating 4): 0.25-1" snow remaining
- * - Soaked (rating 5): >0.6" in 24h, >1.3" net liquid, or heavy 48h event
- * - Muddy (rating 4): >0.45" in 48h, heavy event, or 2+ freeze/thaw cycles
- * - Slick/Icy (rating 3): >0.25" in 72h, 3+ wet days, or freeze with liquid
+ * - Soaked (rating 5): >0.5" in 24h, >1.3" net liquid, or heavy 48h event
+ * - Muddy (rating 4): >0.35" in 48h, heavy event, or 2+ freeze/thaw cycles
+ * - Slick/Icy (rating 3): >0.20" in 72h, 3+ wet days, or freeze with liquid
  * - Moist (rating 2): Any moisture signal
  * - Dry (rating 1): No significant moisture
+ *
+ * Thresholds are lower than sandy/rocky terrain because clay-rich soil holds
+ * moisture longer and rooty/rocky sections (Hartshorne, Huber Woods) get slick easily.
  *
  * @param {object} wetnessData - Wetness data from computeWetness
  * @returns {object} Trail condition interpretation with label, caution, rating, stats
@@ -830,12 +835,12 @@ export const interpretWetness = (wetnessData = null) => {
     caution = "Lingering snow/ice—microspikes recommended.";
     rating = 4;
   } else {
-    if (last24 >= 0.6 || netLiquid >= 1.3 || (last48 >= 0.9 && heavyEvent)) {
+    if (last24 >= 0.5 || netLiquid >= 1.3 || (last48 >= 0.9 && heavyEvent)) {
       label = "Soaked";
       caution = "Standing water and boot-sucking mud—plan for slow miles.";
       rating = 5;
     } else if (
-      last48 >= 0.45 ||
+      last48 >= 0.35 ||
       (last72 >= 0.6 && netLiquid >= 0.6) ||
       heavyEvent ||
       freezeThawCycles >= 2
@@ -844,7 +849,7 @@ export const interpretWetness = (wetnessData = null) => {
       caution = "Trail bed is saturated—gaiters/poles will help stability.";
       rating = 4;
     } else if (
-      last72 >= 0.25 ||
+      last72 >= 0.20 ||
       recentWetDays >= 3 ||
       netLiquid >= 0.35 ||
       freezeWithLiquid
