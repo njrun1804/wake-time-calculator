@@ -55,6 +55,18 @@ export const DEFAULT_DECAY_BASE = 0.85;
 export const SNOW_MELT_THRESHOLD_F = 34;
 
 /**
+ * Base temperature (°F) for snowmelt curve calculation
+ * Melt rate scales from this point up to BASE + RANGE
+ */
+export const SNOW_MELT_CURVE_BASE_F = 32;
+
+/**
+ * Temperature range (°F) for snowmelt curve
+ * Full melt occurs at BASE + RANGE (42°F)
+ */
+export const SNOW_MELT_CURVE_RANGE_F = 10;
+
+/**
  * Maximum intensity boost factor for precipitation events
  */
 export const MAX_INTENSITY_BOOST = 1.35;
@@ -332,8 +344,52 @@ export const computeWetness = (
   const referenceMidnight = refDate ? new Date(refDate) : null;
   if (referenceMidnight) {
     referenceMidnight.setHours(0, 0, 0, 0);
+  } else if (dailyRecords.length > 0) {
+    // Warning: referenceDate is missing, time decay will use array index fallback
+    // This may produce incorrect results if array structure changes
+    console.warn(
+      "[computeWetness] referenceDate is missing; using array index for time decay (may be inaccurate)",
+    );
   }
   const sorted = sortByDate(dailyRecords);
+
+  // Optimization: Check if all records are in the same season (growing/dormant)
+  // If so, we can calculate seasonal coefficient once instead of per-record
+  const singleSeasonCoefficient = (() => {
+    if (sorted.length === 0) return null;
+
+    // Extract months from first and last records
+    const getMonth = (dateStr) => {
+      if (!dateStr || typeof dateStr !== "string") return null;
+      const parts = dateStr.split("-");
+      if (parts.length >= 2) {
+        const monthNum = parseInt(parts[1], 10);
+        return Number.isFinite(monthNum) && monthNum >= 1 && monthNum <= 12
+          ? monthNum - 1
+          : null;
+      }
+      return null;
+    };
+
+    const firstMonth = getMonth(sorted[0]?.date);
+    const lastMonth = getMonth(sorted[sorted.length - 1]?.date);
+
+    if (firstMonth === null || lastMonth === null) return null;
+
+    // Check if both are in same season (growing: Apr-Oct = 3-9, dormant: Nov-Mar = 0-2,10-11)
+    const isGrowing = (m) => m >= 3 && m <= 9;
+    const firstGrowing = isGrowing(firstMonth);
+    const lastGrowing = isGrowing(lastMonth);
+
+    // If same season, return the coefficient; otherwise return null to calculate per-record
+    if (firstGrowing === lastGrowing) {
+      const warmSeason = firstGrowing;
+      return warmSeason
+        ? dryingCoefficient
+        : Math.max(0, dryingCoefficient * 0.5);
+    }
+    return null;
+  })();
 
   let cumulativeScore = 0;
   let runningSnowpack = 0;
@@ -360,9 +416,22 @@ export const computeWetness = (
     // === STEP 1: Parse precipitation inputs ===
     // Some API responses have separate rain/snow, others just precipitation total
     const precipTotal = coerceNumber(precipitation);
-    const rainIn = numberOrNull(rain) ?? precipTotal;
     const snowDepthIn = Math.max(0, numberOrNull(snowfall) ?? 0);
     const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO; // Convert depth to water equivalent (10:1 ratio)
+
+    // Determine rain contribution, avoiding double-counting of snow
+    // - If rain_sum is available, use it (explicit rain only)
+    // - If rain_sum is null, subtract snow water equivalent from total precipitation
+    //   to prevent counting atmospheric snow twice (once here, again when snowpack melts)
+    const rainIn = (() => {
+      const explicitRain = numberOrNull(rain);
+      if (explicitRain !== null) {
+        return explicitRain;
+      }
+      // Estimate rain by subtracting snow SWE from total precipitation
+      return Math.max(0, precipTotal - snowSwe);
+    })();
+
     const et0In = Math.max(0, numberOrNull(et0) ?? 0);
     totalEt0 += et0In;
 
@@ -374,15 +443,20 @@ export const computeWetness = (
     // Snow melts when daily high exceeds 34°F (freezing point + margin)
     // Melt rate increases with temperature: 10% at 34°F, up to 100% at 42°F+
     let melt = 0;
-    const thawTemp = numberOrNull(maxTempF);
+    // Use maxTempF if available, otherwise fall back to minTempF
+    // If even the daily minimum exceeds threshold, melting definitely occurs
+    const thawTemp = numberOrNull(maxTempF) ?? numberOrNull(minTempF);
     if (
       runningSnowpack > 0 &&
       thawTemp !== null &&
       thawTemp >= SNOW_MELT_THRESHOLD_F
     ) {
-      // thawFactor: 0.0 at 32°F → 1.0 at 42°F
+      // thawFactor: 0.0 at SNOW_MELT_CURVE_BASE_F (32°F) → 1.0 at (32+10)=42°F
       // Example: 37°F → (37-32)/10 = 0.5 → 50% of snowpack melts
-      const thawFactor = Math.min(1, (thawTemp - 32) / 10);
+      const thawFactor = Math.min(
+        1,
+        (thawTemp - SNOW_MELT_CURVE_BASE_F) / SNOW_MELT_CURVE_RANGE_F,
+      );
       melt = Math.min(
         runningSnowpack,
         runningSnowpack * Math.max(0.1, thawFactor), // Min 10% melt when above threshold
@@ -404,11 +478,17 @@ export const computeWetness = (
     // Rationale: 1" in 1 hour creates more runoff/pooling than 1" over 24 hours
     const intensityBoost = (() => {
       const hours = numberOrNull(precipHours);
+      let rate;
+
       if (!hours || hours <= 0) {
-        // No duration data: boost if large total (likely intense)
-        return liquid > 0.35 ? MAX_INTENSITY_BOOST : 1.15;
+        // No duration data: assume typical storm duration (6 hours) to estimate intensity
+        // This prevents overweighting slow drizzle events
+        const assumedStormDuration = 6;
+        rate = liquid / assumedStormDuration;
+      } else {
+        rate = liquid / hours; // inches per hour
       }
-      const rate = liquid / hours; // inches per hour
+
       // Thresholds based on NWS intensity classifications:
       // - Heavy: ≥0.3"/hr → 1.35x boost
       // - Moderate: 0.1-0.3"/hr → 1.1-1.2x boost
@@ -421,19 +501,36 @@ export const computeWetness = (
 
     // === STEP 6: Calculate seasonal drying ===
     // Evapotranspiration (ET₀) varies by season due to vegetation
-    const entryDate = date ? new Date(date) : null;
-    const month = entryDate
-      ? entryDate.getMonth()
-      : refDate
-        ? refDate.getMonth()
-        : new Date().getMonth();
-    const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
-    const warmSeasonCoefficient = dryingCoefficient; // Default 0.6
-    const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants)
-    // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
-    const seasonalDryingCoefficient = leafOn
-      ? warmSeasonCoefficient
-      : coolSeasonCoefficient;
+    // Use pre-calculated coefficient if all records are in same season (optimization)
+    const seasonalDryingCoefficient =
+      singleSeasonCoefficient !== null
+        ? singleSeasonCoefficient
+        : (() => {
+            // Extract month directly from YYYY-MM-DD string to avoid timezone parsing issues
+            // (new Date("2024-10-23") is parsed as UTC, which becomes wrong local date in negative UTC offsets)
+            const month = (() => {
+              if (date && typeof date === "string") {
+                const parts = date.split("-");
+                if (parts.length >= 2) {
+                  const monthNum = parseInt(parts[1], 10);
+                  // Convert to 0-indexed (1 = Jan -> 0)
+                  return Number.isFinite(monthNum) &&
+                    monthNum >= 1 &&
+                    monthNum <= 12
+                    ? monthNum - 1
+                    : null;
+                }
+              }
+              return null;
+            })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
+
+            const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
+            const warmSeasonCoefficient = dryingCoefficient; // Default 0.6
+            const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants)
+            // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
+            return leafOn ? warmSeasonCoefficient : coolSeasonCoefficient;
+          })();
+
     const drying = seasonalDryingCoefficient * et0In;
     totalDrying += drying;
 
