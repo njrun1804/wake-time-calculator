@@ -560,7 +560,7 @@ export const computeWetness = (
     // dailyBalance = net moisture added to trails
     // Positive = wetter, Negative = drier
     // Apply intensity boost only to liquid contribution, not to drying
-    const dailyBalance = (liquid * intensityBoost) - drying;
+    const dailyBalance = liquid * intensityBoost - drying;
     peakDailyBalance = Math.max(peakDailyBalance, dailyBalance);
 
     if (liquid > 0.05) {
@@ -839,7 +839,7 @@ export const interpretWetness = (wetnessData = null) => {
       caution = "Trail bed is saturated—gaiters/poles will help stability.";
       rating = 4;
     } else if (
-      last72 >= 0.20 ||
+      last72 >= 0.2 ||
       recentWetDays >= 3 ||
       netLiquid >= 0.35 ||
       freezeWithLiquid
