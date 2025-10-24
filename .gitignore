@@ -1,53 +1,27 @@
+# Dependencies
 node_modules/
+
+# Environment variables
 .env
-/.local/
-wake.min.html
-*.log
-.DS_Store
-npm-debug.log*
-/.vscode/chrome-debug/
+
+# Build output
 dist/
 
-# Test artifacts
-test-visual.js
-wake-updated.png
-test-results/
-test-results.json
-wake-tests.js
-playwright-report/
-playwright/.cache/
+# Logs
+*.log
+npm-debug.log*
 
-# Coverage reports
-coverage/
-.nyc_output/
-
-# Generated documentation
-docs/api/
-docs/API.md
-
-# Visual test screenshots (keep baselines, ignore current test runs)
-tests/visual/screenshots/current/
-
-# Platform-specific visual test snapshots (macOS)
-# CI uses Linux, so darwin-specific snapshots should not be committed
-*-darwin.png
-
-# macOS optimizations
+# macOS
+.DS_Store
 .Spotlight-V100
 .Trashes
-.fseventsd
-.TemporaryItems
 
-# IDE and editor caches
+# IDE
 .idea/
+.vscode/
 *.swp
 *.swo
 *~
-
-# Package manager caches
-.npm/
-.yarn/
-.pnp.*
 
 # Temporary files
 tmp/
