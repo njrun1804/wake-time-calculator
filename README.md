@@ -125,10 +125,7 @@ The application is built with modern ES6 modules requiring no build step. For de
 ## Documentation
 
 - `CLAUDE.md` – Comprehensive developer documentation with architecture details
-- `docs/architecture/trail-wetness.md` – Trail condition scoring algorithm and calibration
-- `docs/development/testing.md` – Test coverage mapping for all features
-- `docs/development/quality-standards.md` – Quality gates and performance budgets
-- `docs/development/setup.md` – Development environment setup guide
+- `docs/trail-wetness.md` – Trail condition scoring algorithm and calibration
 
 ## Live Demo
 
