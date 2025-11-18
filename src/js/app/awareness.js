@@ -458,6 +458,52 @@ export const setCurrentDawn = (date) => {
 // ============================================================================
 
 /**
+ * Fetch all awareness data (weather, wetness, dawn)
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @param {string} tz - Timezone
+ * @param {AbortSignal} signal - Abort signal
+ * @returns {Promise<object>} Combined weather data
+ */
+const fetchAwarenessData = async (lat, lon, tz, signal) => {
+  // Fetch dawn first
+  const dawnDate = await fetchDawn(lat, lon, tz, signal);
+
+  // Parallel fetch weather & wetness with graceful degradation
+  const [weatherResult, wetnessResult] = await Promise.allSettled([
+    fetchWeatherAround(lat, lon, dawnDate, tz),
+    fetchWetnessInputs(lat, lon, dawnDate, tz),
+  ]);
+
+  const weather =
+    weatherResult.status === "fulfilled"
+      ? weatherResult.value
+      : {
+        windChillF: null,
+        pop: null,
+        wetBulbF: null,
+        tempF: null,
+        windMph: null,
+        weatherCode: null,
+        snowfall: null,
+        isSnow: false,
+      };
+
+  const wetnessInfo =
+    wetnessResult.status === "fulfilled" ? wetnessResult.value : null;
+
+  // Log any partial failures
+  if (weatherResult.status === "rejected") {
+    console.warn("Weather fetch failed:", weatherResult.reason);
+  }
+  if (wetnessResult.status === "rejected") {
+    console.warn("Wetness fetch failed:", wetnessResult.reason);
+  }
+
+  return { dawnDate, weather, wetnessInfo };
+};
+
+/**
  * Refresh weather awareness data
  *
  * Main orchestration function that:
@@ -480,39 +526,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   try {
-    // Fetch dawn first
-    const dawnDate = await fetchDawn(lat, lon, tz, signal);
-
-    // Parallel fetch weather & wetness with graceful degradation
-    const [weatherResult, wetnessResult] = await Promise.allSettled([
-      fetchWeatherAround(lat, lon, dawnDate, tz),
-      fetchWetnessInputs(lat, lon, dawnDate, tz),
-    ]);
-
-    const weather =
-      weatherResult.status === "fulfilled"
-        ? weatherResult.value
-        : {
-            windChillF: null,
-            pop: null,
-            wetBulbF: null,
-            tempF: null,
-            windMph: null,
-            weatherCode: null,
-            snowfall: null,
-            isSnow: false,
-          };
-
-    const wetnessInfo =
-      wetnessResult.status === "fulfilled" ? wetnessResult.value : null;
-
-    // Log any partial failures
-    if (weatherResult.status === "rejected") {
-      console.warn("Weather fetch failed:", weatherResult.reason);
-    }
-    if (wetnessResult.status === "rejected") {
-      console.warn("Wetness fetch failed:", wetnessResult.reason);
-    }
+    const { dawnDate, weather, wetnessInfo } = await fetchAwarenessData(lat, lon, tz, signal);
 
     // Only refine city name if it looks incomplete (no comma = single component)
     // Skip refinement if city is already formatted (e.g., "Boulder, CO, US")

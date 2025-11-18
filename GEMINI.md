@@ -1,4 +1,4 @@
-# Wake Time Calculator - Claude Documentation
+# Wake Time Calculator - Gemini Documentation
 
 ## Project Overview
 
@@ -152,14 +152,14 @@ The project uses **minimal testing** optimized for solo development:
 
 **Removed for Solo Dev:**
 - ❌ Integration tests (manual testing preferred)
-- ❌ Visual regression tests (Claude can verify UI visually)
+- ❌ Visual regression tests (Gemini can verify UI visually)
 - ❌ Performance tests (not needed for single user)
 - ❌ Complex test infrastructure (Playwright, fixtures, mocks)
 
 **Testing Philosophy:**
 - Manual testing by user for features/UI
 - Automated tests only for pure math (calculator)
-- Claude verifies code correctness through reading/analysis
+- Gemini verifies code correctness through reading/analysis
 - Fast iteration > comprehensive automation
 
 ## Recent Major Changes
@@ -214,7 +214,7 @@ The project uses **minimal testing** optimized for solo development:
 - **Testing Reduction**: Removed 99% of tests (152 files → 1 file)
   - Kept only `calculator.test.js` (pure math functions)
   - Deleted: Playwright, visual regression, integration, performance tests
-  - Rationale: Solo dev, manual testing, Claude verification
+  - Rationale: Solo dev, manual testing, Gemini verification
 
 ### Simplification Efforts (2024)
 - **Aggressive Minimization** (Oct 2024): Removed all legacy config files and tooling
@@ -293,7 +293,7 @@ Explicit architectural constraints for agents:
 - [ ] Input validation added
 - [ ] Error handling implemented
 - [ ] Memory leaks prevented (timeouts cleaned up)
-- [ ] Documentation updated (CLAUDE.md, trail-wetness.md if relevant)
+- [ ] Documentation updated (GEMINI.md, trail-wetness.md if relevant)
 
 ## Best Practices
 
@@ -332,7 +332,7 @@ Explicit architectural constraints for agents:
 5. **Update UI**: Add HTML in `index.html`, styles in `css/main.css`
 6. **Manual test**: Load app, verify functionality works
 7. **Add unit test**: Only if pure math/logic (like calculator.js)
-8. **Update CLAUDE.md**: Add to Key Components section if significant
+8. **Update GEMINI.md**: Add to Key Components section if significant
 
 **AI-First Guidelines:**
 - Keep related code together in one file (not scattered across subdirectories)

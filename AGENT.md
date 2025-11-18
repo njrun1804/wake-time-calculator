@@ -34,7 +34,7 @@ src/
 
 ### Documentation
 - `README.md` - User-facing project overview
-- `CLAUDE.md` - Comprehensive developer documentation
+- `GEMINI.md` - Comprehensive developer documentation
 - `docs/trail-wetness.md` - Trail condition algorithm details
 - `AGENT.md` - This file (agent-specific guidance)
 
@@ -107,7 +107,7 @@ src/
 5. **Update UI**: Add HTML in `index.html`, styles in `css/main.css`
 6. **Manual Test**: Load app, verify functionality
 7. **Add Unit Test**: Only if pure math/logic (like `calculator.js`)
-8. **Update Documentation**: Add to `CLAUDE.md` Key Components if significant
+8. **Update Documentation**: Add to `GEMINI.md` Key Components if significant
 
 ## Testing Philosophy
 
@@ -140,7 +140,7 @@ npm test  # Runs calculator.test.js (7 tests)
 1. Modify `src/js/lib/calculator.js`
 2. Run `npm test` to verify
 3. Test edge cases (previous day rollover, midnight boundaries)
-4. Update `CLAUDE.md` if significant changes
+4. Update `GEMINI.md` if significant changes
 
 ### Changing UI/Display
 1. Modify `src/js/app/awareness.js` or `src/js/app/main.js`
@@ -175,7 +175,7 @@ npm test  # Runs calculator.test.js (7 tests)
    - [ ] Check mobile responsiveness
 
 3. **Documentation Checklist:**
-   - [ ] Update `CLAUDE.md` if architecture changes
+   - [ ] Update `GEMINI.md` if architecture changes
    - [ ] Update `docs/trail-wetness.md` if wetness algorithm changes
    - [ ] Update `README.md` if features change
    - [ ] Add JSDoc comments for new functions
@@ -288,7 +288,7 @@ const data = loadFromStorage('key', defaultValue);
 
 ## Additional Resources
 
-- **CLAUDE.md**: Comprehensive developer documentation
+- **GEMINI.md**: Comprehensive developer documentation
 - **docs/trail-wetness.md**: Detailed wetness algorithm explanation
 - **README.md**: User-facing project overview
 - **package.json**: Dependencies and scripts

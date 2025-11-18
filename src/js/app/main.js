@@ -271,6 +271,10 @@ export const saveFormValues = (state) => {
 // APPLICATION CLASS
 // ============================================================================
 
+// ============================================================================
+// APPLICATION CLASS
+// ============================================================================
+
 /**
  * Main application orchestrator.
  *
@@ -342,15 +346,13 @@ export class WakeTimeApp {
 
     // Meeting time change
     this.elements.firstMeeting?.addEventListener("change", () => {
-      this.state.meeting = this.elements.firstMeeting.value;
-      this.saveAndRecalculate();
+      this.updateState({ meeting: this.elements.firstMeeting.value });
     });
 
     // Run minutes change
     this.elements.runMinutes?.addEventListener("input", () => {
       const value = parseInt(this.elements.runMinutes.value, 10) || 0;
-      this.state.runMinutes = Math.max(0, Math.min(999, value));
-      this.saveAndRecalculate();
+      this.updateState({ runMinutes: Math.max(0, Math.min(999, value)) });
     });
 
     // Breakfast change
@@ -367,10 +369,28 @@ export class WakeTimeApp {
 
     // Location change
     this.elements.runLocation?.addEventListener("change", () => {
-      this.state.location = this.elements.runLocation.value;
-      this.state = this.syncTravelWithLocation(this.state);
-      this.saveAndRecalculate();
+      const location = this.elements.runLocation.value;
+      const newState = updateLocationWithTravel(
+        { ...this.state, location },
+        location,
+        this.elements.runLocation
+      );
+      
+      if (this.elements.travelMinutes) {
+        this.elements.travelMinutes.value = newState.travelMinutes;
+      }
+      
+      this.updateState(newState);
     });
+  }
+
+  /**
+   * Update state and trigger save/recalculate
+   * @param {object} updates - Partial state updates
+   */
+  updateState(updates) {
+    this.state = { ...this.state, ...updates };
+    this.saveAndRecalculate();
   }
 
   /**

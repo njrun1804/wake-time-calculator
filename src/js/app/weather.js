@@ -35,68 +35,27 @@ import { Storage } from "../lib/storage.js";
 // ============================================================================
 
 /**
- * Milliseconds in a day
- */
-export const MS_PER_DAY = 86400000;
-
-/**
- * Default coefficient for drying rate calculation
+ * Weather Configuration
  * Calibrated for Monmouth County, NJ (humid coastal climate, clay-rich soil)
- * Lower than arid regions due to high humidity and moderate drainage
  */
-export const DEFAULT_DRYING_COEFFICIENT = 0.5;
+export const WEATHER_CONFIG = {
+  // Drying dynamics
+  DRYING_COEFFICIENT: 0.5,
+  DECAY_BASE: 0.85,
 
-/**
- * Default decay base for wetness score over time
- * Note: Overridden seasonally in computeWetness for Rumson, NJ climate
- * - Summer: 0.75 (faster drying, warm)
- * - Spring/Fall: 0.85 (moderate)
- * - Winter: 0.92 (slow drying, cloudy/humid)
- */
-export const DEFAULT_DECAY_BASE = 0.85;
+  // Snow dynamics
+  SNOW_MELT_THRESHOLD_F: 32,
+  SNOW_MELT_CURVE_BASE_F: 32,
+  SNOW_MELT_CURVE_RANGE_F: 6,
+  SNOW_TO_WATER_RATIO: 0.143, // 1/7 ratio (heavy maritime snow)
 
-/**
- * Temperature threshold (°F) above which snow begins to melt
- * Calibrated for Rumson, NJ: Maritime snow melts quickly due to temp fluctuations
- */
-export const SNOW_MELT_THRESHOLD_F = 32;
+  // Intensity
+  MAX_INTENSITY_BOOST: 1.35,
+  HEAVY_EVENT_THRESHOLD: 1.0,
 
-/**
- * Base temperature (°F) for snowmelt curve calculation
- * Melt rate scales from this point up to BASE + RANGE
- */
-export const SNOW_MELT_CURVE_BASE_F = 32;
-
-/**
- * Temperature range (°F) for snowmelt curve
- * Calibrated for Rumson, NJ: Full melt at 38°F (maritime snow melts faster)
- * NJ snow rarely persists >2-3 days due to temp fluctuations and high melt rate
- */
-export const SNOW_MELT_CURVE_RANGE_F = 6;
-
-/**
- * Maximum intensity boost factor for precipitation events
- */
-export const MAX_INTENSITY_BOOST = 1.35;
-
-/**
- * Ratio for converting snow depth to snow water equivalent
- * Calibrated for Rumson, NJ maritime snow (heavy, wet)
- * NJ coastal snow: ~7:1 ratio (heavier than Rocky Mountain 10:1 powder)
- */
-export const SNOW_TO_WATER_RATIO = 0.143; // 1/7 ratio
-
-/**
- * Threshold (inches) for heavy precipitation event
- * Calibrated for Monmouth County clay-rich soil (moderate drainage)
- * Lower than sandy/rocky terrain due to saturation characteristics
- */
-export const HEAVY_EVENT_THRESHOLD = 1.0;
-
-/**
- * Weather codes that indicate snow conditions
- */
-export const snowCodes = new Set([71, 73, 75, 77, 85, 86]);
+  // Weather codes indicating snow
+  SNOW_CODES: new Set([71, 73, 75, 77, 85, 86])
+};
 
 // ============================================================================
 // UTILITIES
@@ -272,15 +231,15 @@ const createWetnessSummary = (wetness) => {
     const dryingSummary =
       dryingFraction !== null
         ? `-${inches(totals.drying)} drying (${Math.round(
-            dryingFraction * 100,
-          )}% of ${inches(et0Total)} ET₀)`
+          dryingFraction * 100,
+        )}% of ${inches(et0Total)} ET₀)`
         : `-${inches(totals.drying)} drying`;
     parts.push(dryingSummary);
   }
   if (snowpackRemaining > 0) {
     const snowDepth =
-      SNOW_TO_WATER_RATIO > 0
-        ? snowpackRemaining / SNOW_TO_WATER_RATIO
+      WEATHER_CONFIG.SNOW_TO_WATER_RATIO > 0
+        ? snowpackRemaining / WEATHER_CONFIG.SNOW_TO_WATER_RATIO
         : snowpackRemaining;
     if (snowDepth > 0.05) {
       const sweText = inches(snowpackRemaining);
@@ -319,7 +278,7 @@ const createWetnessSummary = (wetness) => {
  */
 export const computeWetness = (
   dailyRecords = [],
-  { referenceDate = null, dryingCoefficient = DEFAULT_DRYING_COEFFICIENT } = {},
+  { referenceDate = null, dryingCoefficient = WEATHER_CONFIG.DRYING_COEFFICIENT } = {},
 ) => {
   if (!Array.isArray(dailyRecords) || dailyRecords.length === 0) {
     const base = {
@@ -432,7 +391,7 @@ export const computeWetness = (
     // Some API responses have separate rain/snow, others just precipitation total
     const precipTotal = coerceNumber(precipitation);
     const snowDepthIn = Math.max(0, numberOrNull(snowfall) ?? 0);
-    const snowSwe = snowDepthIn * SNOW_TO_WATER_RATIO; // Convert depth to water equivalent (7:1 ratio for NJ maritime snow)
+    const snowSwe = snowDepthIn * WEATHER_CONFIG.SNOW_TO_WATER_RATIO; // Convert depth to water equivalent
 
     // Determine rain contribution, avoiding double-counting of snow
     // - If rain_sum is available, use it (explicit rain only)
@@ -464,13 +423,13 @@ export const computeWetness = (
     if (
       runningSnowpack > 0 &&
       thawTemp !== null &&
-      thawTemp >= SNOW_MELT_THRESHOLD_F
+      thawTemp >= WEATHER_CONFIG.SNOW_MELT_THRESHOLD_F
     ) {
       // thawFactor: 0.0 at SNOW_MELT_CURVE_BASE_F (32°F) → 1.0 at (32+10)=42°F
       // Example: 37°F → (37-32)/10 = 0.5 → 50% of snowpack melts
       const thawFactor = Math.min(
         1,
-        (thawTemp - SNOW_MELT_CURVE_BASE_F) / SNOW_MELT_CURVE_RANGE_F,
+        (thawTemp - WEATHER_CONFIG.SNOW_MELT_CURVE_BASE_F) / WEATHER_CONFIG.SNOW_MELT_CURVE_RANGE_F,
       );
       melt = Math.min(
         runningSnowpack,
@@ -507,7 +466,7 @@ export const computeWetness = (
       // - Heavy: ≥0.3"/hr → 1.35x boost
       // - Moderate: 0.1-0.3"/hr → 1.1-1.2x boost
       // - Light: <0.1"/hr → 1.0x (no boost)
-      if (rate >= 0.35) return MAX_INTENSITY_BOOST; // 1.35
+      if (rate >= 0.35) return WEATHER_CONFIG.MAX_INTENSITY_BOOST; // 1.35
       if (rate >= 0.2) return 1.2;
       if (rate >= 0.1) return 1.1;
       return 1;
@@ -520,31 +479,31 @@ export const computeWetness = (
       singleSeasonCoefficient !== null
         ? singleSeasonCoefficient
         : (() => {
-            // Extract month directly from YYYY-MM-DD string to avoid timezone parsing issues
-            // (new Date("2024-10-23") is parsed as UTC, which becomes wrong local date in negative UTC offsets)
-            const month =
-              (() => {
-                if (date && typeof date === "string") {
-                  const parts = date.split("-");
-                  if (parts.length >= 2) {
-                    const monthNum = parseInt(parts[1], 10);
-                    // Convert to 0-indexed (1 = Jan -> 0)
-                    return Number.isFinite(monthNum) &&
-                      monthNum >= 1 &&
-                      monthNum <= 12
-                      ? monthNum - 1
-                      : null;
-                  }
+          // Extract month directly from YYYY-MM-DD string to avoid timezone parsing issues
+          // (new Date("2024-10-23") is parsed as UTC, which becomes wrong local date in negative UTC offsets)
+          const month =
+            (() => {
+              if (date && typeof date === "string") {
+                const parts = date.split("-");
+                if (parts.length >= 2) {
+                  const monthNum = parseInt(parts[1], 10);
+                  // Convert to 0-indexed (1 = Jan -> 0)
+                  return Number.isFinite(monthNum) &&
+                    monthNum >= 1 &&
+                    monthNum <= 12
+                    ? monthNum - 1
+                    : null;
                 }
-                return null;
-              })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
+              }
+              return null;
+            })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
 
-            const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
-            const warmSeasonCoefficient = dryingCoefficient; // Default 0.5
-            const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants = 0.25)
-            // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
-            return leafOn ? warmSeasonCoefficient : coolSeasonCoefficient;
-          })();
+          const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
+          const warmSeasonCoefficient = dryingCoefficient; // Default 0.5
+          const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants = 0.25)
+          // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
+          return leafOn ? warmSeasonCoefficient : coolSeasonCoefficient;
+        })();
 
     const drying = seasonalDryingCoefficient * et0In;
     totalDrying += drying;
@@ -696,7 +655,7 @@ export const interpretWetness = (wetnessData = null) => {
     numberOrNull(wetnessData.snowpackRemaining) ?? 0,
   );
   const snowpackDepth =
-    SNOW_TO_WATER_RATIO > 0 ? snowpackSWE / SNOW_TO_WATER_RATIO : snowpackSWE;
+    WEATHER_CONFIG.SNOW_TO_WATER_RATIO > 0 ? snowpackSWE / WEATHER_CONFIG.SNOW_TO_WATER_RATIO : snowpackSWE;
   const recentWetDays = Math.max(
     0,
     numberOrNull(wetnessData.recentWetDays) ?? 0,
@@ -729,7 +688,7 @@ export const interpretWetness = (wetnessData = null) => {
 
   const heavyEvent = events.some(
     (evt) =>
-      typeof evt?.balance === "number" && evt.balance >= HEAVY_EVENT_THRESHOLD,
+      typeof evt?.balance === "number" && evt.balance >= WEATHER_CONFIG.HEAVY_EVENT_THRESHOLD,
   );
 
   const freezeThawCycles = events.reduce((count, evt) => {
@@ -759,8 +718,8 @@ export const interpretWetness = (wetnessData = null) => {
     const dryingDescriptor =
       dryingFraction !== null
         ? `-${formatInches(dryingTotal)} drying (${Math.round(
-            dryingFraction * 100,
-          )}% of ${formatInches(et0Total)} ET₀)`
+          dryingFraction * 100,
+        )}% of ${formatInches(et0Total)} ET₀)`
         : `-${formatInches(dryingTotal)} drying`;
     detailParts.push(dryingDescriptor);
   }

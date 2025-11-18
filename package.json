@@ -25,7 +25,7 @@
     "running",
     "planner"
   ],
-  "author": "",
+  "author": "Gemini & User",
   "license": "MIT",
   "engines": {
     "node": ">=20.19.0",

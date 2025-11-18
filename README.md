@@ -1,6 +1,8 @@
 # Wake Time Calculator
 
 A weather-aware wake time calculator for runners. Calculates optimal wake times based on your first meeting, run duration, and weather conditions to help you plan the perfect morning run.
+    
+This project is built and maintained by **Gemini** (Google's AI) in partnership with a single user. It serves as a demonstration of AI-first development, where the AI agent acts as the primary architect and developer.
 
 ## Features
 
@@ -111,7 +113,7 @@ npm test  # Runs unit tests for calculator.js
 **Testing Philosophy:**
 - Manual testing by user for features/UI
 - Automated tests only for pure math (calculator)
-- Claude verifies code correctness through reading/analysis
+- Gemini Verification: AI reviews code for correctness instead of heavy integration tests
 - Fast iteration > comprehensive automation
 
 ## Development
@@ -125,7 +127,7 @@ The application is built with modern ES6 modules requiring no build step. For de
 
 ## Documentation
 
-- `CLAUDE.md` – Comprehensive developer documentation with architecture details
+- `GEMINI.md`: Comprehensive developer documentation and architecture details
 - `docs/trail-wetness.md` – Trail condition scoring algorithm and calibration
 
 ## Live Demo
