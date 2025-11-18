@@ -1,0 +1,34 @@
+{
+  "name": "wake-time-calculator",
+  "version": "1.0.0",
+  "description": "A wake time calculator with weather awareness for runners",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "http-server src -p 8000 -c-1 --cors",
+    "test": "node --test tests/unit/**/*.test.js",
+    "format": "prettier --write 'src/**/*.html' 'src/js/**/*.js'",
+    "build": "mkdir -p dist && cp -r src/* dist/"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "prettier": "^3.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/njrun1804/wake-time-calculator.git"
+  },
+  "keywords": [
+    "wake-time",
+    "calculator",
+    "weather",
+    "running",
+    "planner"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  }
+}

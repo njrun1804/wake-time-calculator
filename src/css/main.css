@@ -1,0 +1,697 @@
+/* Wake Time Calculator - Main Styles */
+
+/* ========== Base Styles ========== */
+:root {
+  color-scheme: light;
+  --hero-img: none; /* Optional image path, e.g., url('../img/boston.jpg') */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f6f8;
+  color: #1f2933;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+/* ========== Hero Background & Glass Effect ========== */
+.hero-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(21, 64, 159, 0.65), rgba(255, 208, 0, 0.35)),
+    var(--hero-img) center/cover no-repeat,
+    conic-gradient(from 200deg at 50% 0%, #15409f, #0b2a7a, #15409f);
+  filter: saturate(1.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  .hero-bg {
+    filter: brightness(0.85) saturate(1.1);
+  }
+}
+
+.glass-main {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  backdrop-filter: blur(8px) saturate(1.05);
+}
+
+/* ========== Main Container ========== */
+main {
+  width: min(100%, 720px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  padding: clamp(1.25rem, 1.5vw + 0.75rem, 2rem);
+  display: grid;
+  gap: 1.25rem;
+}
+
+h1 {
+  margin: 0;
+}
+
+.title-wrapper {
+  text-align: center;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.title-main {
+  font-size: clamp(1.9rem, 2.5vw + 1rem, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.title-accent {
+  display: inline-block;
+  background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.title-sub {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+/* ========== Utility Classes ========== */
+.hidden {
+  display: none !important;
+}
+
+.mt-neg-half {
+  margin-top: -0.5rem;
+}
+
+/* ========== Form Styles ========== */
+form {
+  display: grid;
+  gap: 0.75rem;
+  margin: -0.5rem -1rem 1.25rem;
+  padding: 1.25rem 1rem 1.5rem;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.03), transparent);
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+}
+
+form::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 30%;
+  right: 30%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+  opacity: 0.5;
+  border-radius: 3px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.field-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+input[type='time'],
+input[type='number'],
+select {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d2d8e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2933;
+  font-size: 0.95rem;
+}
+
+input[type='time']:focus,
+input[type='number']:focus,
+select:focus,
+input[type='text']:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-color: #3b82f6;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* ========== Button Styles ========== */
+button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.btn-secondary:active {
+  background: #d1d5db;
+}
+
+.status {
+  min-height: 1.25rem;
+  font-size: 0.95rem;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* ========== Output Styles ========== */
+.output {
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f8fbff, #eef2f8);
+  padding: 0.75rem 1rem;
+  margin-top: -0.5rem;
+}
+
+.wake-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.primary-time {
+  font-size: clamp(2.2rem, 3vw + 0.75rem, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+/* ========== Card Styles ========== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: rgba(30, 41, 59, 0.7);
+  }
+}
+
+.wake-display-section {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+.wake-hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.wake-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.wake-hero-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.info-card {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
+}
+
+.focus-card {
+  border-width: 2px;
+  border-color: #1d4ed8;
+  box-shadow: 0 20px 36px rgba(29, 78, 216, 0.18);
+}
+
+.wake-hero {
+  margin-top: 1.75rem;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  border-radius: 24px;
+  padding: clamp(1.5rem, 3vw + 1rem, 2.5rem);
+  box-shadow: 0 25px 45px rgba(37, 99, 235, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .wake-hero {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.wake-hero__primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.wake-hero__label {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.wake-hero__time {
+  font-size: clamp(2.6rem, 5vw + 1rem, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.wake-hero__badge {
+  align-self: flex-start;
+}
+
+.wake-hero__secondary {
+  background: rgba(15, 23, 42, 0.15);
+  border-radius: 18px;
+  padding: 0.85rem 1.1rem;
+  min-width: 180px;
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.wake-hero__secondary-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.wake-hero__secondary-time {
+  font-size: clamp(1.6rem, 3vw + 0.6rem, 2rem);
+  font-weight: 700;
+}
+
+.wake-time-display {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== Time Bar ========== */
+#timeBar > div {
+  transition: flex-basis 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#timeBar > div span {
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+/* Hide labels when segment is too small */
+#timeBar > div[style*='display: none'] {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ========== Badge & Text Styles ========== */
+.badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1f3b82;
+  background: #dbe4ff;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+}
+
+.secondary-time {
+  font-size: 1rem;
+  color: #52606d;
+  font-weight: 600;
+}
+
+.totals,
+.breakdown {
+  color: #61748f;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.note {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #7d8ca2;
+}
+
+/* ========== Weather Awareness Styles ========== */
+.awareness {
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f8fbff, #eef2f8) !important;
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0;
+}
+
+.aw-top {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.aw-where {
+  font-size: 0.9rem;
+  color: #1f3158;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+.aw-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #e5e9f2;
+  border-radius: 12px;
+  padding: 0.5rem;
+}
+
+.aw-actions input {
+  width: 10rem;
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d2d8e1;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 0.85rem;
+}
+
+.aw-actions button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.aw-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.aw-item {
+  background: #ffffff !important;
+  border: 1px solid #e5e9f2 !important;
+  border-radius: 10px;
+  padding: 0.5rem 0.35rem;
+  text-align: center;
+  color: #1f2933 !important;
+}
+
+.aw-item .label {
+  font-size: 0.65rem;
+  color: #61748f;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+}
+
+.aw-item .value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #1f2933;
+}
+
+.status-icon {
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+}
+
+.status-icon.icon-ok {
+  color: #15803d;
+}
+
+.status-icon.icon-yield {
+  color: #f59e0b;
+}
+
+.status-icon.icon-warning {
+  color: #dc2626;
+}
+
+#awWetness {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.aw-item .value.bad {
+  color: #b91c1c;
+}
+
+.toggle-breakfast {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.25rem 0;
+}
+
+.toggle-breakfast-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2933;
+  cursor: pointer;
+}
+
+.toggle-breakfast-option input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.toggle-breakfast-option span {
+  line-height: 1;
+  padding-top: 1px;
+}
+
+#daylightWarning {
+  font-size: 0.65rem;
+  letter-spacing: 0.09em;
+}
+
+.aw-note {
+  font-size: 0.85rem;
+  color: #7d8ca2;
+  margin: 0;
+}
+
+.inline-subtle {
+  font-size: 1rem;
+  color: #52606d;
+  font-weight: 500;
+}
+
+.aw-credits {
+  margin: 0.1rem 0 0;
+  font-size: 0.65rem;
+  color: #7d8ca2;
+}
+
+.aw-credits a {
+  color: #1f3b82;
+  text-decoration: underline;
+}
+
+/* Location badge colors */
+.location-badge {
+  display: inline-block;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.location-badge.verification-needed {
+  background: rgba(251, 146, 60, 0.1);
+  color: #ea580c;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+.location-badge.location-verified {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+/* Trail status text styling */
+#awDecisionText {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+/* ========== Media Queries ========== */
+@media (max-width: 640px) {
+  .aw-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+  .aw-item {
+    padding: 0.45rem 0.25rem;
+  }
+  .aw-item .label {
+    font-size: 0.6rem;
+  }
+  .aw-item .value {
+    font-size: 0.95rem;
+  }
+  .aw-actions {
+    width: 100%;
+  }
+  .aw-actions input {
+    flex: 1 1 auto;
+    width: auto;
+  }
+  body {
+    padding: 1rem;
+  }
+  main {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  h1 {
+    font-size: 1.4rem;
+  }
+  .actions {
+    flex-direction: column;
+  }
+  button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .aw-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
