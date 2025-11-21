@@ -30,6 +30,9 @@
 import { CACHE_DURATION, MS_PER_HOUR } from "../lib/constants.js";
 import { Storage } from "../lib/storage.js";
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const snowCodes = new Set([71, 73, 75, 77, 85, 86]);
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
