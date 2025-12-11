@@ -750,12 +750,10 @@ export const handleUseMyLocation = async (): Promise<void> => {
         lon: coords.lon,
       });
     } catch (error) {
-      // refreshAwareness handles its own error display, but we still emit the event
+      // refreshAwareness handles its own error display
       console.warn("Failed to refresh awareness after location update:", error);
-      emitAwarenessEvent("location-updated", {
-        city: label,
-        lat: coords.lat,
-        lon: coords.lon,
+      emitAwarenessEvent("error", {
+        message: getErrorMessage(error, "Failed to load weather data"),
       });
     }
   } catch (error) {
@@ -775,9 +773,18 @@ export const handleUseMyLocation = async (): Promise<void> => {
  * 2. Save location to localStorage
  * 3. Refresh awareness data
  */
+const MAX_QUERY_LENGTH = 200; // Prevent excessively long queries
+
 export const handleLocationSearch = async (query: string | null | undefined): Promise<void> => {
   const trimmed = query?.trim();
   if (!trimmed) return;
+
+  // Limit query length to prevent abuse
+  if (trimmed.length > MAX_QUERY_LENGTH) {
+    showAwarenessError("Query too long");
+    emitAwarenessEvent("search-error", { message: "Query too long" });
+    return;
+  }
 
   showAwarenessError("Searching…");
   emitAwarenessEvent("search-started", { query: trimmed });
@@ -810,12 +817,10 @@ export const handleLocationSearch = async (query: string | null | undefined): Pr
       lon: location.lon,
     });
   } catch (error) {
-    // refreshAwareness handles its own error display, but we still emit the event
+    // refreshAwareness handles its own error display
     console.warn("Failed to refresh awareness after location search:", error);
-    emitAwarenessEvent("location-updated", {
-      city: location.city,
-      lat: location.lat,
-      lon: location.lon,
+    emitAwarenessEvent("error", {
+      message: getErrorMessage(error, "Failed to load weather data"),
     });
   }
 
@@ -891,35 +896,56 @@ export const initializeAwareness = async (): Promise<void> => {
 };
 
 /**
+ * Track if listeners have been set up to prevent duplicates
+ */
+let listenersInitialized = false;
+
+/**
  * Setup awareness event listeners
  *
  * Attaches handlers to:
  * - "Use my location" button
  * - Location search input (Enter key)
  * - Location search button
+ *
+ * Safe to call multiple times - will only attach listeners once.
  */
 export const setupAwarenessListeners = (): void => {
+  // Prevent duplicate listeners
+  if (listenersInitialized) return;
+
   const els = cacheAwarenessElements();
   if (!els) return;
 
-  // Use my location button
+  // Mark as initialized before attaching (even if some elements missing)
+  listenersInitialized = true;
+
+  // Use my location button - wrap async handler to catch errors
   if (els.useLoc) {
-    els.useLoc.addEventListener("click", handleUseMyLocation);
+    els.useLoc.addEventListener("click", () => {
+      handleUseMyLocation().catch((error) => {
+        console.error("Unhandled error in handleUseMyLocation:", error);
+      });
+    });
   }
 
-  // Location search
+  // Location search - wrap async handler to catch errors
   if (els.placeInput) {
     els.placeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        handleLocationSearch(els.placeInput?.value);
+        handleLocationSearch(els.placeInput?.value).catch((error) => {
+          console.error("Unhandled error in handleLocationSearch:", error);
+        });
       }
     });
   }
 
   if (els.setPlace) {
     els.setPlace.addEventListener("click", () => {
-      handleLocationSearch(els.placeInput?.value);
+      handleLocationSearch(els.placeInput?.value).catch((error) => {
+        console.error("Unhandled error in handleLocationSearch:", error);
+      });
     });
   }
 };

@@ -18,6 +18,14 @@ interface SunriseSunsetResponse {
 
 const dawnCache: Record<string, DawnCacheEntry> = {};
 const MAX_CACHE_ENTRIES = 50;
+const CLEANUP_INTERVAL = 10; // Run cleanup every N cache operations
+let cacheOperationCount = 0;
+
+/**
+ * Round coordinates to 2 decimal places for cache keys.
+ * This prevents GPS jitter from creating duplicate cache entries.
+ */
+const roundCoordForCache = (coord: number): string => coord.toFixed(2);
 
 const cleanupDawnCache = (maxAge = CACHE_DURATION) => {
   const now = Date.now();
@@ -40,8 +48,12 @@ const cleanupDawnCache = (maxAge = CACHE_DURATION) => {
 };
 
 const cacheDawn = (key: string, data: Date, tz: string) => {
-  dawnCache[key] = { data, tz, time: Date.now() };
-  if (Math.random() < 0.1) {
+  // Clone the Date to prevent mutation of cached value
+  dawnCache[key] = { data: new Date(data.getTime()), tz, time: Date.now() };
+  cacheOperationCount++;
+  // Deterministic cleanup every N operations instead of probabilistic
+  if (cacheOperationCount >= CLEANUP_INTERVAL) {
+    cacheOperationCount = 0;
     cleanupDawnCache();
   }
 };
@@ -49,7 +61,8 @@ const cacheDawn = (key: string, data: Date, tz: string) => {
 const getCachedDawn = (key: string, maxAge = CACHE_DURATION): DawnInfo | null => {
   const cached = dawnCache[key];
   if (cached && Date.now() - cached.time < maxAge) {
-    return { date: cached.data, tz: cached.tz };
+    // Clone the Date to prevent mutation of cached value
+    return { date: new Date(cached.data.getTime()), tz: cached.tz };
   }
   return null;
 };
@@ -61,7 +74,7 @@ export const fetchDawn = async (
   signal?: AbortSignal | null
 ): Promise<DawnInfo> => {
   const ymd = fmtYMDInZone(new Date(Date.now() + 24 * 60 * 60 * 1000), tz);
-  const key = `dawn_${lat}_${lon}_${tz}_${ymd}`;
+  const key = `dawn_${roundCoordForCache(lat)}_${roundCoordForCache(lon)}_${tz}_${ymd}`;
 
   const cached = getCachedDawn(key);
   if (cached) return cached;
@@ -70,7 +83,12 @@ export const fetchDawn = async (
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error("Failed to fetch dawn time");
 
-  const data = (await res.json()) as SunriseSunsetResponse;
+  let data: SunriseSunsetResponse;
+  try {
+    data = (await res.json()) as SunriseSunsetResponse;
+  } catch {
+    throw new Error("Failed to parse dawn API response");
+  }
 
   // Runtime validation
   if (!data || typeof data !== "object") {

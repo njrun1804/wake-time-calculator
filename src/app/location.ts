@@ -201,10 +201,25 @@ export const geocodePlace = async (
   name: string
 ): Promise<Coordinates & { city: string; tz: string }> => {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
-  const res = await fetch(url);
+
+  // Add timeout to prevent hanging requests
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
   if (!res.ok) throw new Error("Failed to geocode location");
 
-  const data = (await res.json()) as OpenMeteoGeocodingResponse;
+  let data: OpenMeteoGeocodingResponse;
+  try {
+    data = (await res.json()) as OpenMeteoGeocodingResponse;
+  } catch {
+    throw new Error("Failed to parse geocoding API response");
+  }
 
   // Runtime validation
   if (!data || typeof data !== "object") {
@@ -233,7 +248,17 @@ export const geocodePlace = async (
 const tryNominatimReverse = async (lat: number, lon: number): Promise<LocationInfo | null> => {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
-    const res = await fetch(url);
+
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    let res: Response;
+    try {
+      res = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     if (!res.ok) return null;
 
     const data = (await res.json()) as NominatimResponse;

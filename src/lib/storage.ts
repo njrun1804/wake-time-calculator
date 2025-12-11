@@ -35,8 +35,9 @@ const showToast = (message: string, type: ToastType = "error") => {
     if (container) {
       container.style.opacity = "0";
       setTimeout(() => {
-        if (container) {
-          container.style.display = "none";
+        // Remove from DOM after fade-out animation completes
+        if (container && container.parentNode) {
+          container.parentNode.removeChild(container);
         }
       }, 300);
     }
@@ -104,7 +105,15 @@ export const Storage = {
     const lat = parseFloat(this.load(weatherStorage.lat) ?? "");
     const lon = parseFloat(this.load(weatherStorage.lon) ?? "");
 
-    if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    // Validate coordinates are finite and within valid bounds
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lon) ||
+      lat < -90 ||
+      lat > 90 ||
+      lon < -180 ||
+      lon > 180
+    ) {
       return null;
     }
 
@@ -147,10 +156,16 @@ export const Storage = {
 
       const timestamp = Number(rawTimestamp);
       if (!Number.isFinite(timestamp)) {
+        // Invalid timestamp - clean up stale entries
+        localStorage.removeItem(key);
+        localStorage.removeItem(key + ":t");
         return null;
       }
 
       if (Date.now() - timestamp > maxAge) {
+        // Expired cache - clean up stale entries
+        localStorage.removeItem(key);
+        localStorage.removeItem(key + ":t");
         return null;
       }
       const data = localStorage.getItem(key);

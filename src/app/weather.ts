@@ -413,10 +413,12 @@ export const computeWetness = (
   }
 
   const refDate = referenceDate ? new Date(referenceDate) : null;
-  const referenceMidnight = refDate ? new Date(refDate) : null;
-  if (referenceMidnight) {
-    referenceMidnight.setHours(0, 0, 0, 0);
-  } else if (dailyRecords.length > 0) {
+  // Use UTC midnight to avoid timezone issues when comparing dates
+  // Important: Use getUTC* methods since ISO date strings parse as UTC
+  const referenceMidnight = refDate
+    ? new Date(Date.UTC(refDate.getUTCFullYear(), refDate.getUTCMonth(), refDate.getUTCDate()))
+    : null;
+  if (!referenceMidnight && dailyRecords.length > 0) {
     // Warning: referenceDate is missing, time decay will use array index fallback
     // This may produce incorrect results if array structure changes
     console.warn(
@@ -623,8 +625,9 @@ export const computeWetness = (
     // - Winter (0.92/day): 1d=92%, 3d=78%, 7d=55%
     const ageDays = (() => {
       if (referenceMidnight && date) {
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
+        // Parse YYYY-MM-DD as UTC to match referenceMidnight
+        const [year, month, day] = date.split("-").map(Number);
+        const dayStart = new Date(Date.UTC(year, month - 1, day));
         const diffMs = referenceMidnight.getTime() - dayStart.getTime();
         const diff = diffMs / MS_PER_DAY;
         return Number.isFinite(diff) && diff > 0 ? diff : 0;
@@ -972,6 +975,13 @@ export const categorizeWetness = (wetnessData: WetnessData | null): string =>
 // ============================================================================
 
 /**
+ * Round coordinates to 2 decimal places for cache keys.
+ * This prevents GPS jitter from creating duplicate cache entries.
+ * 2 decimal places gives ~1.1km precision, sufficient for weather data.
+ */
+const roundCoordForCache = (coord: number): string => coord.toFixed(2);
+
+/**
  * Fetch data with caching using Storage module
  */
 const fetchWithCache = async <T>(
@@ -999,7 +1009,7 @@ export const fetchWeatherAround = async (
   whenLocal: Date,
   tz: string
 ): Promise<WeatherData> => {
-  const hrKey = `hourly_${lat}_${lon}_${Math.floor(whenLocal.getTime() / MS_PER_HOUR)}`;
+  const hrKey = `hourly_${roundCoordForCache(lat)}_${roundCoordForCache(lon)}_${Math.floor(whenLocal.getTime() / MS_PER_HOUR)}`;
 
   return fetchWithCache(hrKey, async (signal) => {
     const ymd = whenLocal.toLocaleDateString("en-CA");
@@ -1020,7 +1030,12 @@ export const fetchWeatherAround = async (
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error("Failed to fetch weather data");
 
-    const rawData = await res.json();
+    let rawData: unknown;
+    try {
+      rawData = await res.json();
+    } catch {
+      throw new Error("Failed to parse weather API response");
+    }
     if (!validateOpenMeteoHourlyResponse(rawData)) {
       throw new Error("Invalid hourly weather API response format");
     }
@@ -1089,7 +1104,7 @@ export const fetchWetnessInputs = async (
   tz: string
 ): Promise<WetnessData> => {
   const dawnYMD = dawnLocalDate.toLocaleDateString("en-CA");
-  const key = `wetness_${lat}_${lon}_${dawnYMD}`;
+  const key = `wetness_${roundCoordForCache(lat)}_${roundCoordForCache(lon)}_${dawnYMD}`;
 
   return fetchWithCache(key, async (signal) => {
     // Get 7 days of historical data before dawn day
@@ -1114,7 +1129,14 @@ export const fetchWetnessInputs = async (
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error("Failed to fetch wetness data");
 
-    const rawData = await res.json();
+    let rawData: unknown;
+    try {
+      rawData = await res.json();
+    } catch {
+      // If JSON parsing fails, return empty wetness data rather than crashing
+      console.warn("Failed to parse wetness API response");
+      return computeWetness([], { referenceDate: dawnLocalDate });
+    }
     if (!validateOpenMeteoDailyResponse(rawData)) {
       // If response is invalid, return empty wetness data rather than throwing
       // This allows the app to continue functioning with degraded weather info

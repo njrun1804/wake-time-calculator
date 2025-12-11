@@ -31,6 +31,17 @@ export const getMinutesSinceMidnightInZone = (date: Date, tz: string): number =>
     hour12: false,
     timeZone: tz,
   });
-  const [hours, minutes] = timeStr.split(":").map(Number);
+  const parts = timeStr.split(":");
+  if (parts.length < 2) {
+    // Unexpected format from toLocaleTimeString - should not happen with en-US locale
+    console.warn(`Unexpected time format: ${timeStr}`);
+    return 0;
+  }
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+    console.warn(`Failed to parse time: ${timeStr}`);
+    return 0;
+  }
   return hours * 60 + minutes;
 };

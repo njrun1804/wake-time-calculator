@@ -330,6 +330,7 @@ test("geocodePlace rejects when API returns invalid response format", async () =
       return (
         error.message.includes("Invalid geocoding API response format") ||
         error.message.includes("Failed to geocode location") ||
+        error.message.includes("Failed to parse geocoding API response") ||
         error.message.includes("not valid JSON") ||
         error.name === "SyntaxError" ||
         error.constructor.name === "SyntaxError"
