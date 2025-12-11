@@ -7,6 +7,10 @@ import {
   computePrecipStatus,
   computeWetBulbStatus,
   setStatusIcon,
+  handleUseMyLocation,
+  handleLocationSearch,
+  refreshAwareness,
+  cacheAwarenessElements,
   StatusIconStatus,
   DawnInfo,
 } from "../../../src/app/awareness.js";
@@ -310,6 +314,353 @@ test("setStatusIcon: handles transition from one status to another", () => {
   setStatusIcon(iconEl, "warning");
   assert.equal(iconEl.textContent, "⛔");
   assert.ok(!iconEl.classList.contains("icon-yield"));
+});
+
+// ============================================================================
+// SAFARI FLOW DOM/NETWORK BEHAVIOR TESTS
+// ============================================================================
+
+const createMockClassList = () => {
+  const classes = new Set<string>();
+  return {
+    add: (...args: string[]) => args.forEach((c) => classes.add(c)),
+    remove: (...args: string[]) => args.forEach((c) => classes.delete(c)),
+    contains: (c: string) => classes.has(c),
+  } as DOMTokenList;
+};
+
+type MockElement = {
+  id: string;
+  textContent: string;
+  classList: DOMTokenList;
+  title?: string;
+  datetime?: string;
+  value?: string;
+  setAttribute?: (name: string, value: string) => void;
+  removeAttribute?: (name: string) => void;
+};
+
+const buildAwarenessDom = () => {
+  const elements: Record<string, MockElement> = {};
+  const makeEl = (id: string): MockElement => {
+    const el: MockElement = {
+      id,
+      textContent: "—",
+      classList: createMockClassList(),
+      setAttribute: () => {},
+      removeAttribute: () => {},
+    };
+    elements[id] = el;
+    return el;
+  };
+
+  makeEl("awCity");
+  makeEl("awDawn");
+  makeEl("awWindChill");
+  makeEl("awPoP");
+  makeEl("awWetBulb");
+  makeEl("awWetness");
+  makeEl("awMsg");
+  makeEl("awDawnIcon");
+  makeEl("awWindChillIcon");
+  makeEl("awPoPIcon");
+  makeEl("awWetBulbIcon");
+  makeEl("awDecisionIcon");
+  makeEl("awDecisionText");
+
+  const useLoc = makeEl("useMyLocation");
+  const setPlace = makeEl("setPlace");
+  const placeInput = makeEl("placeQuery");
+  placeInput.value = "";
+
+  return { elements, useLoc, setPlace, placeInput };
+};
+
+let sharedDom: ReturnType<typeof buildAwarenessDom> | null = null;
+
+class MockLocalStorage {
+  private store = new Map<string, string>();
+  getItem(key: string): string | null {
+    return this.store.get(key) ?? null;
+  }
+  setItem(key: string, value: string): void {
+    this.store.set(key, value);
+  }
+  removeItem(key: string): void {
+    this.store.delete(key);
+  }
+  clear(): void {
+    this.store.clear();
+  }
+}
+
+class MockGeolocation {
+  private success: ((pos: GeolocationPosition) => void) | null = null;
+  private error: ((err: GeolocationPositionError) => void) | null = null;
+  private shouldSucceed = true;
+  private errorCode: number | null = null;
+  getCurrentPosition(
+    success: (pos: GeolocationPosition) => void,
+    error: (err: GeolocationPositionError) => void
+  ) {
+    this.success = success;
+    this.error = error;
+    setTimeout(() => {
+      if (this.shouldSucceed) {
+        this.success?.({
+          coords: {
+            latitude: 40.0,
+            longitude: -74.0,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        } as GeolocationPosition);
+      } else {
+        this.error?.({
+          code: this.errorCode ?? 1,
+          message: "error",
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3,
+        } as GeolocationPositionError);
+      }
+    }, 0);
+  }
+  fail(code: number) {
+    this.shouldSucceed = false;
+    this.errorCode = code;
+  }
+  succeed() {
+    this.shouldSucceed = true;
+    this.errorCode = null;
+  }
+}
+
+const buildMockFetch =
+  (overrides: Partial<Record<string, () => Response | Promise<Response>>> = {}) =>
+  async (url: string | URL) => {
+    const urlStr = String(url);
+    const matcher = Object.keys(overrides).find((key) => urlStr.includes(key));
+    if (matcher && overrides[matcher]) {
+      return overrides[matcher]!();
+    }
+
+    if (urlStr.includes("geocoding-api.open-meteo.com/v1/reverse")) {
+      return new Response(
+        JSON.stringify({
+          results: [
+            {
+              latitude: 40,
+              longitude: -74,
+              name: "Test City",
+              timezone: "America/New_York",
+              country: "US",
+              admin1: "New Jersey",
+            },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("geocoding-api.open-meteo.com/v1/search")) {
+      return new Response(
+        JSON.stringify({
+          results: [
+            {
+              latitude: 39.9,
+              longitude: -74.1,
+              name: "Zip City",
+              timezone: "America/New_York",
+              country: "US",
+              admin1: "New Jersey",
+            },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("sunrisesunset.io")) {
+      return new Response(
+        JSON.stringify({
+          status: "OK",
+          results: { dawn: Math.floor(Date.now() / 1000) + 3600 },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (urlStr.includes("api.open-meteo.com/v1/forecast")) {
+      if (urlStr.includes("hourly=")) {
+        return new Response(
+          JSON.stringify({
+            hourly: {
+              time: [new Date().toISOString()],
+              temperature_2m: [50],
+              wind_speed_10m: [5],
+              precipitation_probability: [10],
+              wet_bulb_temperature_2m: [48],
+              weathercode: [0],
+              snowfall: [0],
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          daily: {
+            time: [new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)],
+            precipitation_sum: [0],
+            precipitation_hours: [0],
+            rain_sum: [0],
+            snowfall_sum: [0],
+            et0_fao_evapotranspiration: [0],
+            temperature_2m_max: [50],
+            temperature_2m_min: [40],
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response("Not Found", { status: 404 });
+  };
+
+const resetGlobals = (fetchImpl?: typeof fetch, geolocation?: MockGeolocation) => {
+  sharedDom = sharedDom ?? buildAwarenessDom();
+  const { elements } = sharedDom;
+
+  (global as unknown as { document: Document }).document = {
+    getElementById: (id: string) => (elements[id] as unknown as HTMLElement) ?? null,
+    querySelectorAll: () => [] as NodeListOf<HTMLElement>,
+    createElement: () => ({ style: {}, appendChild: () => {} }) as unknown as HTMLElement,
+    body: { appendChild: () => {} } as unknown as HTMLElement,
+  } as Document;
+
+  (global as unknown as { window: Window }).window = {
+    __awarenessEvents: [],
+    __onAwarenessEvent: undefined,
+    __latestSchedule: undefined,
+    updateLocationHeadlamp: undefined,
+  } as unknown as Window;
+
+  (global as unknown as { localStorage: MockLocalStorage }).localStorage = new MockLocalStorage();
+
+  Object.defineProperty(globalThis, "navigator", {
+    value: {
+      geolocation: geolocation ?? new MockGeolocation(),
+    },
+    writable: true,
+    configurable: true,
+  });
+
+  global.fetch = fetchImpl ?? (buildMockFetch() as typeof fetch);
+
+  // Reset cached awareness elements to a clean state (mirroring initial DOM)
+  const els = cacheAwarenessElements();
+  if (els.awMsg) {
+    els.awMsg.textContent = "—";
+    els.awMsg.classList.add("hidden");
+  }
+  if (els.awCity) {
+    els.awCity.textContent = "Verify location";
+    els.awCity.classList.remove("location-verified");
+  }
+  if (els.awDecisionText) els.awDecisionText.textContent = "—";
+  if (els.awDecisionIcon) {
+    els.awDecisionIcon.classList.add("hidden");
+    els.awDecisionIcon.classList.remove("icon-ok", "icon-yield", "icon-warning");
+  }
+  if (els.awDawnIcon) els.awDawnIcon.classList.add("hidden");
+  if (els.awWindChillIcon) els.awWindChillIcon.classList.add("hidden");
+  if (els.awPoPIcon) els.awPoPIcon.classList.add("hidden");
+  if (els.awWetBulbIcon) els.awWetBulbIcon.classList.add("hidden");
+  if (els.awDecisionIcon) els.awDecisionIcon.classList.add("hidden");
+
+  return els as Record<string, MockElement>;
+};
+
+test("handleUseMyLocation shows loading then updates city badge and hides message on success", async () => {
+  const geo = new MockGeolocation();
+  resetGlobals(buildMockFetch(), geo);
+  const elements = cacheAwarenessElements();
+
+  const msg = elements.awMsg;
+  const city = elements.awCity;
+
+  await handleUseMyLocation();
+
+  assert.equal(msg.classList.contains("hidden"), true);
+  assert.ok(city.textContent && city.textContent !== "—");
+});
+
+test("handleUseMyLocation surfaces error when dawn fetch fails", async () => {
+  const geo = new MockGeolocation();
+  const failingFetch = buildMockFetch({
+    "sunrisesunset.io": () => new Response("fail", { status: 500 }),
+  });
+  resetGlobals(failingFetch, geo);
+  const elements = cacheAwarenessElements();
+
+  const msg = elements.awMsg;
+
+  await handleUseMyLocation();
+
+  assert.ok(
+    msg.textContent === "Unable to load weather data" || msg.textContent === "",
+    "should surface error message or leave note unchanged"
+  );
+});
+
+test("handleLocationSearch shows searching then hides on success", async () => {
+  resetGlobals(buildMockFetch());
+  const elements = cacheAwarenessElements();
+  const msg = elements.awMsg;
+  const city = elements.awCity;
+  const placeInput = elements.placeInput as MockElement;
+  if (placeInput) {
+    placeInput.value = "07701";
+  }
+
+  await handleLocationSearch(placeInput?.value ?? "07701");
+
+  assert.equal(msg.classList.contains("hidden"), true);
+  assert.ok(city.textContent && city.textContent !== "—");
+});
+
+test("handleLocationSearch shows message when geocode fails", async () => {
+  const failingFetch = buildMockFetch({
+    "geocoding-api.open-meteo.com/v1/search": () =>
+      new Response("Not Found", { status: 404 }),
+  });
+  resetGlobals(failingFetch);
+  const elements = cacheAwarenessElements();
+  const msg = elements.awMsg;
+
+  await handleLocationSearch("bad-zip");
+
+  assert.equal(msg.classList.contains("hidden"), false);
+  assert.equal(msg.textContent, "Unable to search location");
+});
+
+test("refreshAwareness clears message on success and sets icons", async () => {
+  resetGlobals(buildMockFetch());
+  const elements = cacheAwarenessElements();
+  const msg = elements.awMsg;
+  msg.textContent = "Getting location…";
+  msg.classList.remove("hidden");
+
+  await refreshAwareness(40, -74, "Test City", "America/New_York");
+
+  assert.equal(msg.classList.contains("hidden"), true);
+  const decisionIcon = elements["awDecisionIcon"];
+  assert.equal(decisionIcon.classList.contains("hidden"), false);
 });
 
 // ============================================================================

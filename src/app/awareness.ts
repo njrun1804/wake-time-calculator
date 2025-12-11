@@ -710,22 +710,32 @@ export const handleUseMyLocation = async (): Promise<void> => {
       return;
     }
 
-    if (els.awMsg) els.awMsg.textContent = "Getting location…";
+    if (els.awMsg) {
+      els.awMsg.textContent = "Getting location…";
+      els.awMsg.classList.remove("hidden");
+    }
     emitAwarenessEvent("location-requested");
 
     const coords = await getCurrentLocation();
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+    let label: string;
     try {
       const info = await reverseGeocode(coords.lat, coords.lon);
-      const label = info.city || formatCoordinates(coords.lat, coords.lon);
+      label = info.city || formatCoordinates(coords.lat, coords.lon);
+    } catch (error) {
+      console.warn("Reverse geocoding failed:", error);
+      label = formatCoordinates(coords.lat, coords.lon);
+    }
 
-      Storage.saveWeatherLocation({
-        lat: coords.lat,
-        lon: coords.lon,
-        city: label,
-        tz,
-      });
+    Storage.saveWeatherLocation({
+      lat: coords.lat,
+      lon: coords.lon,
+      city: label,
+      tz,
+    });
+
+    try {
       await refreshAwareness(coords.lat, coords.lon, label, tz);
       emitAwarenessEvent("location-updated", {
         city: label,
@@ -733,17 +743,10 @@ export const handleUseMyLocation = async (): Promise<void> => {
         lon: coords.lon,
       });
     } catch (error) {
-      console.warn("Reverse geocoding failed:", error);
-      const fallback = formatCoordinates(coords.lat, coords.lon);
-      Storage.saveWeatherLocation({
-        lat: coords.lat,
-        lon: coords.lon,
-        city: fallback,
-        tz: defaultTz,
-      });
-      await refreshAwareness(coords.lat, coords.lon, fallback, defaultTz);
+      // refreshAwareness handles its own error display, but we still emit the event
+      console.warn("Failed to refresh awareness after location update:", error);
       emitAwarenessEvent("location-updated", {
-        city: fallback,
+        city: label,
         lat: coords.lat,
         lon: coords.lon,
       });
@@ -792,12 +795,22 @@ export const handleLocationSearch = async (query: string | null | undefined): Pr
     tz: location.tz,
   });
 
-  await refreshAwareness(location.lat, location.lon, location.city, location.tz || defaultTz);
-  emitAwarenessEvent("location-updated", {
-    city: location.city,
-    lat: location.lat,
-    lon: location.lon,
-  });
+  try {
+    await refreshAwareness(location.lat, location.lon, location.city, location.tz || defaultTz);
+    emitAwarenessEvent("location-updated", {
+      city: location.city,
+      lat: location.lat,
+      lon: location.lon,
+    });
+  } catch (error) {
+    // refreshAwareness handles its own error display, but we still emit the event
+    console.warn("Failed to refresh awareness after location search:", error);
+    emitAwarenessEvent("location-updated", {
+      city: location.city,
+      lat: location.lat,
+      lon: location.lon,
+    });
+  }
 
   const els = cacheAwarenessElements();
   if (els?.placeInput) {
