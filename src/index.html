@@ -10,15 +10,13 @@
     <link rel="stylesheet" href="css/main.css" fetchpriority="high" />
 
     <!-- Preload JS entry point so hydration can start sooner -->
-    <link rel="modulepreload" href="js/app/main.js" />
+    <link rel="modulepreload" href="app/main.js" />
   </head>
   <body>
     <div class="hero-bg" aria-hidden="true"></div>
     <main>
       <header class="title-wrapper">
-        <h1 class="title-main">
-          Wake Time <span class="title-accent">Calculator</span>
-        </h1>
+        <h1 class="title-main">Wake Time <span class="title-accent">Calculator</span></h1>
       </header>
 
       <!-- Input Form Section (moved to top) -->
@@ -55,11 +53,7 @@
         <div class="form-row">
           <div class="field-group">
             <label id="breakfastLabel">Breakfast</label>
-            <div
-              class="toggle-breakfast"
-              role="radiogroup"
-              aria-labelledby="breakfastLabel"
-            >
+            <div class="toggle-breakfast" role="radiogroup" aria-labelledby="breakfastLabel">
               <label class="toggle-breakfast-option">
                 <input
                   type="radio"
@@ -71,21 +65,11 @@
                 <span>No</span>
               </label>
               <label class="toggle-breakfast-option">
-                <input
-                  type="radio"
-                  class="breakfast-option"
-                  name="breakfastToggle"
-                  value="30"
-                />
+                <input type="radio" class="breakfast-option" name="breakfastToggle" value="30" />
                 <span>Yes (30m)</span>
               </label>
             </div>
-            <input
-              id="breakfastMinutes"
-              name="breakfastMinutes"
-              type="hidden"
-              value="0"
-            />
+            <input id="breakfastMinutes" name="breakfastMinutes" type="hidden" value="0" />
           </div>
           <div class="field-group">
             <label for="runLocation">Run location</label>
@@ -95,41 +79,22 @@
                 <option value="huber" data-travel="20">Huber</option>
                 <option value="tatum" data-travel="36">Tatum</option>
                 <option value="holmdel" data-travel="50">Holmdel</option>
-                <option value="shark-river" data-travel="52">
-                  Shark River Park
-                </option>
-                <option value="allaire" data-travel="64">
-                  Allaire State Park
-                </option>
+                <option value="shark-river" data-travel="52">Shark River Park</option>
+                <option value="allaire" data-travel="64">Allaire State Park</option>
                 <option value="rez" data-travel="70">Reservoir Loop</option>
-                <option value="battlefield" data-travel="60">
-                  Monmouth Battlefield
-                </option>
+                <option value="battlefield" data-travel="60">Monmouth Battlefield</option>
               </optgroup>
               <optgroup label="No dirt">
-                <option value="round-town" data-travel="0" selected>
-                  Round town
-                </option>
+                <option value="round-town" data-travel="0" selected>Round town</option>
                 <option value="sandy-hook" data-travel="32">Sandy hook</option>
-                <option value="henry-hudson" data-travel="32">
-                  Henry Hudson Trail
-                </option>
-                <option value="lb-boardwalk" data-travel="38">
-                  Long Branch boardwalk
-                </option>
-                <option value="asbury-boardwalk" data-travel="50">
-                  Asbury boardwalk
-                </option>
+                <option value="henry-hudson" data-travel="32">Henry Hudson Trail</option>
+                <option value="lb-boardwalk" data-travel="38">Long Branch boardwalk</option>
+                <option value="asbury-boardwalk" data-travel="50">Asbury boardwalk</option>
               </optgroup>
             </select>
           </div>
         </div>
-        <input
-          id="travelMinutes"
-          name="travelMinutes"
-          type="hidden"
-          value="0"
-        />
+        <input id="travelMinutes" name="travelMinutes" type="hidden" value="0" />
         <!-- Hidden submit button for HTML validation -->
         <button type="submit" class="hidden" tabindex="-1">Submit</button>
       </form>
@@ -138,23 +103,12 @@
       <section class="awareness" id="awareness" aria-live="polite">
         <div class="aw-top">
           <div class="aw-where">
-            <span id="awCity" class="location-badge verification-needed"
-              >Verify location</span
-            >
+            <span id="awCity" class="location-badge verification-needed">Verify location</span>
           </div>
           <div class="aw-actions">
-            <button type="button" id="useMyLocation" class="btn-primary">
-              Use my location
-            </button>
-            <input
-              id="placeQuery"
-              type="text"
-              placeholder="City or ZIP"
-              aria-label="City or ZIP"
-            />
-            <button type="button" id="setPlace" class="btn-secondary">
-              Set
-            </button>
+            <button type="button" id="useMyLocation" class="btn-primary">Use my location</button>
+            <input id="placeQuery" type="text" placeholder="City or ZIP" aria-label="City or ZIP" />
+            <button type="button" id="setPlace" class="btn-secondary">Set</button>
           </div>
         </div>
 
@@ -162,57 +116,35 @@
           <div class="aw-item">
             <div class="label">Dawn</div>
             <div class="value">
-              <span
-                class="status-icon hidden"
-                id="awDawnIcon"
-                aria-hidden="true"
-                >⚠</span
-              >
+              <span class="status-icon hidden" id="awDawnIcon" aria-hidden="true">⚠</span>
               <time id="awDawn" datetime="">—</time>
             </div>
           </div>
           <div class="aw-item">
             <div class="label">Wind chill</div>
             <div class="value">
-              <span
-                class="status-icon hidden"
-                id="awWindChillIcon"
-                aria-hidden="true"
-                >⚠</span
-              >
+              <span class="status-icon hidden" id="awWindChillIcon" aria-hidden="true">⚠</span>
               <span id="awWindChill">—</span>
             </div>
           </div>
           <div class="aw-item">
             <div class="label">Precip %</div>
             <div class="value">
-              <span class="status-icon hidden" id="awPoPIcon" aria-hidden="true"
-                >⚠</span
-              >
+              <span class="status-icon hidden" id="awPoPIcon" aria-hidden="true">⚠</span>
               <span id="awPoP">—</span>
             </div>
           </div>
           <div class="aw-item">
             <div class="label">Wet bulb</div>
             <div class="value">
-              <span
-                class="status-icon hidden"
-                id="awWetBulbIcon"
-                aria-hidden="true"
-                >⚠</span
-              >
+              <span class="status-icon hidden" id="awWetBulbIcon" aria-hidden="true">⚠</span>
               <span id="awWetBulb">—</span>
             </div>
           </div>
           <div class="aw-item">
             <div class="label">Trail Status</div>
             <div class="value" id="awWetness">
-              <span
-                class="status-icon hidden"
-                id="awDecisionIcon"
-                aria-hidden="true"
-                >⚠</span
-              >
+              <span class="status-icon hidden" id="awDecisionIcon" aria-hidden="true">⚠</span>
               <span id="awDecisionText">—</span>
             </div>
           </div>
@@ -221,13 +153,9 @@
         <div class="aw-note hidden" id="awMsg"></div>
         <p class="aw-credits">
           Powered by
-          <a href="https://sunrisesunset.io" target="_blank" rel="noopener"
-            >SunriseSunset.io</a
-          >
+          <a href="https://sunrisesunset.io" target="_blank" rel="noopener">SunriseSunset.io</a>
           &amp;
-          <a href="https://open-meteo.com" target="_blank" rel="noopener"
-            >Open‑Meteo</a
-          >
+          <a href="https://open-meteo.com" target="_blank" rel="noopener">Open‑Meteo</a>
         </p>
       </section>
 
@@ -237,9 +165,7 @@
           <div class="wake-hero__primary">
             <h2 class="wake-hero__label">Wake Time</h2>
             <div class="wake-hero__time" id="chosenWake">--:--</div>
-            <span id="prevDayBadge" class="badge hidden wake-hero__badge">
-              previous day
-            </span>
+            <span id="prevDayBadge" class="badge hidden wake-hero__badge"> previous day </span>
           </div>
           <div class="wake-hero__secondary">
             <h3 class="wake-hero__secondary-label">Latest Wake Window</h3>
@@ -250,6 +176,6 @@
     </main>
 
     <!-- Load modular JavaScript -->
-    <script type="module" src="js/app/main.js"></script>
+    <script type="module" src="app/main.js"></script>
   </body>
 </html>

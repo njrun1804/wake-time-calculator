@@ -25,16 +25,16 @@
  * 3. Wait for user to click "Use my location"
  *
  * Cross-module Dependencies:
- * - weather.js: fetchWeatherAround, fetchWetnessInputs, interpretWetness
- * - location.js: getCurrentLocation, reverseGeocode, geocodePlace
- * - dawn.js: fetchDawn (for dawn time)
- * - main.js: calls updateLocationHeadlamp when awareness ready
+ * - weather.ts: fetchWeatherAround, fetchWetnessInputs, interpretWetness
+ * - location.ts: getCurrentLocation, reverseGeocode, geocodePlace
+ * - dawn.ts: fetchDawn (for dawn time)
+ * - main.ts: calls updateLocationHeadlamp when awareness ready
  */
 
 // External dependencies
 import { Storage } from "../lib/storage.js";
-import { defaultTz } from "../lib/constants.js";
-import { fmtTime12InZone } from "../lib/time.js";
+import { defaultTz, isError, getErrorMessage } from "../lib/constants.js";
+import { fmtTime12InZone, getMinutesSinceMidnightInZone } from "../lib/time.js";
 import { toMinutes } from "../lib/calculator.js";
 import {
   fetchWeatherAround,
@@ -42,15 +42,123 @@ import {
   interpretWetness,
   formatTemp,
   formatPoP,
+  WeatherData,
+  WetnessData,
+  type WetnessInterpretation,
 } from "./weather.js";
-import { fetchDawn } from "./dawn.js";
+import { fetchDawn, DawnInfo } from "./dawn.js";
 import {
   getCurrentLocation,
   reverseGeocode,
   geocodePlace,
   validateCoordinates,
   formatCoordinates,
+  Coordinates,
+  LocationInfo,
 } from "./location.js";
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type StatusIconStatus = "ok" | "yield" | "warning" | "none";
+
+export type AwarenessEventType =
+  | "init"
+  | "ready"
+  | "error"
+  | "location-updated"
+  | "location-requested"
+  | "location-error"
+  | "location-denied"
+  | "search-started"
+  | "search-error";
+
+export interface AwarenessEventDetail {
+  source?: string;
+  message?: string;
+  city?: string;
+  lat?: number;
+  lon?: number;
+  label?: string | null;
+  decision?: string | null;
+  dawn?: string | null;
+  query?: string;
+}
+
+export interface AwarenessEventPayload {
+  type: AwarenessEventType;
+  detail: AwarenessEventDetail;
+  timestamp: number;
+}
+
+export interface AwarenessElements {
+  awCity: HTMLElement | null;
+  awDawn: HTMLTimeElement | null;
+  awMsg: HTMLElement | null;
+  awWindChill: HTMLElement | null;
+  awPoP: HTMLElement | null;
+  awWetBulb: HTMLElement | null;
+  awDawnIcon: HTMLElement | null;
+  awWindChillIcon: HTMLElement | null;
+  awPoPIcon: HTMLElement | null;
+  awWetBulbIcon: HTMLElement | null;
+  awWetness: HTMLElement | null;
+  awDecisionIcon: HTMLElement | null;
+  awDecisionText: HTMLElement | null;
+  useLoc: HTMLButtonElement | null;
+  placeInput: HTMLInputElement | null;
+  setPlace: HTMLButtonElement | null;
+  defaultMsg: string | null;
+}
+
+export interface AwarenessDisplayData {
+  city?: string;
+  dawn?: DawnInfo | null;
+  windChillF?: number | null;
+  pop?: number | null;
+  wetBulbF?: number | null;
+  tempF?: number | null;
+  windMph?: number | null;
+  weatherCode?: number | null;
+  snowfall?: number | null;
+  isSnow?: boolean;
+  wetnessData?: WetnessData | null;
+  tz: string;
+}
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface AwarenessDisplayResult {
+  wetnessInsight?: WetnessInterpretation | null;
+  decision?: string | null;
+  city?: string | null;
+  dawn?: DawnInfo | null;
+  runStartMinutes?: number | null;
+  timezone?: string;
+}
+
+interface AwarenessDataResult {
+  dawnData: DawnInfo;
+  weather: WeatherData;
+  wetnessInfo: WetnessData | null;
+}
+
+declare global {
+  interface Window {
+    __awarenessEvents?: AwarenessEventPayload[];
+    __onAwarenessEvent?: (payload: AwarenessEventPayload) => void;
+    __latestWetnessInsight?: WetnessInterpretation | null;
+    __latestWetnessRaw?: WetnessData | null;
+    __latestSchedule?: {
+      runStartMinutes?: number;
+      runStartTime?: string;
+    };
+    updateLocationHeadlamp?: () => void;
+  }
+}
 
 // ============================================================================
 // EVENT SYSTEM
@@ -61,16 +169,13 @@ import {
  *
  * Events are stored in window.__awarenessEvents array for debugging
  * and can trigger custom callbacks via window.__onAwarenessEvent.
- *
- * @param {string} type - Event type (init, ready, error, location-updated, etc.)
- * @param {object} detail - Event detail data
- *
- * @example
- * emitAwarenessEvent('location-updated', { city: 'Boulder, CO, US', lat: 40.015, lon: -105.270 });
  */
-export const emitAwarenessEvent = (type, detail = {}) => {
+export const emitAwarenessEvent = (
+  type: AwarenessEventType,
+  detail: AwarenessEventDetail = {}
+): void => {
   if (typeof window === "undefined") return;
-  const payload = {
+  const payload: AwarenessEventPayload = {
     type,
     detail,
     timestamp: Date.now(),
@@ -94,10 +199,8 @@ export const emitAwarenessEvent = (type, detail = {}) => {
 
 /**
  * Set status icon appearance
- * @param {Element} iconEl - Icon element
- * @param {string} status - Status: 'ok', 'yield', 'warning', 'none'
  */
-export const setStatusIcon = (iconEl, status) => {
+export const setStatusIcon = (iconEl: HTMLElement | null, status: StatusIconStatus): void => {
   if (!iconEl) return;
   iconEl.classList.add("hidden");
   iconEl.classList.remove("icon-ok", "icon-yield", "icon-warning");
@@ -124,14 +227,21 @@ export const setStatusIcon = (iconEl, status) => {
  * - Yield (⚠): Start within ±5 minutes of dawn (twilight)
  * - OK (✅): Start >5 minutes after dawn (daylight)
  *
- * @param {number} runStartMinutes - Run start time in minutes since midnight
- * @param {Date} dawnDate - Dawn date
- * @returns {string} Status: 'ok', 'yield', 'warning'
+ * IMPORTANT: Uses location timezone to ensure accurate warnings for remote locations.
  */
-export const computeDawnStatus = (runStartMinutes, dawnDate) => {
-  if (!Number.isFinite(runStartMinutes) || !dawnDate) return "ok";
-  const dawnMinutes = dawnDate.getHours() * 60 + dawnDate.getMinutes();
+export const computeDawnStatus = (
+  runStartMinutes: number,
+  dawnData: DawnInfo | null
+): StatusIconStatus => {
+  if (!dawnData || !dawnData.date || !dawnData.tz) return "ok";
+  if (!Number.isFinite(runStartMinutes)) return "ok";
+
+  const { date: dawnDate, tz: dawnTz } = dawnData;
+
+  // Get dawn time in minutes since midnight IN THE LOCATION'S TIMEZONE
+  const dawnMinutes = getMinutesSinceMidnightInZone(dawnDate, dawnTz);
   if (!Number.isFinite(dawnMinutes)) return "ok";
+
   const diff = runStartMinutes - dawnMinutes;
   if (!Number.isFinite(diff)) return "ok";
   if (diff <= 5 && diff >= -5) return "yield";
@@ -146,11 +256,8 @@ export const computeDawnStatus = (runStartMinutes, dawnDate) => {
  * - Warning (⛔): ≤30°F (frostbite risk)
  * - Yield (⚠): 31-40°F (cold)
  * - OK (✅): >40°F (comfortable)
- *
- * @param {number} windChillF - Wind chill temperature
- * @returns {string} Status: 'ok', 'yield', 'warning'
  */
-export const computeWindStatus = (windChillF) => {
+export const computeWindStatus = (windChillF: number | null | undefined): StatusIconStatus => {
   if (typeof windChillF !== "number") return "ok";
   if (windChillF <= 30) return "warning";
   if (windChillF <= 40) return "yield";
@@ -164,11 +271,8 @@ export const computeWindStatus = (windChillF) => {
  * - Warning (⛔): ≥60% (likely rain)
  * - Yield (⚠): 30-59% (possible rain)
  * - OK (✅): <30% (unlikely)
- *
- * @param {number} pop - Probability of precipitation (0-100)
- * @returns {string} Status: 'ok', 'yield', 'warning'
  */
-export const computePrecipStatus = (pop) => {
+export const computePrecipStatus = (pop: number | null | undefined): StatusIconStatus => {
   if (typeof pop !== "number") return "ok";
   if (pop >= 60) return "warning";
   if (pop >= 30) return "yield";
@@ -182,11 +286,8 @@ export const computePrecipStatus = (pop) => {
  * - Warning (⛔): ≥75°F (dangerous heat/humidity)
  * - Yield (⚠): 65-74°F (hot/humid)
  * - OK (✅): <65°F (comfortable)
- *
- * @param {number} wetBulbF - Wet bulb temperature
- * @returns {string} Status: 'ok', 'yield', 'warning'
  */
-export const computeWetBulbStatus = (wetBulbF) => {
+export const computeWetBulbStatus = (wetBulbF: number | null | undefined): StatusIconStatus => {
   if (typeof wetBulbF !== "number") return "ok";
   if (wetBulbF >= 75) return "warning";
   if (wetBulbF >= 65) return "yield";
@@ -200,17 +301,16 @@ export const computeWetBulbStatus = (wetBulbF) => {
 /**
  * Weather awareness UI elements cache
  */
-let awarenessElements = null;
+let awarenessElements: AwarenessElements | null = null;
 
 /**
  * Build awareness elements object from DOM
- * @returns {object} Elements object
  */
-const buildAwarenessElements = () => {
+const buildAwarenessElements = (): AwarenessElements => {
   const awMsgEl = document.getElementById("awMsg");
   return {
     awCity: document.getElementById("awCity"),
-    awDawn: document.getElementById("awDawn"),
+    awDawn: document.getElementById("awDawn") as HTMLTimeElement | null,
     awMsg: awMsgEl,
     awWindChill: document.getElementById("awWindChill"),
     awPoP: document.getElementById("awPoP"),
@@ -222,19 +322,17 @@ const buildAwarenessElements = () => {
     awWetness: document.getElementById("awWetness"),
     awDecisionIcon: document.getElementById("awDecisionIcon"),
     awDecisionText: document.getElementById("awDecisionText"),
-    useLoc: document.getElementById("useMyLocation"),
-    placeInput: document.getElementById("placeQuery"),
-    setPlace: document.getElementById("setPlace"),
-    defaultMsg: awMsgEl ? awMsgEl.textContent : "",
+    useLoc: document.getElementById("useMyLocation") as HTMLButtonElement | null,
+    placeInput: document.getElementById("placeQuery") as HTMLInputElement | null,
+    setPlace: document.getElementById("setPlace") as HTMLButtonElement | null,
+    defaultMsg: awMsgEl ? awMsgEl.textContent : null,
   };
 };
 
 /**
  * Check if DOM element is stale (disconnected)
- * @param {Element} el - Element to check
- * @returns {boolean} True if stale
  */
-const isElementStale = (el) => {
+const isElementStale = (el: HTMLElement | null): boolean => {
   if (!el) return true;
   if (typeof Element !== "undefined" && el instanceof Element) {
     return !el.isConnected;
@@ -248,10 +346,8 @@ const isElementStale = (el) => {
  * Re-queries DOM if cache is empty or elements are disconnected.
  * This handles cases where DOM is rebuilt (e.g., hot reload).
  * Checks awMsg as representative element - if it's stale, all elements are.
- *
- * @returns {object} Cached elements
  */
-export const cacheAwarenessElements = () => {
+export const cacheAwarenessElements = (): AwarenessElements => {
   if (!awarenessElements || isElementStale(awarenessElements.awMsg)) {
     awarenessElements = buildAwarenessElements();
   }
@@ -263,19 +359,18 @@ export const cacheAwarenessElements = () => {
 // ============================================================================
 
 /**
- * Current dawn date (global state for daylight checking)
+ * Current dawn data (global state for daylight checking)
+ * Stores {date: Date, tz: string} to ensure timezone-aware comparisons
  */
-let currentDawnDate = null;
+let currentDawnData: DawnInfo | null = null;
 
 /**
  * Update dawn status icon
- * @param {number} runStartMinutes - Run start time in minutes
- * @param {Date} dawnDate - Dawn date
  */
-export const updateDawnStatus = (runStartMinutes, dawnDate) => {
+export const updateDawnStatus = (runStartMinutes: number, dawnData: DawnInfo | null): void => {
   const els = cacheAwarenessElements();
   if (!els?.awDawnIcon) return;
-  const status = computeDawnStatus(runStartMinutes, dawnDate);
+  const status = computeDawnStatus(runStartMinutes, dawnData);
   setStatusIcon(els.awDawnIcon, status);
 };
 
@@ -288,11 +383,8 @@ export const updateDawnStatus = (runStartMinutes, dawnDate) => {
  * - Wind chill, PoP, wet bulb temperature
  * - Trail wetness label and decision icon
  * - Status icons for all weather factors
- *
- * @param {object} data - Weather and location data
- * @returns {object} Display result with wetnessInsight, decision, city, etc.
  */
-export const updateAwarenessDisplay = (data) => {
+export const updateAwarenessDisplay = (data: AwarenessDisplayData): AwarenessDisplayResult => {
   const els = cacheAwarenessElements();
   if (!els) return {};
 
@@ -313,10 +405,10 @@ export const updateAwarenessDisplay = (data) => {
 
   // Update dawn time
   if (els.awDawn) {
-    if (dawn) {
-      els.awDawn.textContent = fmtTime12InZone(dawn, tz || defaultTz);
-      els.awDawn.setAttribute("datetime", dawn.toISOString());
-      els.awDawn.title = `Around dawn local time (${tz || defaultTz})`;
+    if (dawn && dawn.date && dawn.tz) {
+      els.awDawn.textContent = fmtTime12InZone(dawn.date, dawn.tz);
+      els.awDawn.setAttribute("datetime", dawn.date.toISOString());
+      els.awDawn.title = `Around dawn local time (${dawn.tz})`;
     } else {
       els.awDawn.textContent = "—";
       els.awDawn.removeAttribute("datetime");
@@ -332,16 +424,16 @@ export const updateAwarenessDisplay = (data) => {
     els.awPoP.title = "Probability of precip for the hour around dawn";
   }
 
-  let wetnessInsight = null;
-  let decision = null;
+  let wetnessInsight: WetnessInterpretation | null = null;
+  let decision: string | null = null;
 
-  const hasWetnessUi =
-    els.awWetness || els.awDecisionText || els.awDecisionIcon || els.awMsg;
+  const hasWetnessUi = els.awWetness || els.awDecisionText || els.awDecisionIcon || els.awMsg;
   if (hasWetnessUi) {
     wetnessInsight = interpretWetness(wetnessData);
 
-    if (els.awWetness) {
-      const tooltip = wetnessInsight.detail || wetnessData?.summary;
+    if (els.awWetness && wetnessInsight) {
+      const tooltip =
+        wetnessInsight.detail || (wetnessData?.summary ? String(wetnessData.summary) : undefined);
       if (tooltip) {
         els.awWetness.title = tooltip;
       } else {
@@ -349,18 +441,14 @@ export const updateAwarenessDisplay = (data) => {
       }
     }
 
-    decision = wetnessInsight.decision || "OK";
+    decision = wetnessInsight?.decision || "OK";
     if (els.awDecisionText) {
-      const labelText = wetnessInsight.label || "—";
+      const labelText = wetnessInsight?.label || "—";
       els.awDecisionText.textContent = labelText;
     }
     if (els.awDecisionIcon) {
-      const decisionStatus =
-        decision === "Hazard"
-          ? "warning"
-          : decision === "Caution"
-            ? "yield"
-            : "ok";
+      const decisionStatus: StatusIconStatus =
+        decision === "Hazard" ? "warning" : decision === "Caution" ? "yield" : "ok";
       setStatusIcon(els.awDecisionIcon, decisionStatus);
     }
 
@@ -376,14 +464,19 @@ export const updateAwarenessDisplay = (data) => {
     }
   }
 
-  const schedule =
-    typeof window !== "undefined" ? window.__latestSchedule : null;
+  const schedule = typeof window !== "undefined" ? window.__latestSchedule : null;
   const scheduleStart = schedule
-    ? (schedule.runStartMinutes ?? toMinutes(schedule.runStartTime))
+    ? (schedule.runStartMinutes ??
+      (schedule.runStartTime ? toMinutes(schedule.runStartTime) : null))
     : null;
   const runStartMinutes = Number.isFinite(scheduleStart) ? scheduleStart : null;
+  const scheduleReady = schedule && Number.isFinite(runStartMinutes);
 
-  const dawnStatus = computeDawnStatus(runStartMinutes, dawn);
+  // Only compute dawn status when schedule is ready
+  const dawnStatus: StatusIconStatus =
+    scheduleReady && dawn && dawn.date && dawn.tz
+      ? computeDawnStatus(runStartMinutes!, dawn)
+      : "ok";
   const windStatus = computeWindStatus(windChillF);
   const precipStatus = computePrecipStatus(pop);
   const wetBulbStatus = computeWetBulbStatus(wetBulbF);
@@ -393,31 +486,33 @@ export const updateAwarenessDisplay = (data) => {
   setStatusIcon(els.awPoPIcon, precipStatus);
   setStatusIcon(els.awWetBulbIcon, wetBulbStatus);
 
-  // Store dawn for daylight check
-  currentDawnDate = dawn;
+  // Store dawn data for daylight check (with timezone)
+  currentDawnData = dawn && dawn.date && dawn.tz ? dawn : null;
 
   // Trigger daylight check update if function exists
   if (typeof window.updateLocationHeadlamp === "function") {
     window.updateLocationHeadlamp();
   }
 
-  updateDawnStatus(runStartMinutes, dawn);
+  // Only update dawn status when schedule is ready
+  if (scheduleReady && dawn && dawn.date && dawn.tz && runStartMinutes !== null) {
+    updateDawnStatus(runStartMinutes, dawn);
+  }
 
   return {
     wetnessInsight,
     decision,
-    city,
-    dawn,
-    runStartMinutes,
+    city: city || null,
+    dawn: dawn && dawn.date && dawn.tz ? dawn : null,
+    runStartMinutes: runStartMinutes || null,
     timezone: tz,
   };
 };
 
 /**
  * Show error message in awareness UI
- * @param {string} message - Error message to display
  */
-export const showAwarenessError = (message) => {
+export const showAwarenessError = (message: string): void => {
   const els = cacheAwarenessElements();
   if (els?.awMsg) {
     els.awMsg.textContent = message;
@@ -437,17 +532,15 @@ export const showAwarenessError = (message) => {
 };
 
 /**
- * Get current dawn date (for external access)
- * @returns {Date|null} Current dawn date
+ * Get current dawn data (for external access)
  */
-export const getCurrentDawn = () => currentDawnDate;
+export const getCurrentDawn = (): DawnInfo | null => currentDawnData;
 
 /**
- * Set current dawn date (for testing)
- * @param {Date} date - Dawn date to set
+ * Set current dawn data (for testing)
  */
-export const setCurrentDawn = (date) => {
-  currentDawnDate = date;
+export const setCurrentDawn = (dawn: DawnInfo | null): void => {
+  currentDawnData = dawn && dawn.date && dawn.tz ? dawn : null;
   if (typeof window.updateLocationHeadlamp === "function") {
     window.updateLocationHeadlamp();
   }
@@ -459,37 +552,37 @@ export const setCurrentDawn = (date) => {
 
 /**
  * Fetch all awareness data (weather, wetness, dawn)
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @param {string} tz - Timezone
- * @param {AbortSignal} signal - Abort signal
- * @returns {Promise<object>} Combined weather data
  */
-const fetchAwarenessData = async (lat, lon, tz, signal) => {
-  // Fetch dawn first
-  const dawnDate = await fetchDawn(lat, lon, tz, signal);
+const fetchAwarenessData = async (
+  lat: number,
+  lon: number,
+  tz: string,
+  signal: AbortSignal
+): Promise<AwarenessDataResult> => {
+  // Fetch dawn first (returns {date, tz})
+  const dawnData = await fetchDawn(lat, lon, tz, signal);
 
   // Parallel fetch weather & wetness with graceful degradation
   const [weatherResult, wetnessResult] = await Promise.allSettled([
-    fetchWeatherAround(lat, lon, dawnDate, tz),
-    fetchWetnessInputs(lat, lon, dawnDate, tz),
+    fetchWeatherAround(lat, lon, dawnData.date, tz),
+    fetchWetnessInputs(lat, lon, dawnData.date, tz),
   ]);
 
-  const weather =
+  const weather: WeatherData =
     weatherResult.status === "fulfilled"
       ? weatherResult.value
       : {
-        windChillF: null,
-        pop: null,
-        wetBulbF: null,
-        tempF: null,
-        windMph: null,
-        weatherCode: null,
-        snowfall: null,
-        isSnow: false,
-      };
+          windChillF: null,
+          pop: null,
+          wetBulbF: null,
+          tempF: null,
+          windMph: null,
+          weatherCode: null,
+          snowfall: null,
+          isSnow: false,
+        };
 
-  const wetnessInfo =
+  const wetnessInfo: WetnessData | null =
     wetnessResult.status === "fulfilled" ? wetnessResult.value : null;
 
   // Log any partial failures
@@ -500,7 +593,7 @@ const fetchAwarenessData = async (lat, lon, tz, signal) => {
     console.warn("Wetness fetch failed:", wetnessResult.reason);
   }
 
-  return { dawnDate, weather, wetnessInfo };
+  return { dawnData, weather, wetnessInfo };
 };
 
 /**
@@ -512,13 +605,13 @@ const fetchAwarenessData = async (lat, lon, tz, signal) => {
  * 3. Optionally refines city name via reverse geocoding
  * 4. Updates display with all data
  * 5. Emits ready event
- *
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @param {string} city - City name (optional)
- * @param {string} tz - Timezone (optional)
  */
-export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
+export const refreshAwareness = async (
+  lat: number,
+  lon: number,
+  city = "",
+  tz = defaultTz
+): Promise<void> => {
   const controller = new AbortController();
   const signal = controller.signal;
 
@@ -526,7 +619,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   try {
-    const { dawnDate, weather, wetnessInfo } = await fetchAwarenessData(lat, lon, tz, signal);
+    const { dawnData, weather, wetnessInfo } = await fetchAwarenessData(lat, lon, tz, signal);
 
     // Only refine city name if it looks incomplete (no comma = single component)
     // Skip refinement if city is already formatted (e.g., "Boulder, CO, US")
@@ -557,7 +650,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
     // Update display with all data (handles null values gracefully)
     const displayResult = updateAwarenessDisplay({
       city: displayCity || formatCoordinates(lat, lon),
-      dawn: dawnDate,
+      dawn: dawnData,
       windChillF: weather.windChillF,
       pop: weather.pop,
       wetBulbF: weather.wetBulbF,
@@ -574,10 +667,10 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
       city: displayResult?.city || displayCity || formatCoordinates(lat, lon),
       label: displayResult?.wetnessInsight?.label ?? null,
       decision: displayResult?.decision ?? null,
-      dawn: dawnDate?.toISOString?.() ?? null,
+      dawn: dawnData?.date?.toISOString() ?? null,
     });
   } catch (error) {
-    if (error.name === "AbortError") {
+    if (isError(error) && error.name === "AbortError") {
       console.error("Awareness refresh aborted:", error);
       showAwarenessError("Request timed out");
     } else {
@@ -604,7 +697,7 @@ export const refreshAwareness = async (lat, lon, city = "", tz = defaultTz) => {
  * 4. Save location to localStorage
  * 5. Refresh awareness data
  */
-export const handleUseMyLocation = async () => {
+export const handleUseMyLocation = async (): Promise<void> => {
   const els = cacheAwarenessElements();
   if (!els) return;
 
@@ -659,7 +752,7 @@ export const handleUseMyLocation = async () => {
     console.warn("Location access failed:", error);
     showAwarenessError("Location denied.");
     emitAwarenessEvent("location-denied", {
-      message: error?.message || "Location denied.",
+      message: getErrorMessage(error, "Location denied."),
     });
   }
 };
@@ -671,25 +764,22 @@ export const handleUseMyLocation = async () => {
  * 1. Forward geocode query to coordinates
  * 2. Save location to localStorage
  * 3. Refresh awareness data
- *
- * @param {string} query - Search query (e.g., "Boulder, CO")
  */
-export const handleLocationSearch = async (query) => {
+export const handleLocationSearch = async (query: string | null | undefined): Promise<void> => {
   const trimmed = query?.trim();
   if (!trimmed) return;
 
   showAwarenessError("Searching…");
   emitAwarenessEvent("search-started", { query: trimmed });
 
-  let location;
+  let location: Coordinates & LocationInfo;
   try {
     location = await geocodePlace(trimmed);
   } catch (error) {
     console.warn("Location search failed:", error);
+    const errorMessage = getErrorMessage(error);
     const message =
-      error?.message === "no results"
-        ? "Location not found"
-        : "Unable to search location";
+      errorMessage === "no results" ? "Location not found" : "Unable to search location";
     showAwarenessError(message);
     emitAwarenessEvent("search-error", { message });
     return;
@@ -702,12 +792,7 @@ export const handleLocationSearch = async (query) => {
     tz: location.tz,
   });
 
-  await refreshAwareness(
-    location.lat,
-    location.lon,
-    location.city,
-    location.tz,
-  );
+  await refreshAwareness(location.lat, location.lon, location.city, location.tz || defaultTz);
   emitAwarenessEvent("location-updated", {
     city: location.city,
     lat: location.lat,
@@ -728,7 +813,7 @@ export const handleLocationSearch = async (query) => {
  * 2. Try browser geolocation (silent, no UI prompt)
  * 3. Skip initialization (user must click "Use my location")
  */
-export const initializeAwareness = async () => {
+export const initializeAwareness = async (): Promise<void> => {
   const saved = Storage.loadWeatherLocation();
 
   if (saved && validateCoordinates(saved.lat, saved.lon)) {
@@ -739,7 +824,7 @@ export const initializeAwareness = async () => {
       emitAwarenessEvent("ready", { source: "storage" });
     } catch (error) {
       console.error("[Awareness] Failed to refresh from storage:", error);
-      emitAwarenessEvent("error", { message: error.message });
+      emitAwarenessEvent("error", { message: getErrorMessage(error) });
       throw error;
     }
   } else if (navigator.geolocation) {
@@ -793,7 +878,7 @@ export const initializeAwareness = async () => {
  * - Location search input (Enter key)
  * - Location search button
  */
-export const setupAwarenessListeners = () => {
+export const setupAwarenessListeners = (): void => {
   const els = cacheAwarenessElements();
   if (!els) return;
 
@@ -807,7 +892,7 @@ export const setupAwarenessListeners = () => {
     els.placeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        handleLocationSearch(els.placeInput.value);
+        handleLocationSearch(els.placeInput?.value);
       }
     });
   }

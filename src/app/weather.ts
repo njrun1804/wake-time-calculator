@@ -34,6 +34,151 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const snowCodes = new Set([71, 73, 75, 77, 85, 86]);
 
 // ============================================================================
+// TYPES
+// ============================================================================
+
+export interface DailyPrecipitationRecord {
+  date: string;
+  precipitation?: number | null;
+  rain?: number | null;
+  snowfall?: number | null;
+  precipHours?: number | null;
+  et0?: number | null;
+  maxTempF?: number | null;
+  minTempF?: number | null;
+}
+
+export interface WetnessEvent {
+  date: string;
+  rain: number;
+  snowfall: number;
+  snowfallSWE: number;
+  melt: number;
+  et0: number;
+  precipHours: number | null;
+  maxTempF: number | null;
+  minTempF: number | null;
+  liquid: number;
+  drying: number;
+  balance: number;
+  decayedBalance: number;
+  decay: number;
+  ageDays: number;
+}
+
+export interface WetnessTotals {
+  rainfall: number;
+  melt: number;
+  drying: number;
+  et0: number;
+}
+
+export interface WetnessData {
+  score: number;
+  analysisDays: number;
+  recentWetDays: number;
+  totals: WetnessTotals;
+  snowpackRemaining: number;
+  events: WetnessEvent[];
+  referenceDate: Date | null;
+  summary: string;
+}
+
+export interface WetnessInterpretation {
+  label: string;
+  detail: string;
+  caution: string;
+  rating: number;
+  confidence: "low" | "medium" | "high";
+  stats: {
+    last24: number;
+    last48: number;
+    last72: number;
+    weeklyLiquid: number;
+    weeklyRainfall: number;
+    weeklyMelt: number;
+    dryingTotal: number;
+    et0Total: number;
+    netLiquid: number;
+    snowpack: number;
+    snowpackDepth: number;
+    snowpackSWE: number;
+    recentWetDays: number;
+    heavyEvent: boolean;
+    freezeThawCycles: number;
+    wetDaysLast72: number;
+    freezeWithLiquid: boolean;
+    moistSignal: boolean;
+  };
+  decision: "OK" | "Caution" | "Hazard";
+}
+
+export interface WeatherData {
+  tempF: number | null;
+  windMph: number | null;
+  windChillF: number | null;
+  pop: number | null;
+  wetBulbF: number | null;
+  isSnow: boolean;
+  weatherCode: number | null;
+  snowfall: number | null;
+}
+
+interface OpenMeteoHourlyResponse {
+  hourly: {
+    time: string[];
+    temperature_2m?: (number | null)[];
+    relative_humidity_2m?: (number | null)[];
+    wind_speed_10m?: (number | null)[];
+    apparent_temperature?: (number | null)[];
+    precipitation_probability?: (number | null)[];
+    wet_bulb_temperature_2m?: (number | null)[];
+    weathercode?: (number | null)[];
+    snowfall?: (number | null)[];
+  };
+}
+
+interface OpenMeteoDailyResponse {
+  daily: {
+    time: string[];
+    precipitation_sum?: (number | null)[];
+    precipitation_hours?: (number | null)[];
+    rain_sum?: (number | null)[];
+    snowfall_sum?: (number | null)[];
+    et0_fao_evapotranspiration?: (number | null)[];
+    temperature_2m_max?: (number | null)[];
+    temperature_2m_min?: (number | null)[];
+  };
+}
+
+/**
+ * Validate Open-Meteo hourly response structure
+ */
+const validateOpenMeteoHourlyResponse = (data: unknown): data is OpenMeteoHourlyResponse => {
+  if (!data || typeof data !== "object") return false;
+  const obj = data as Record<string, unknown>;
+  if (!obj.hourly || typeof obj.hourly !== "object") return false;
+  const hourly = obj.hourly as Record<string, unknown>;
+  return Array.isArray(hourly.time);
+};
+
+/**
+ * Validate Open-Meteo daily response structure
+ */
+const validateOpenMeteoDailyResponse = (data: unknown): data is OpenMeteoDailyResponse => {
+  if (!data || typeof data !== "object") return false;
+  const obj = data as Record<string, unknown>;
+  if (!obj.daily || typeof obj.daily !== "object") return false;
+  const daily = obj.daily as Record<string, unknown>;
+  return Array.isArray(daily.time);
+};
+
+interface ComputeWetnessOptions {
+  referenceDate?: Date | null;
+  dryingCoefficient?: number;
+}
+
+// ============================================================================
 // CONSTANTS
 // ============================================================================
 
@@ -57,7 +202,7 @@ export const WEATHER_CONFIG = {
   HEAVY_EVENT_THRESHOLD: 1.0,
 
   // Weather codes indicating snow
-  SNOW_CODES: new Set([71, 73, 75, 77, 85, 86])
+  SNOW_CODES: new Set([71, 73, 75, 77, 85, 86]),
 };
 
 // ============================================================================
@@ -66,25 +211,19 @@ export const WEATHER_CONFIG = {
 
 /**
  * Convert value to number or null
- * @param {any} value - Value to convert
- * @returns {number|null} Number or null if invalid
  */
-export const numberOrNull = (value) =>
+export const numberOrNull = (value: unknown): number | null =>
   typeof value === "number" && !Number.isNaN(value) ? value : null;
 
 /**
  * Convert value to number with fallback to 0
- * @param {any} value - Value to convert
- * @returns {number} Number or 0 if invalid
  */
-export const coerceNumber = (value) => numberOrNull(value) ?? 0;
+export const coerceNumber = (value: unknown): number => numberOrNull(value) ?? 0;
 
 /**
  * Sort records by date
- * @param {Array<object>} records - Records with date property
- * @returns {Array<object>} Sorted records
  */
-export const sortByDate = (records) =>
+export const sortByDate = <T extends { date?: string }>(records: T[]): T[] =>
   [...records].sort((a, b) => {
     if (!a?.date || !b?.date) return 0;
     if (a.date === b.date) return 0;
@@ -95,22 +234,12 @@ export const sortByDate = (records) =>
  * Find the index of the time entry closest to target hour
  *
  * Tries exact hour match first, then finds closest match if exact not found.
- *
- * @param {Array<string>} times - Array of ISO time strings
- * @param {number} targetHour - Target hour (0-23)
- * @returns {number} Index of closest time, or -1 if times array is empty
- *
- * @example
- * findClosestHourIndex(['2024-01-01T05:00', '2024-01-01T06:00'], 6) // Returns 1
- * findClosestHourIndex(['2024-01-01T05:00', '2024-01-01T07:00'], 6) // Returns 1 (closer to 7 than 5)
  */
-export const findClosestHourIndex = (times, targetHour) => {
+export const findClosestHourIndex = (times: string[], targetHour: number): number => {
   if (!Array.isArray(times) || times.length === 0) return -1;
 
   // First try exact match
-  const exactIndex = times.findIndex(
-    (t) => new Date(t).getHours() === targetHour,
-  );
+  const exactIndex = times.findIndex((t) => new Date(t).getHours() === targetHour);
   if (exactIndex !== -1) return exactIndex;
 
   // Find closest hour
@@ -134,56 +263,40 @@ export const findClosestHourIndex = (times, targetHour) => {
 
 /**
  * Format temperature with fallback
- * @param {number|null} temp - Temperature in Fahrenheit
- * @returns {string} Formatted temperature
  */
-export const formatTemp = (temp) => {
-  return typeof temp === "number" && !isNaN(temp)
-    ? `${Math.round(temp)}°F`
-    : "—";
+export const formatTemp = (temp: number | null | undefined): string => {
+  return typeof temp === "number" && !isNaN(temp) ? `${Math.round(temp)}°F` : "—";
 };
 
 /**
  * Format wind speed with fallback
- * @param {number|null} wind - Wind speed in mph
- * @returns {string} Formatted wind speed
  */
-export const formatWind = (wind) => {
-  return typeof wind === "number" && !isNaN(wind)
-    ? `${Math.round(wind)} mph`
-    : "—";
+export const formatWind = (wind: number | null | undefined): string => {
+  return typeof wind === "number" && !isNaN(wind) ? `${Math.round(wind)} mph` : "—";
 };
 
 /**
  * Format probability of precipitation
- * @param {number|null} pop - Probability of precipitation (0-100)
- * @returns {string} Formatted PoP
  */
-export const formatPoP = (pop) => {
+export const formatPoP = (pop: number | null | undefined): string => {
   return typeof pop === "number" && !isNaN(pop) ? `${Math.round(pop)}%` : "—";
 };
 
 /**
  * Format inches (internal utility)
- * @param {number} value - Value in inches
- * @returns {string} Formatted inches
  */
-export const inches = (value) => `${value.toFixed(2)}"`;
+export const inches = (value: number): string => `${value.toFixed(2)}"`;
 
 /**
  * Format inches with adaptive precision
- * @param {number} value - Value in inches
- * @returns {string} Formatted inches
  */
-export const formatInches = (value) =>
+export const formatInches = (value: number): string =>
   value >= 0.995 ? `${value.toFixed(1)}"` : `${value.toFixed(2)}"`;
 
 /**
  * Format signed inches with +/- prefix
- * @param {number} value - Value in inches
- * @returns {string} Formatted signed inches
  */
-export const formatSignedInches = (value) => {
+export const formatSignedInches = (value: number): string => {
   const magnitude = Math.abs(value);
   const formatted = formatInches(magnitude);
   const sign = value >= 0 ? "+" : "-";
@@ -196,15 +309,13 @@ export const formatSignedInches = (value) => {
 
 /**
  * Create wetness summary text
- * @param {object} wetness - Wetness data
- * @returns {string} Summary text
  */
-const createWetnessSummary = (wetness) => {
+const createWetnessSummary = (wetness: WetnessData): string => {
   if (!wetness) return "No recent precipitation signal";
 
   const parts = [];
   const {
-    totals = {},
+    totals = { rainfall: 0, melt: 0, drying: 0, et0: 0 },
     recentWetDays = 0,
     analysisDays = 0,
     snowpackRemaining = 0,
@@ -212,10 +323,7 @@ const createWetnessSummary = (wetness) => {
 
   // computeWetness only populates rainfall, not precipitation
   // Use explicit rainfall value (already excludes snowfall)
-  const totalRainfall = Math.max(
-    0,
-    numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? 0,
-  );
+  const totalRainfall = Math.max(0, numberOrNull(totals.rainfall) ?? 0);
 
   const totalMelt = Math.max(0, numberOrNull(totals.melt) ?? 0);
   const totalLiquid = totalRainfall + totalMelt;
@@ -229,13 +337,12 @@ const createWetnessSummary = (wetness) => {
   }
   if (typeof totals.drying === "number" && totals.drying > 0.01) {
     const et0Total = typeof totals.et0 === "number" ? totals.et0 : null;
-    const dryingFraction =
-      et0Total && et0Total > 0 ? Math.min(1, totals.drying / et0Total) : null;
+    const dryingFraction = et0Total && et0Total > 0 ? Math.min(1, totals.drying / et0Total) : null;
     const dryingSummary =
-      dryingFraction !== null
+      dryingFraction !== null && et0Total !== null
         ? `-${inches(totals.drying)} drying (${Math.round(
-          dryingFraction * 100,
-        )}% of ${inches(et0Total)} ET₀)`
+            dryingFraction * 100
+          )}% of ${inches(et0Total)} ET₀)`
         : `-${inches(totals.drying)} drying`;
     parts.push(dryingSummary);
   }
@@ -272,19 +379,16 @@ const createWetnessSummary = (wetness) => {
  * 5. Subtract evapotranspiration (seasonal)
  * 6. Apply time decay to older events
  * 7. Sum to cumulative score
- *
- * @param {Array<object>} dailyRecords - Daily precipitation records
- * @param {object} [options] - Calculation options
- * @param {Date} [options.referenceDate] - Date to calculate relative to
- * @param {number} [options.dryingCoefficient] - Drying rate coefficient (default 0.5)
- * @returns {object} Wetness analysis with score, events, totals
  */
 export const computeWetness = (
-  dailyRecords = [],
-  { referenceDate = null, dryingCoefficient = WEATHER_CONFIG.DRYING_COEFFICIENT } = {},
-) => {
+  dailyRecords: DailyPrecipitationRecord[] = [],
+  {
+    referenceDate = null,
+    dryingCoefficient = WEATHER_CONFIG.DRYING_COEFFICIENT,
+  }: ComputeWetnessOptions = {}
+): WetnessData => {
   if (!Array.isArray(dailyRecords) || dailyRecords.length === 0) {
-    const base = {
+    const base: Omit<WetnessData, "summary"> = {
       score: 0,
       analysisDays: 0,
       recentWetDays: 0,
@@ -300,7 +404,7 @@ export const computeWetness = (
     };
     return {
       ...base,
-      summary: createWetnessSummary(base),
+      summary: createWetnessSummary({ ...base, summary: "" }),
     };
   }
 
@@ -312,7 +416,7 @@ export const computeWetness = (
     // Warning: referenceDate is missing, time decay will use array index fallback
     // This may produce incorrect results if array structure changes
     console.warn(
-      "[computeWetness] referenceDate is missing; using array index for time decay (may be inaccurate)",
+      "[computeWetness] referenceDate is missing; using array index for time decay (may be inaccurate)"
     );
   }
   const sorted = sortByDate(dailyRecords);
@@ -337,14 +441,12 @@ export const computeWetness = (
     if (sorted.length === 0) return null;
 
     // Extract months from first and last records
-    const getMonth = (dateStr) => {
+    const getMonth = (dateStr: string | undefined): number | null => {
       if (!dateStr || typeof dateStr !== "string") return null;
       const parts = dateStr.split("-");
       if (parts.length >= 2) {
         const monthNum = parseInt(parts[1], 10);
-        return Number.isFinite(monthNum) && monthNum >= 1 && monthNum <= 12
-          ? monthNum - 1
-          : null;
+        return Number.isFinite(monthNum) && monthNum >= 1 && monthNum <= 12 ? monthNum - 1 : null;
       }
       return null;
     };
@@ -355,16 +457,14 @@ export const computeWetness = (
     if (firstMonth === null || lastMonth === null) return null;
 
     // Check if both are in same season (growing: Apr-Oct = 3-9, dormant: Nov-Mar = 0-2,10-11)
-    const isGrowing = (m) => m >= 3 && m <= 9;
+    const isGrowing = (m: number): boolean => m >= 3 && m <= 9;
     const firstGrowing = isGrowing(firstMonth);
     const lastGrowing = isGrowing(lastMonth);
 
     // If same season, return the coefficient; otherwise return null to calculate per-record
     if (firstGrowing === lastGrowing) {
       const warmSeason = firstGrowing;
-      return warmSeason
-        ? dryingCoefficient
-        : Math.max(0, dryingCoefficient * 0.5);
+      return warmSeason ? dryingCoefficient : Math.max(0, dryingCoefficient * 0.5);
     }
     return null;
   })();
@@ -379,16 +479,7 @@ export const computeWetness = (
   let peakDailyBalance = 0;
 
   const events = sorted.map((entry, index) => {
-    const {
-      date,
-      precipitation,
-      rain,
-      snowfall,
-      precipHours,
-      et0,
-      maxTempF,
-      minTempF,
-    } = entry;
+    const { date, precipitation, rain, snowfall, precipHours, et0, maxTempF, minTempF } = entry;
 
     // === STEP 1: Parse precipitation inputs ===
     // Some API responses have separate rain/snow, others just precipitation total
@@ -432,11 +523,11 @@ export const computeWetness = (
       // Example: 37°F → (37-32)/10 = 0.5 → 50% of snowpack melts
       const thawFactor = Math.min(
         1,
-        (thawTemp - WEATHER_CONFIG.SNOW_MELT_CURVE_BASE_F) / WEATHER_CONFIG.SNOW_MELT_CURVE_RANGE_F,
+        (thawTemp - WEATHER_CONFIG.SNOW_MELT_CURVE_BASE_F) / WEATHER_CONFIG.SNOW_MELT_CURVE_RANGE_F
       );
       melt = Math.min(
         runningSnowpack,
-        runningSnowpack * Math.max(0.1, thawFactor), // Min 10% melt when above threshold
+        runningSnowpack * Math.max(0.1, thawFactor) // Min 10% melt when above threshold
       );
       runningSnowpack = Math.max(0, runningSnowpack - melt);
     }
@@ -482,31 +573,29 @@ export const computeWetness = (
       singleSeasonCoefficient !== null
         ? singleSeasonCoefficient
         : (() => {
-          // Extract month directly from YYYY-MM-DD string to avoid timezone parsing issues
-          // (new Date("2024-10-23") is parsed as UTC, which becomes wrong local date in negative UTC offsets)
-          const month =
-            (() => {
-              if (date && typeof date === "string") {
-                const parts = date.split("-");
-                if (parts.length >= 2) {
-                  const monthNum = parseInt(parts[1], 10);
-                  // Convert to 0-indexed (1 = Jan -> 0)
-                  return Number.isFinite(monthNum) &&
-                    monthNum >= 1 &&
-                    monthNum <= 12
-                    ? monthNum - 1
-                    : null;
+            // Extract month directly from YYYY-MM-DD string to avoid timezone parsing issues
+            // (new Date("2024-10-23") is parsed as UTC, which becomes wrong local date in negative UTC offsets)
+            const month: number | null =
+              (() => {
+                if (date && typeof date === "string") {
+                  const parts = date.split("-");
+                  if (parts.length >= 2) {
+                    const monthNum = parseInt(parts[1], 10);
+                    // Convert to 0-indexed (1 = Jan -> 0)
+                    return Number.isFinite(monthNum) && monthNum >= 1 && monthNum <= 12
+                      ? monthNum - 1
+                      : null;
+                  }
                 }
-              }
-              return null;
-            })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
+                return null;
+              })() ?? (refDate ? refDate.getMonth() : new Date().getMonth());
 
-          const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
-          const warmSeasonCoefficient = dryingCoefficient; // Default 0.5
-          const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants = 0.25)
-          // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
-          return leafOn ? warmSeasonCoefficient : coolSeasonCoefficient;
-        })();
+            const leafOn = month >= 3 && month <= 9; // Apr–Oct (growing season)
+            const warmSeasonCoefficient = dryingCoefficient; // Default 0.5
+            const coolSeasonCoefficient = Math.max(0, dryingCoefficient * 0.5); // 50% reduction (dormant plants = 0.25)
+            // Why 50%? Dormant vegetation transpires much less, but ground evaporation continues
+            return leafOn ? warmSeasonCoefficient : coolSeasonCoefficient;
+          })();
 
     const drying = seasonalDryingCoefficient * et0In;
     totalDrying += drying;
@@ -532,7 +621,8 @@ export const computeWetness = (
       if (referenceMidnight && date) {
         const dayStart = new Date(date);
         dayStart.setHours(0, 0, 0, 0);
-        const diff = (referenceMidnight - dayStart) / MS_PER_DAY;
+        const diffMs = referenceMidnight.getTime() - dayStart.getTime();
+        const diff = diffMs / MS_PER_DAY;
         return Number.isFinite(diff) && diff > 0 ? diff : 0;
       }
       // Fallback: use index offset if no date
@@ -568,10 +658,9 @@ export const computeWetness = (
   // preventing the score from being too low when time decay reduces impact
   // but trail conditions remain affected by the peak moisture event.
   // Example: Heavy rain 3 days ago may be 61% decayed, but trails still muddy.
-  const normalizedScore =
-    cumulativeScore + Math.max(0, peakDailyBalance * 0.05);
+  const normalizedScore = cumulativeScore + Math.max(0, peakDailyBalance * 0.05);
 
-  const result = {
+  const result: Omit<WetnessData, "summary"> = {
     score: Math.max(0, Number.isFinite(normalizedScore) ? normalizedScore : 0),
     analysisDays: sorted.length,
     recentWetDays,
@@ -588,7 +677,7 @@ export const computeWetness = (
 
   return {
     ...result,
-    summary: createWetnessSummary(result),
+    summary: createWetnessSummary({ ...result, summary: "" }),
   };
 };
 
@@ -598,11 +687,8 @@ export const computeWetness = (
 
 /**
  * Sum liquid within time window
- * @param {Array<object>} events - Event array
- * @param {number} maxAgeDays - Maximum age in days
- * @returns {number} Total liquid
  */
-const sumWindowLiquid = (events, maxAgeDays) =>
+const sumWindowLiquid = (events: WetnessEvent[], maxAgeDays: number): number =>
   events.reduce((total, evt) => {
     if (!evt) return total;
     const age = typeof evt.ageDays === "number" ? evt.ageDays : Infinity;
@@ -613,10 +699,8 @@ const sumWindowLiquid = (events, maxAgeDays) =>
 
 /**
  * Determine confidence level based on analysis window
- * @param {number} analysisDays - Number of days analyzed
- * @returns {string} Confidence level
  */
-const confidenceForWindow = (analysisDays = 0) => {
+const confidenceForWindow = (analysisDays = 0): "low" | "medium" | "high" => {
   if (analysisDays >= 6) return "high";
   if (analysisDays >= 4) return "medium";
   return "low";
@@ -636,40 +720,50 @@ const confidenceForWindow = (analysisDays = 0) => {
  *
  * Thresholds are lower than sandy/rocky terrain because clay-rich soil holds
  * moisture longer and rooty/rocky sections (Hartshorne, Huber Woods) get slick easily.
- *
- * @param {object} wetnessData - Wetness data from computeWetness
- * @returns {object} Trail condition interpretation with label, caution, rating, stats
  */
-export const interpretWetness = (wetnessData = null) => {
+export const interpretWetness = (wetnessData: WetnessData | null = null): WetnessInterpretation => {
   if (!wetnessData) {
     return {
       label: "Dry",
       detail: "No precipitation history available",
       caution: "",
       rating: 1,
-      confidence: "low",
-      stats: {},
+      confidence: "low" as const,
+      stats: {
+        last24: 0,
+        last48: 0,
+        last72: 0,
+        weeklyLiquid: 0,
+        weeklyRainfall: 0,
+        weeklyMelt: 0,
+        dryingTotal: 0,
+        et0Total: 0,
+        netLiquid: 0,
+        snowpack: 0,
+        snowpackDepth: 0,
+        snowpackSWE: 0,
+        recentWetDays: 0,
+        heavyEvent: false,
+        freezeThawCycles: 0,
+        wetDaysLast72: 0,
+        freezeWithLiquid: false,
+        moistSignal: false,
+      },
+      decision: "OK" as const,
     };
   }
 
   const events = Array.isArray(wetnessData.events) ? wetnessData.events : [];
-  const snowpackSWE = Math.max(
-    0,
-    numberOrNull(wetnessData.snowpackRemaining) ?? 0,
-  );
+  const snowpackSWE = Math.max(0, numberOrNull(wetnessData.snowpackRemaining) ?? 0);
   const snowpackDepth =
-    WEATHER_CONFIG.SNOW_TO_WATER_RATIO > 0 ? snowpackSWE / WEATHER_CONFIG.SNOW_TO_WATER_RATIO : snowpackSWE;
-  const recentWetDays = Math.max(
-    0,
-    numberOrNull(wetnessData.recentWetDays) ?? 0,
-  );
+    WEATHER_CONFIG.SNOW_TO_WATER_RATIO > 0
+      ? snowpackSWE / WEATHER_CONFIG.SNOW_TO_WATER_RATIO
+      : snowpackSWE;
+  const recentWetDays = Math.max(0, numberOrNull(wetnessData.recentWetDays) ?? 0);
 
-  const totals = wetnessData.totals ?? {};
+  const totals = wetnessData.totals ?? { rainfall: 0, melt: 0, drying: 0, et0: 0 };
   // computeWetness only populates rainfall, not precipitation
-  const totalRainfall = Math.max(
-    0,
-    numberOrNull(totals.rainfall) ?? numberOrNull(totals.rain) ?? 0,
-  );
+  const totalRainfall = Math.max(0, numberOrNull(totals.rainfall) ?? 0);
 
   const totalMelt = Math.max(0, numberOrNull(totals.melt) ?? 0);
   const totalLiquid = totalRainfall + totalMelt;
@@ -690,8 +784,7 @@ export const interpretWetness = (wetnessData = null) => {
   }, 0);
 
   const heavyEvent = events.some(
-    (evt) =>
-      typeof evt?.balance === "number" && evt.balance >= WEATHER_CONFIG.HEAVY_EVENT_THRESHOLD,
+    (evt) => typeof evt?.balance === "number" && evt.balance >= WEATHER_CONFIG.HEAVY_EVENT_THRESHOLD
   );
 
   const freezeThawCycles = events.reduce((count, evt) => {
@@ -716,21 +809,18 @@ export const interpretWetness = (wetnessData = null) => {
   }
 
   if (dryingTotal > 0.05) {
-    const dryingFraction =
-      et0Total > 0.05 ? Math.min(1, dryingTotal / et0Total) : null;
+    const dryingFraction = et0Total > 0.05 ? Math.min(1, dryingTotal / et0Total) : null;
     const dryingDescriptor =
       dryingFraction !== null
         ? `-${formatInches(dryingTotal)} drying (${Math.round(
-          dryingFraction * 100,
-        )}% of ${formatInches(et0Total)} ET₀)`
+            dryingFraction * 100
+          )}% of ${formatInches(et0Total)} ET₀)`
         : `-${formatInches(dryingTotal)} drying`;
     detailParts.push(dryingDescriptor);
   }
 
   if (recentWetDays > 0) {
-    detailParts.push(
-      `${recentWetDays} wet day${recentWetDays === 1 ? "" : "s"}`,
-    );
+    detailParts.push(`${recentWetDays} wet day${recentWetDays === 1 ? "" : "s"}`);
   }
 
   const moistSignal = last72 >= 0.05 || netLiquid >= 0.15 || wetDaysLast72 >= 1;
@@ -793,12 +883,7 @@ export const interpretWetness = (wetnessData = null) => {
       label = "Muddy";
       caution = "Trail bed is saturated—gaiters/poles will help stability.";
       rating = 4;
-    } else if (
-      last72 >= 0.2 ||
-      recentWetDays >= 3 ||
-      netLiquid >= 0.35 ||
-      freezeWithLiquid
-    ) {
+    } else if (last72 >= 0.2 || recentWetDays >= 3 || netLiquid >= 0.35 || freezeWithLiquid) {
       const icy = freezeWithLiquid;
       label = icy ? "Slick/Icy" : "Slick";
       caution = icy
@@ -819,7 +904,7 @@ export const interpretWetness = (wetnessData = null) => {
     rating = Math.max(rating, 2);
   }
 
-  const decision = (() => {
+  const decision: "OK" | "Caution" | "Hazard" = (() => {
     // Only Soaked/Snowbound are hazardous from runner perspective
     if (label === "Soaked" || label === "Snowbound") {
       return "Hazard";
@@ -850,9 +935,7 @@ export const interpretWetness = (wetnessData = null) => {
     metricsSummary.push(`Melt ${formatInches(totalMelt)} (7d)`);
   }
   if (wetDaysLast72 > 0) {
-    metricsSummary.push(
-      `${wetDaysLast72} wet day${wetDaysLast72 === 1 ? "" : "s"} (72h)`,
-    );
+    metricsSummary.push(`${wetDaysLast72} wet day${wetDaysLast72 === 1 ? "" : "s"} (72h)`);
   }
   if (freezeThawCycles > 0) {
     metricsSummary.push(`Freeze/thaw ${freezeThawCycles}`);
@@ -876,10 +959,8 @@ export const interpretWetness = (wetnessData = null) => {
 
 /**
  * Get wetness category label
- * @param {object} wetnessData - Wetness data
- * @returns {string} Category label
  */
-export const categorizeWetness = (wetnessData) =>
+export const categorizeWetness = (wetnessData: WetnessData | null): string =>
   interpretWetness(wetnessData).label;
 
 // ============================================================================
@@ -888,13 +969,13 @@ export const categorizeWetness = (wetnessData) =>
 
 /**
  * Fetch data with caching using Storage module
- * @param {string} key - Cache key
- * @param {Function} fetcher - Function that returns Promise<data>
- * @param {AbortSignal} signal - Abort signal
- * @returns {Promise<any>} Cached or fresh data
  */
-const fetchWithCache = async (key, fetcher, signal = null) => {
-  const cached = Storage.loadCache(key, CACHE_DURATION);
+const fetchWithCache = async <T>(
+  key: string,
+  fetcher: (signal: AbortSignal | null) => Promise<T>,
+  signal: AbortSignal | null = null
+): Promise<T> => {
+  const cached = Storage.loadCache<T>(key, CACHE_DURATION);
   if (cached) return cached;
 
   const data = await fetcher(signal);
@@ -907,21 +988,20 @@ const fetchWithCache = async (key, fetcher, signal = null) => {
  *
  * Uses Open-Meteo Forecast API to get hourly weather for a target date/time.
  * Caches results for 1 hour to reduce API load.
- *
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @param {Date} whenLocal - Local time to get weather for
- * @param {string} tz - Timezone (IANA format, e.g., 'America/New_York')
- * @returns {Promise<object>} Weather data with tempF, windMph, windChillF, pop, wetBulbF, isSnow
  */
-export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
+export const fetchWeatherAround = async (
+  lat: number,
+  lon: number,
+  whenLocal: Date,
+  tz: string
+): Promise<WeatherData> => {
   const hrKey = `hourly_${lat}_${lon}_${Math.floor(whenLocal.getTime() / MS_PER_HOUR)}`;
 
   return fetchWithCache(hrKey, async (signal) => {
     const ymd = whenLocal.toLocaleDateString("en-CA");
     const params = new URLSearchParams({
-      latitude: lat,
-      longitude: lon,
+      latitude: String(lat),
+      longitude: String(lon),
       hourly:
         "temperature_2m,relative_humidity_2m,wind_speed_10m,apparent_temperature,precipitation_probability,wet_bulb_temperature_2m,weathercode,snowfall",
       timezone: tz,
@@ -936,18 +1016,23 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error("Failed to fetch weather data");
 
-    const data = await res.json();
-    if (!data.hourly) throw new Error("No hourly weather data available");
+    const rawData = await res.json();
+    if (!validateOpenMeteoHourlyResponse(rawData)) {
+      throw new Error("Invalid hourly weather API response format");
+    }
+    const data = rawData;
+    if (!data.hourly || !Array.isArray(data.hourly.time) || data.hourly.time.length === 0) {
+      throw new Error("No hourly weather data available");
+    }
 
     // Find closest hour to the target time
     const targetHour = whenLocal.getHours();
     const times = data.hourly.time;
     const index = findClosestHourIndex(times, targetHour);
 
-    if (index === -1)
-      throw new Error("No hourly data available for target time");
+    if (index === -1) throw new Error("No hourly data available for target time");
 
-    const weatherCode = data.hourly.weathercode?.[index];
+    const weatherCode = data.hourly.weathercode?.[index] ?? null;
     const tempF = data.hourly.temperature_2m?.[index] ?? null;
     const windMph = data.hourly.wind_speed_10m?.[index] ?? null;
     const pop = data.hourly.precipitation_probability?.[index] ?? null;
@@ -992,14 +1077,13 @@ export const fetchWeatherAround = async (lat, lon, whenLocal, tz) => {
  * Retrieves 7 days of historical precipitation data before dawn to assess
  * trail surface conditions. Uses Open-Meteo Forecast API's historical mode.
  * Caches results per location/date to reduce API load.
- *
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @param {Date} dawnLocalDate - Dawn date in local time
- * @param {string} tz - Timezone (IANA format)
- * @returns {Promise<object>} Wetness analysis from computeWetness
  */
-export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
+export const fetchWetnessInputs = async (
+  lat: number,
+  lon: number,
+  dawnLocalDate: Date,
+  tz: string
+): Promise<WetnessData> => {
   const dawnYMD = dawnLocalDate.toLocaleDateString("en-CA");
   const key = `wetness_${lat}_${lon}_${dawnYMD}`;
 
@@ -1010,8 +1094,8 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     const startYMD = startDate.toLocaleDateString("en-CA");
 
     const params = new URLSearchParams({
-      latitude: lat,
-      longitude: lon,
+      latitude: String(lat),
+      longitude: String(lon),
       daily:
         "precipitation_sum,precipitation_hours,rain_sum,snowfall_sum,et0_fao_evapotranspiration,temperature_2m_max,temperature_2m_min",
       timezone: tz,
@@ -1026,13 +1110,20 @@ export const fetchWetnessInputs = async (lat, lon, dawnLocalDate, tz) => {
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error("Failed to fetch wetness data");
 
-    const data = await res.json();
-    if (!data.daily) {
+    const rawData = await res.json();
+    if (!validateOpenMeteoDailyResponse(rawData)) {
+      // If response is invalid, return empty wetness data rather than throwing
+      // This allows the app to continue functioning with degraded weather info
+      console.warn("Invalid daily weather API response format, using empty wetness data");
+      return computeWetness([], { referenceDate: dawnLocalDate });
+    }
+    const data = rawData;
+    if (!data.daily || !Array.isArray(data.daily.time)) {
       return computeWetness([], { referenceDate: dawnLocalDate });
     }
 
     // Keep only days strictly BEFORE the dawn day (we're judging surface state going into dawn)
-    const dailyRecords = [];
+    const dailyRecords: DailyPrecipitationRecord[] = [];
     const {
       time: days,
       precipitation_sum: precipTotals = [],

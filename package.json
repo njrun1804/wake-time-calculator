@@ -5,14 +5,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "serve": "http-server src -p 8000 -c-1 --cors",
-    "test": "node --test tests/unit/**/*.test.js",
-    "format": "prettier --write 'src/**/*.html' 'src/js/**/*.js'",
-    "build": "mkdir -p dist && cp -r src/* dist/"
+    "serve": "http-server dist -p 8000 -c-1 --cors",
+    "test": "tsx --test tests/unit/**/*.test.ts",
+    "format": "prettier --write 'src/**/*.html' 'src/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.html' 'src/**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "build": "rm -rf dist && tsc --project tsconfig.json && cp src/index.html dist/index.html && cp -r src/css dist/css"
   },
   "devDependencies": {
     "http-server": "^14.1.1",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "tsx": "^4.7.0",
+    "typescript": "^5.6.3"
   },
   "repository": {
     "type": "git",

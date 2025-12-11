@@ -1,17 +1,10 @@
-/**
- * Wake Time Calculator - Storage Module
- * Manages localStorage persistence
- */
-
 import { storageKeys, weatherStorage, defaults } from "./constants.js";
 
-/**
- * Show a simple toast notification to the user
- * @param {string} message - Message to display
- * @param {string} type - Type: 'error', 'warning', 'info'
- */
-const showToast = (message, type = "error") => {
-  // Check if toast container exists, create if not
+type ToastType = "error" | "warning" | "info";
+
+const showToast = (message: string, type: ToastType = "error") => {
+  if (typeof document === "undefined") return;
+
   let container = document.getElementById("storage-toast");
   if (!container) {
     container = document.createElement("div");
@@ -38,11 +31,9 @@ const showToast = (message, type = "error") => {
   container.style.display = "block";
   container.style.opacity = "1";
 
-  // Auto-hide after 5 seconds with fade-out
   setTimeout(() => {
     if (container) {
       container.style.opacity = "0";
-      // Remove from view after fade completes
       setTimeout(() => {
         if (container) {
           container.style.display = "none";
@@ -52,51 +43,29 @@ const showToast = (message, type = "error") => {
   }, 5000);
 };
 
-/**
- * Storage manager for wake time calculator data
- */
 export const Storage = {
-  /**
-   * Save a value to localStorage
-   * @param {string} key - Storage key
-   * @param {any} value - Value to store
-   * @returns {boolean} True if successful, false otherwise
-   */
-  save(key, value) {
+  save(key: string, value: unknown): boolean {
     try {
       localStorage.setItem(key, String(value));
       return true;
     } catch (error) {
       console.error("Failed to save to localStorage:", error);
-      showToast(
-        "Unable to save preferences. Browser storage may be full or disabled.",
-        "error",
-      );
+      showToast("Unable to save preferences. Browser storage may be full or disabled.", "error");
       return false;
     }
   },
 
-  /**
-   * Load a value from localStorage
-   * @param {string} key - Storage key
-   * @param {any} defaultValue - Default value if not found
-   * @returns {string|null} Stored value or default
-   */
-  load(key, defaultValue = null) {
+  load(key: string, defaultValue: unknown = null): string | null {
     try {
       const value = localStorage.getItem(key);
-      return value !== null ? value : defaultValue;
+      return value !== null ? value : (defaultValue as string | null);
     } catch (error) {
       console.error("Failed to load from localStorage:", error);
-      return defaultValue;
+      return defaultValue as string | null;
     }
   },
 
-  /**
-   * Save all form values
-   * @param {object} values - Form values to save
-   */
-  saveFormValues(values) {
+  saveFormValues(values: Record<string, unknown>): void {
     Object.entries(storageKeys).forEach(([field, key]) => {
       if (values[field] !== undefined) {
         this.save(key, values[field]);
@@ -104,93 +73,72 @@ export const Storage = {
     });
   },
 
-  /**
-   * Load all form values
-   * @returns {object} Loaded form values
-   */
-  loadFormValues() {
-    const values = {};
+  loadFormValues(): Record<string, string> {
+    const values: Record<string, string> = {};
     Object.entries(storageKeys).forEach(([field, key]) => {
-      const value = this.load(key, defaults[field]);
-      values[field] = value !== null ? String(value) : String(defaults[field]);
+      const value = this.load(key, defaults[field as keyof typeof defaults]);
+      values[field] =
+        value !== null ? String(value) : String(defaults[field as keyof typeof defaults]);
     });
     return values;
   },
 
-  /**
-   * Save weather location data
-   * @param {object} location - Location data
-   */
-  saveWeatherLocation({ lat, lon, city, tz }) {
+  saveWeatherLocation({
+    lat,
+    lon,
+    city,
+    tz,
+  }: {
+    lat?: number;
+    lon?: number;
+    city?: string;
+    tz?: string;
+  }): void {
     if (lat !== undefined) this.save(weatherStorage.lat, lat);
     if (lon !== undefined) this.save(weatherStorage.lon, lon);
     if (city !== undefined) this.save(weatherStorage.city, city);
     if (tz !== undefined) this.save(weatherStorage.tz, tz);
   },
 
-  /**
-   * Load weather location data
-   * @returns {object|null} Location data or null
-   */
-  loadWeatherLocation() {
-    const lat = parseFloat(this.load(weatherStorage.lat));
-    const lon = parseFloat(this.load(weatherStorage.lon));
+  loadWeatherLocation(): { lat: number; lon: number; city: string; tz: string } | null {
+    const lat = parseFloat(this.load(weatherStorage.lat) ?? "");
+    const lon = parseFloat(this.load(weatherStorage.lon) ?? "");
 
-    if (isNaN(lat) || isNaN(lon)) {
+    if (Number.isNaN(lat) || Number.isNaN(lon)) {
       return null;
     }
 
     return {
       lat,
       lon,
-      city: this.load(weatherStorage.city, ""),
-      tz: this.load(
-        weatherStorage.tz,
+      city: this.load(weatherStorage.city, "") ?? "",
+      tz:
+        this.load(weatherStorage.tz, Intl.DateTimeFormat().resolvedOptions().timeZone) ??
         Intl.DateTimeFormat().resolvedOptions().timeZone,
-      ),
     };
   },
 
-  /**
-   * Clear all stored data
-   */
-  clear() {
+  clear(): void {
     try {
       Object.values(storageKeys).forEach((key) => localStorage.removeItem(key));
-      Object.values(weatherStorage).forEach((key) =>
-        localStorage.removeItem(key),
-      );
+      Object.values(weatherStorage).forEach((key) => localStorage.removeItem(key));
     } catch (error) {
       console.error("Failed to clear localStorage:", error);
     }
   },
 
-  /**
-   * Save cached data with timestamp
-   * @param {string} key - Cache key
-   * @param {any} data - Data to cache
-   * @returns {boolean} True if successful, false otherwise
-   */
-  saveCache(key, data) {
+  saveCache(key: string, data: unknown): boolean {
     try {
       localStorage.setItem(key, JSON.stringify(data));
       localStorage.setItem(key + ":t", String(Date.now()));
       return true;
     } catch (error) {
       console.error("Failed to save cache:", error);
-      // Don't show toast for cache failures - less critical than user preferences
-      // Cache will just be refetched from API on next request
       return false;
     }
   },
 
-  /**
-   * Load cached data if not expired
-   * @param {string} key - Cache key
-   * @param {number} maxAge - Maximum age in milliseconds
-   * @returns {any|null} Cached data or null if expired/not found
-   */
-  loadCache(key, maxAge) {
+  loadCache<T>(key: string, maxAge: number): T | null {
     try {
       const rawTimestamp = localStorage.getItem(key + ":t");
       if (rawTimestamp === null) {
@@ -206,7 +154,7 @@ export const Storage = {
         return null;
       }
       const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : null;
+      return data ? (JSON.parse(data) as T) : null;
     } catch (error) {
       console.error("Failed to load cache:", error);
       return null;
