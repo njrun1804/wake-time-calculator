@@ -560,7 +560,14 @@ const fetchAwarenessData = async (
   signal: AbortSignal
 ): Promise<AwarenessDataResult> => {
   // Fetch dawn first (returns {date, tz})
-  const dawnData = await fetchDawn(lat, lon, tz, signal);
+  // If dawn lookup fails (e.g., network/CORS), fall back to current date so we can still fetch weather.
+  let dawnData: DawnInfo;
+  try {
+    dawnData = await fetchDawn(lat, lon, tz, signal);
+  } catch (error) {
+    console.warn("Dawn fetch failed, falling back to current date:", error);
+    dawnData = { date: new Date(), tz };
+  }
 
   // Parallel fetch weather & wetness with graceful degradation
   const [weatherResult, wetnessResult] = await Promise.allSettled([
