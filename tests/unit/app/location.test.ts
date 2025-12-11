@@ -395,69 +395,31 @@ test("geocodePlace handles network errors", async () => {
 // REVERSE GEOCODE TESTS
 // ============================================================================
 
-test("reverseGeocode uses Open-Meteo result when available", async () => {
-  const mockResponse = {
-    results: [
-      {
-        latitude: 40.7128,
-        longitude: -74.006,
-        name: "New York",
-        timezone: "America/New_York",
+test("reverseGeocode uses Nominatim for reverse geocoding", async () => {
+  // Open-Meteo doesn't support reverse geocoding, so we use Nominatim
+  mockFetchResponse = new Response(
+    JSON.stringify({
+      name: "New York",
+      address: {
+        city: "New York",
+        state: "New York",
         country: "United States",
-        admin1: "New York",
+        country_code: "us",
       },
-    ],
-  };
-
-  mockFetchResponse = new Response(JSON.stringify(mockResponse), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
-
-  const result = await reverseGeocode(40.7128, -74.006);
-
-  assert.ok(result.city.includes("New York"));
-  assert.equal(result.tz, "America/New_York");
-});
-
-test("reverseGeocode falls back to Nominatim when Open-Meteo fails", async () => {
-  // First call (Open-Meteo) fails
-  let callCount = 0;
-  global.fetch = async (url: string | URL | Request) => {
-    callCount++;
-    const urlStr = typeof url === "string" ? url : url.toString();
-    if (urlStr.includes("open-meteo.com")) {
-      return new Response("Not Found", { status: 404 });
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
     }
-    // Second call (Nominatim) succeeds
-    if (urlStr.includes("nominatim.openstreetmap.org")) {
-      return new Response(
-        JSON.stringify({
-          name: "New York",
-          address: {
-            city: "New York",
-            state: "New York",
-            country: "United States",
-            country_code: "us",
-          },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-    return new Response("Not Found", { status: 404 });
-  };
+  );
 
   const result = await reverseGeocode(40.7128, -74.006);
 
   assert.ok(result.city.includes("New York"));
   assert.equal(result.tz, defaultTz);
-  assert.equal(callCount, 2);
 });
 
-test("reverseGeocode falls back to coordinates when both APIs fail", async () => {
+test("reverseGeocode falls back to coordinates when Nominatim fails", async () => {
   global.fetch = async () => {
     return new Response("Not Found", { status: 404 });
   };
@@ -468,73 +430,29 @@ test("reverseGeocode falls back to coordinates when both APIs fail", async () =>
   assert.equal(result.tz, undefined);
 });
 
-test("reverseGeocode handles Open-Meteo invalid response", async () => {
-  let callCount = 0;
-  global.fetch = async (url: string | URL | Request) => {
-    callCount++;
-    const urlStr = typeof url === "string" ? url : url.toString();
-    if (urlStr.includes("open-meteo.com")) {
-      return new Response("Invalid JSON", {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    // Fallback to Nominatim
-    if (urlStr.includes("nominatim.openstreetmap.org")) {
-      return new Response(
-        JSON.stringify({
-          name: "Test City",
-          address: { city: "Test City" },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-    return new Response("Not Found", { status: 404 });
-  };
-
-  const result = await reverseGeocode(40.7128, -74.006);
-
-  assert.ok(result.city.includes("Test City"));
-  assert.equal(callCount, 2);
-});
-
 test("reverseGeocode handles Nominatim invalid response", async () => {
-  let callCount = 0;
-  global.fetch = async (url: string | URL | Request) => {
-    callCount++;
-    const urlStr = typeof url === "string" ? url : url.toString();
-    if (urlStr.includes("open-meteo.com")) {
-      return new Response("Not Found", { status: 404 });
-    }
-    if (urlStr.includes("nominatim.openstreetmap.org")) {
-      return new Response("Invalid JSON", {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    return new Response("Not Found", { status: 404 });
+  global.fetch = async () => {
+    return new Response("Invalid JSON", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   };
 
   const result = await reverseGeocode(40.7128, -74.006);
 
   assert.equal(result.city, "40.7128, -74.0060");
-  assert.equal(callCount, 2);
 });
 
 test("reverseGeocode formats US state abbreviations correctly", async () => {
+  // Nominatim response format
   const mockResponse = {
-    results: [
-      {
-        latitude: 40.7128,
-        longitude: -74.006,
-        name: "New York",
-        admin1: "New York",
-        country_code: "US",
-      },
-    ],
+    name: "New York",
+    address: {
+      city: "New York",
+      state: "New York",
+      country: "United States",
+      country_code: "us",
+    },
   };
 
   mockFetchResponse = new Response(JSON.stringify(mockResponse), {

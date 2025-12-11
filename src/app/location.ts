@@ -230,30 +230,6 @@ export const geocodePlace = async (
   };
 };
 
-const tryOpenMeteoReverse = async (lat: number, lon: number): Promise<LocationInfo | null> => {
-  try {
-    const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&count=1&format=json`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-
-    const data = (await res.json()) as OpenMeteoGeocodingResponse;
-    
-    // Basic validation
-    if (!data || typeof data !== "object" || !Array.isArray(data.results) || data.results.length === 0) {
-      return null;
-    }
-
-    const place = data.results[0];
-    return {
-      city: formatPlaceName(place),
-      tz: place.timezone || defaultTz,
-    };
-  } catch (error) {
-    console.warn("Open-Meteo reverse geocoding failed:", error);
-    return null;
-  }
-};
-
 const tryNominatimReverse = async (lat: number, lon: number): Promise<LocationInfo | null> => {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
@@ -283,9 +259,8 @@ const tryNominatimReverse = async (lat: number, lon: number): Promise<LocationIn
 };
 
 export const reverseGeocode = async (lat: number, lon: number): Promise<LocationInfo> => {
-  const openMeteoResult = await tryOpenMeteoReverse(lat, lon);
-  if (openMeteoResult) return openMeteoResult;
-
+  // Note: Open-Meteo doesn't support reverse geocoding (planned feature, no ETA)
+  // Using Nominatim (OpenStreetMap) for reverse geocoding
   const nominatimResult = await tryNominatimReverse(lat, lon);
   if (nominatimResult) return nominatimResult;
 

@@ -449,19 +449,16 @@ const buildMockFetch =
       return overrides[matcher]!();
     }
 
-    if (urlStr.includes("geocoding-api.open-meteo.com/v1/reverse")) {
+    if (urlStr.includes("nominatim.openstreetmap.org/reverse")) {
       return new Response(
         JSON.stringify({
-          results: [
-            {
-              latitude: 40,
-              longitude: -74,
-              name: "Test City",
-              timezone: "America/New_York",
-              country: "US",
-              admin1: "New Jersey",
-            },
-          ],
+          name: "Test City",
+          address: {
+            city: "Test City",
+            state: "New Jersey",
+            country: "United States",
+            country_code: "us",
+          },
         }),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
