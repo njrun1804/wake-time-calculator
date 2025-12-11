@@ -11,7 +11,7 @@ type DawnCacheEntry = { data: Date; tz: string; time: number };
 interface SunriseSunsetResponse {
   status: string;
   results?: {
-    dawn?: number;
+    dawn?: string | number; // API returns string with time_format=unix
     [key: string]: unknown;
   };
 }
@@ -82,11 +82,10 @@ export const fetchDawn = async (
   if (!data.results || typeof data.results !== "object") {
     throw new Error("No results in dawn API response");
   }
-  if (typeof data.results.dawn !== "number" || !Number.isFinite(data.results.dawn)) {
+  const dawnEpoch = Number(data.results.dawn);
+  if (!Number.isFinite(dawnEpoch)) {
     throw new Error("Invalid or missing dawn timestamp in API response");
   }
-
-  const dawnEpoch = data.results.dawn;
   const dawnDate = new Date(dawnEpoch * 1000);
 
   cacheDawn(key, dawnDate, tz);

@@ -211,9 +211,13 @@ export const WEATHER_CONFIG = {
 
 /**
  * Convert value to number or null
+ * Handles both number and string inputs (some APIs return numbers as strings)
  */
-export const numberOrNull = (value: unknown): number | null =>
-  typeof value === "number" && !Number.isNaN(value) ? value : null;
+export const numberOrNull = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
 
 /**
  * Convert value to number with fallback to 0

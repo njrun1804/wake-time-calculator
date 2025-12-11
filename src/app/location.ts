@@ -215,18 +215,16 @@ export const geocodePlace = async (
   }
 
   const place = data.results[0];
-  if (
-    typeof place.latitude !== "number" ||
-    typeof place.longitude !== "number" ||
-    !Number.isFinite(place.latitude) ||
-    !Number.isFinite(place.longitude)
-  ) {
+  // Coerce to number first (some APIs return strings)
+  const lat = Number(place.latitude);
+  const lon = Number(place.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     throw new Error("Invalid coordinates in geocoding response");
   }
 
   return {
-    lat: place.latitude,
-    lon: place.longitude,
+    lat,
+    lon,
     city: formatPlaceName(place),
     tz: place.timezone || defaultTz,
   };

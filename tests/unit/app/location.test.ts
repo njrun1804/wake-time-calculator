@@ -360,7 +360,7 @@ test("geocodePlace rejects when coordinates invalid in response", async () => {
   const mockResponse = {
     results: [
       {
-        latitude: Number.NaN,
+        latitude: "invalid", // String that can't be converted to number
         longitude: -74.006,
         name: "Test City",
       },
