@@ -1,135 +1,41 @@
-# Wake Time Calculator
+# Wake Time Calculator (Agent README)
 
-A weather-aware wake time calculator for runners. Calculates optimal wake times based on your first meeting, run duration, and weather conditions to help you plan the perfect morning run.
-    
-This project is built and maintained by **Gemini** (Google's AI) in partnership with a single user. It serves as a demonstration of AI-first development, where the AI agent acts as the primary architect and developer.
+Weather-aware wake time calculator for runners. Vanilla JS ES modules served directly from `src/` (no bundler or transpiler).
 
-## Features
+## Code map
+- `src/index.html` – UI shell
+- `src/css/main.css` – styles
+- `src/js/app/main.js` – app orchestrator (state, events, persistence)
+- `src/js/app/awareness.js` – weather/dawn awareness UI
+- `src/js/app/weather.js` – Open-Meteo integration + wetness scoring (NJ coastal calibration)
+- `src/js/app/location.js` – geolocation + geocoding
+- `src/js/app/dawn.js` – dawn times (SunriseSunset.io)
+- `src/js/app/ui.js` – UI helpers
+- `src/js/lib/calculator.js` – wake-time math (only file with unit tests)
+- `src/js/lib/{constants.js,time.js,schedulers.js,storage.js}` – shared utilities
 
-### Core Functionality
-- **Wake Time Calculation**: Determines when to wake up based on meeting time and activities
-- **Activity Planning**: Accounts for running, travel time, breakfast, and 45-minute prep time
-- **Multiple Time Displays**: Shows wake time, latest wake, and run start time
-- **Previous Day Support**: Handles scenarios where you need to wake up the previous day
-- **Time Allocation Visualization**: Interactive bars showing time breakdown
-
-### Weather Awareness
-- **Dawn Time Tracking**: Fetches tomorrow's dawn time for your location
-- **Weather Data**: Temperature, wind, precipitation probability, and conditions
-- **Surface Conditions**: Analyzes recent precipitation for trail wetness
-- **NJ Coastal Climate Calibration**: Trail wetness algorithm calibrated specifically for Monmouth County, NJ (7:1 snow ratio, clay-rich soil thresholds, seasonal drying rates)
-- **Daylight Warnings**: Alerts when runs start before dawn
-- **Location Services**: GPS-based location detection and manual search
-
-### Technical Features
-- **Modular Architecture**: Clean ES6 modules with no build step required
-- **Persistent Storage**: Saves preferences and location data
-- **Responsive Design**: Works on desktop and mobile devices
-- **Offline Core**: Basic functionality works without internet
-- **API Integration**: Open-Meteo for weather, SunriseSunset.io for dawn times
-
-## Usage
-
-### Default Experience
-Visit the published site at https://njrun1804.github.io/wake-time-calculator/ for the full weather-aware application.
-
-For local development, use `npm run serve` (requires Node.js >= 20.19.0) and navigate to http://localhost:8000/
-
-### Setup for Development
-
-**Prerequisites:**
-- Node.js >= 20.19.0 (use `nvm use` to automatically switch to the correct version)
-- npm >= 10.0.0
-
+## Run / test
 ```bash
-# Use correct Node version (if using nvm)
 nvm use
-
-# Install dependencies
 npm install
-
-# Serve from src/ directory for ES6 module testing
-npm run serve
-# Then visit http://localhost:8000/
+npm run serve   # http://localhost:8000/ served from src/
+npm test        # calculator.js unit tests
+npm run format  # Prettier
+npm run build   # copy src/ → dist/ (GitHub Pages)
 ```
 
-## Architecture
+## Data + config
+- External APIs: Open-Meteo (weather + geocode), SunriseSunset.io (dawn); no API keys.
+- Persistence: localStorage only; state saved on each change.
+- Caching: weather 1h, geolocation 1m, dawn LRU (50 entries).
+- Wetness calibration lives in `src/js/app/weather.js` (clay-rich NJ soil, 7:1 snow ratio).
+- Node version pinned via `.nvmrc`.
 
-### File Structure
-```
-├── src/                     # Application source code
-│   ├── index.html           # Main application
-│   ├── css/
-│   │   └── main.css         # Application styles
-│   └── js/
-│       ├── app/             # Application modules (AI-first consolidated)
-│       │   ├── awareness.js # Weather awareness (805 lines)
-│       │   ├── dawn.js      # Dawn time calculations (211 lines)
-│       │   ├── location.js  # Location services (349 lines)
-│       │   ├── main.js      # App orchestration (486 lines)
-│       │   ├── ui.js        # UI utilities (44 lines)
-│       │   └── weather.js   # Weather API and wetness (1117 lines)
-│       └── lib/             # Utility libraries
-│           ├── calculator.js    # Core wake time calculations
-│           ├── storage.js       # Local storage management
-│           ├── constants.js     # Application constants
-│           ├── schedulers.js    # Scheduling utilities
-│           └── time.js          # Time manipulation utilities
-├── tests/                   # Test suite (minimal for solo dev)
-│   └── unit/                # Unit tests
-│       └── lib/             # Library tests only
-│           └── calculator.test.js
-└── docs/                    # Documentation
+## Deployment / automation
+- GitHub Pages deploy: `.github/workflows/pages.yml` runs `npm ci`, `npm run build`, publishes `dist/` on pushes to `main`.
+- Source is served from `src/`; avoid adding build steps or runtime deps.
 
-### Module Dependencies
-```
-app/main.js
-├── lib/ (calculator, storage, constants, schedulers, time)
-├── app/awareness.js (weather awareness orchestration & display)
-├── app/weather.js (API, forecasts, wetness scoring, analysis)
-├── app/dawn.js (API, astronomy, daylight checks)
-├── app/location.js (geocoding, geolocation, validation)
-└── app/ui.js (UI utilities)
-```
-
-## APIs Used
-
-- **Open-Meteo**: Weather data and geocoding (free, no API key required)
-- **SunriseSunset.io**: Dawn/sunrise times (free, no API key required)
-- **Browser Geolocation**: Optional GPS location detection
-
-## Testing
-
-The project uses **minimal testing** optimized for solo development:
-
-```bash
-npm test  # Runs unit tests for calculator.js
-```
-
-- **Unit Tests**: Calculator logic only (7 tests)
-  - `tests/unit/lib/calculator.test.js`: Wake time calculations
-  - Tests core math functions: toMinutes, fromMinutes, format12, calculateWakeTime
-
-**Testing Philosophy:**
-- Manual testing by user for features/UI
-- Automated tests only for pure math (calculator)
-- Gemini Verification: AI reviews code for correctness instead of heavy integration tests
-- Fast iteration > comprehensive automation
-
-## Development
-
-The application is built with modern ES6 modules requiring no build step. For development:
-
-1. Start a local HTTP server (required for ES6 modules): `npm run serve`
-2. Edit modules in the `src/js/` directory
-3. Test changes in browser
-4. Run test suite to verify functionality
-
-## Documentation
-
-- `GEMINI.md`: Comprehensive developer documentation and architecture details
-- `docs/trail-wetness.md` – Trail condition scoring algorithm and calibration
-
-## Live Demo
-
-Visit: [https://njrun1804.github.io/wake-time-calculator/](https://njrun1804.github.io/wake-time-calculator/)
+## Agent guardrails
+- Keep vanilla JS + ES modules; no frameworks/bundlers.
+- Prefer consolidated modules with `// === SECTION ===` markers.
+- Update or add tests only for pure logic (calculator); otherwise verify in browser.
