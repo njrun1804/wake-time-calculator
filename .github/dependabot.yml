@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Group updates to reduce PR noise
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    # Open pull requests for version updates only
+    open-pull-requests-limit: 10
